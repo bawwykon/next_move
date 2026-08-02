@@ -1,10 +1,12 @@
 import { StyleSheet, Text, View } from 'react-native';
 
+import { colors, fonts, spacing } from '@/lib/theme';
+
 export default function HomeScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>next_move</Text>
-      <Text style={styles.subtitle}>s0-01 boot check</Text>
+      <Text style={styles.title}>Next Move</Text>
+      <Text style={styles.subtitle}>Quest Board coming soon</Text>
     </View>
   );
 }
@@ -14,16 +16,17 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#208AEF',
+    backgroundColor: colors.background,
+    gap: spacing.md,
   },
   title: {
-    color: '#ffffff',
-    fontSize: 32,
-    fontWeight: '700',
+    color: colors.reward,
+    fontFamily: fonts.display.family,
+    fontSize: 40,
   },
   subtitle: {
-    color: '#ffffff',
-    fontSize: 14,
-    marginTop: 8,
+    color: colors.textMuted,
+    fontFamily: fonts.body.family,
+    fontSize: 16,
   },
 });

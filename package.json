@@ -26,6 +26,7 @@
     "react-native-web": "~0.21.0"
   },
   "devDependencies": {
+    "@react-native/jest-preset": "^0.86.2",
     "@types/jest": "^30.0.0",
     "@types/react": "~19.2.2",
     "@typescript-eslint/eslint-plugin": "^8.65.0",
@@ -41,7 +42,6 @@
   },
   "scripts": {
     "start": "expo start",
-    "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",

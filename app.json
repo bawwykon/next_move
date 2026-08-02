@@ -32,6 +32,16 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
+      ],
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/Baloo2-Bold.ttf",
+            "./assets/fonts/Nunito-Regular.ttf",
+            "./assets/fonts/Nunito-Bold.ttf"
+          ]
+        }
       ]
     ],
     "experiments": {
