@@ -1,32 +1,10 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Redirect } from 'expo-router';
 
-import { colors, fonts, spacing } from '@/lib/theme';
+import { useSessionStore } from '@/state/sessionStore';
 
-export default function HomeScreen() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Next Move</Text>
-      <Text style={styles.subtitle}>Quest Board coming soon</Text>
-    </View>
-  );
+export default function IndexRedirect() {
+  const authStatus = useSessionStore((state) => state.authStatus);
+  const target = authStatus === 'signed-in' ? '/(tabs)/quest-board' : '/(auth)/welcome';
+
+  return <Redirect href={target} />;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.background,
-    gap: spacing.md,
-  },
-  title: {
-    color: colors.reward,
-    fontFamily: fonts.display.family,
-    fontSize: 40,
-  },
-  subtitle: {
-    color: colors.textMuted,
-    fontFamily: fonts.body.family,
-    fontSize: 16,
-  },
-});

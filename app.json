@@ -42,7 +42,8 @@
             "./assets/fonts/Nunito-Bold.ttf"
           ]
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,

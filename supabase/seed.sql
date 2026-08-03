@@ -106,7 +106,12 @@ values (
   'endurance',
   8000
 )
-on conflict (id) do nothing;
+on conflict (id) do update set
+  age_range = excluded.age_range,
+  activity_level = excluded.activity_level,
+  weekly_workouts = excluded.weekly_workouts,
+  goal = excluded.goal,
+  target_steps = excluded.target_steps;
 
 -- exercise catalog (15)
 insert into public.exercise_library (slug, name, instruction, safety_note, categories, beginner_variation) values

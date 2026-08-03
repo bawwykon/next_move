@@ -40,3 +40,10 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Supabase CLI temp artifacts
+supabase/.temp/
+
+# local dev-server logs
+.expo-start.log
+.expo-start.err.log

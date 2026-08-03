@@ -1,4 +1,14 @@
-import { supabase } from '../src/data/supabase';
+import { createClient } from '@supabase/supabase-js';
+import type { Database } from '../src/types/database';
+
+const supabaseUrl = process.env.HEALTH_SUPABASE_URL ?? 'http://127.0.0.1:54321';
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseAnonKey) {
+  throw new Error('Missing EXPO_PUBLIC_SUPABASE_ANON_KEY');
+}
+
+const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
 async function main() {
   const email = 'demo@nextmove.app';
