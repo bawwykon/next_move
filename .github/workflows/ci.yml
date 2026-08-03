@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  code:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test
+      - run: npm run format:check
+
+  db:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: supabase start
+      - run: supabase db reset
+      - name: Seed smoke check
+        run: |
+          db_container=$(docker ps --format '{{.Names}}' | grep '^supabase_db_' | head -n 1)
+          counts=$(docker exec "$db_container" psql -U postgres -d postgres -t -A -c \
+            "select (select count(*) from public.quests) || '|' || (select count(*) from public.exercise_library) || '|' || (select count(*) from public.achievements) || '|' || (select count(*) from public.cosmetics);")
+          echo "seed counts: $counts"
+          test "$counts" = "10|15|13|18"

@@ -241,3 +241,56 @@ join (
 ) as s(slug, position, kind, exercise_slug, duration_sec)
 on s.slug = q.slug
 left join public.exercise_library e on e.slug = s.exercise_slug;
+
+-- achievements (13) — unlock logic lives in the complete_quest RPC (Ref 08);
+-- the trigger column below is for traceability only, the schema carries no condition column:
+--   first-quest        -> complete any quest
+--   first-level        -> reach level 2
+--   first-week         -> quests on 7 different days
+--   workouts-50        -> 50 completions
+--   workouts-100       -> 100 completions
+--   workouts-250       -> 250 completions
+--   streak-7           -> 7-day streak
+--   streak-30          -> 30-day streak
+--   streak-100         -> 100-day streak
+--   phoenix            -> return after a 7+ day break
+--   early-bird         -> 100 quests started before 10:00 local
+--   night-owl          -> 100 quests started after 20:00 local
+--   master-adventurer  -> reach level 100
+insert into public.achievements (slug, title, description, hint, category) values
+  ('first-quest', 'First Quest', 'Complete your first quest.', 'Take the first step.', 'beginner'),
+  ('first-level', 'First Level', 'Reach level 2.', 'Every journey has its first summit.', 'beginner'),
+  ('first-week', 'First Week', 'Complete quests on seven different days.', 'A week of small wins adds up.', 'beginner'),
+  ('workouts-50', '50 Workouts', 'Complete 50 quests.', 'A number worth chasing.', 'progress'),
+  ('workouts-100', '100 Workouts', 'Complete 100 quests.', 'Three digits to your name.', 'progress'),
+  ('workouts-250', '250 Workouts', 'Complete 250 quests.', 'Your rhythm is your own.', 'progress'),
+  ('streak-7', '7 Day Streak', 'Keep a 7-day quest streak.', 'Seven small days, one strong chain.', 'consistency'),
+  ('streak-30', '30 Day Streak', 'Keep a 30-day quest streak.', 'A full month of showing up.', 'consistency'),
+  ('streak-100', '100 Day Streak', 'Keep a 100-day quest streak.', 'A hundred days of quiet consistency.', 'consistency'),
+  ('phoenix', 'Phoenix', 'Return after a break of a week or more.', 'Even pauses lead somewhere good.', 'special'),
+  ('early-bird', 'Early Bird', 'Start 100 quests before 10:00 AM.', 'The day starts early for some.', 'special'),
+  ('night-owl', 'Night Owl', 'Start 100 quests after 8:00 PM.', 'Night holds its own magic.', 'special'),
+  ('master-adventurer', 'Master Adventurer', 'Reach level 100.', 'The summit waits for the patient.', 'special')
+on conflict (slug) do nothing;
+
+-- cosmetics (18)
+insert into public.cosmetics (slug, type, name, unlock_rule) values
+  ('frame-default', 'frame', 'Classic Frame', '{}'),
+  ('frame-level-05', 'frame', 'Level 5 Frame', '{"kind":"level","level":5}'),
+  ('frame-level-10', 'frame', 'Level 10 Frame', '{"kind":"level","level":10}'),
+  ('frame-level-25', 'frame', 'Level 25 Frame', '{"kind":"level","level":25}'),
+  ('frame-level-50', 'frame', 'Level 50 Frame', '{"kind":"level","level":50}'),
+  ('frame-level-100', 'frame', 'Level 100 Frame', '{"kind":"level","level":100}'),
+  ('title-adventurer', 'title', 'Adventurer', '{"kind":"achievement","slug":"first-quest"}'),
+  ('title-level-05', 'title', 'Explorer', '{"kind":"level","level":5}'),
+  ('title-level-10', 'title', 'Trailblazer', '{"kind":"level","level":10}'),
+  ('title-level-25', 'title', 'Voyager', '{"kind":"level","level":25}'),
+  ('title-level-50', 'title', 'Champion', '{"kind":"level","level":50}'),
+  ('title-level-100', 'title', 'Legend', '{"kind":"level","level":100}'),
+  ('bg-chapter-02', 'background', 'Chapter 2 Scene', '{"kind":"chapter","chapter":2}'),
+  ('bg-chapter-04', 'background', 'Chapter 4 Scene', '{"kind":"chapter","chapter":4}'),
+  ('bg-chapter-06', 'background', 'Chapter 6 Scene', '{"kind":"chapter","chapter":6}'),
+  ('portrait-default', 'portrait', 'Classic Portrait', '{}'),
+  ('portrait-phoenix', 'portrait', 'Phoenix Portrait', '{"kind":"achievement","slug":"phoenix"}'),
+  ('portrait-master', 'portrait', 'Master Portrait', '{"kind":"achievement","slug":"master-adventurer"}')
+on conflict (slug) do nothing;
