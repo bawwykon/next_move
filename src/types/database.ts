@@ -28,6 +28,129 @@ export type Database = {
   };
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          condition: Json;
+          created_at: string;
+          description: string | null;
+          icon: string | null;
+          id: string;
+          slug: string;
+          tier: string | null;
+          title: string;
+          updated_at: string;
+          xp_reward: number;
+        };
+        Insert: {
+          condition?: Json;
+          created_at?: string;
+          description?: string | null;
+          icon?: string | null;
+          id?: string;
+          slug: string;
+          tier?: string | null;
+          title: string;
+          updated_at?: string;
+          xp_reward?: number;
+        };
+        Update: {
+          condition?: Json;
+          created_at?: string;
+          description?: string | null;
+          icon?: string | null;
+          id?: string;
+          slug?: string;
+          tier?: string | null;
+          title?: string;
+          updated_at?: string;
+          xp_reward?: number;
+        };
+        Relationships: [];
+      };
+      cosmetics: {
+        Row: {
+          active: boolean;
+          created_at: string;
+          description: string | null;
+          id: string;
+          kind: string;
+          metadata: Json;
+          name: string;
+          price_xp: number;
+          rarity: string | null;
+          slug: string;
+          updated_at: string;
+        };
+        Insert: {
+          active?: boolean;
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          kind: string;
+          metadata?: Json;
+          name: string;
+          price_xp?: number;
+          rarity?: string | null;
+          slug: string;
+          updated_at?: string;
+        };
+        Update: {
+          active?: boolean;
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          kind?: string;
+          metadata?: Json;
+          name?: string;
+          price_xp?: number;
+          rarity?: string | null;
+          slug?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      exercises: {
+        Row: {
+          category: string;
+          created_at: string;
+          description: string | null;
+          equipment: string | null;
+          id: string;
+          instructions: Json;
+          metadata: Json;
+          muscle_group: string | null;
+          name: string;
+          slug: string;
+          updated_at: string;
+        };
+        Insert: {
+          category: string;
+          created_at?: string;
+          description?: string | null;
+          equipment?: string | null;
+          id?: string;
+          instructions?: Json;
+          metadata?: Json;
+          muscle_group?: string | null;
+          name: string;
+          slug: string;
+          updated_at?: string;
+        };
+        Update: {
+          category?: string;
+          created_at?: string;
+          description?: string | null;
+          equipment?: string | null;
+          id?: string;
+          instructions?: Json;
+          metadata?: Json;
+          muscle_group?: string | null;
+          name?: string;
+          slug?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           activity_level: string | null;
@@ -58,6 +181,96 @@ export type Database = {
           target_steps?: number | null;
           updated_at?: string;
           weekly_workouts?: number | null;
+        };
+        Relationships: [];
+      };
+      quests: {
+        Row: {
+          active: boolean;
+          category: string;
+          created_at: string;
+          description: string | null;
+          difficulty: string | null;
+          duration_minutes: number | null;
+          id: string;
+          metadata: Json;
+          requirement: Json;
+          slug: string;
+          target_value: number | null;
+          title: string;
+          type: string | null;
+          updated_at: string;
+          xp_reward: number;
+        };
+        Insert: {
+          active?: boolean;
+          category: string;
+          created_at?: string;
+          description?: string | null;
+          difficulty?: string | null;
+          duration_minutes?: number | null;
+          id?: string;
+          metadata?: Json;
+          requirement?: Json;
+          slug: string;
+          target_value?: number | null;
+          title: string;
+          type?: string | null;
+          updated_at?: string;
+          xp_reward?: number;
+        };
+        Update: {
+          active?: boolean;
+          category?: string;
+          created_at?: string;
+          description?: string | null;
+          difficulty?: string | null;
+          duration_minutes?: number | null;
+          id?: string;
+          metadata?: Json;
+          requirement?: Json;
+          slug?: string;
+          target_value?: number | null;
+          title?: string;
+          type?: string | null;
+          updated_at?: string;
+          xp_reward?: number;
+        };
+        Relationships: [];
+      };
+      segments: {
+        Row: {
+          active: boolean;
+          config: Json;
+          created_at: string;
+          id: string;
+          name: string;
+          slug: string;
+          sort_order: number;
+          type: string;
+          updated_at: string;
+        };
+        Insert: {
+          active?: boolean;
+          config?: Json;
+          created_at?: string;
+          id?: string;
+          name: string;
+          slug: string;
+          sort_order?: number;
+          type: string;
+          updated_at?: string;
+        };
+        Update: {
+          active?: boolean;
+          config?: Json;
+          created_at?: string;
+          id?: string;
+          name?: string;
+          slug?: string;
+          sort_order?: number;
+          type?: string;
+          updated_at?: string;
         };
         Relationships: [];
       };
