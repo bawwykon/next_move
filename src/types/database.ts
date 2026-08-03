@@ -30,122 +30,98 @@ export type Database = {
     Tables: {
       achievements: {
         Row: {
-          condition: Json;
-          created_at: string;
-          description: string | null;
-          icon: string | null;
-          id: string;
-          slug: string;
-          tier: string | null;
-          title: string;
-          updated_at: string;
-          xp_reward: number;
-        };
-        Insert: {
-          condition?: Json;
-          created_at?: string;
-          description?: string | null;
-          icon?: string | null;
-          id?: string;
-          slug: string;
-          tier?: string | null;
-          title: string;
-          updated_at?: string;
-          xp_reward?: number;
-        };
-        Update: {
-          condition?: Json;
-          created_at?: string;
-          description?: string | null;
-          icon?: string | null;
-          id?: string;
-          slug?: string;
-          tier?: string | null;
-          title?: string;
-          updated_at?: string;
-          xp_reward?: number;
-        };
-        Relationships: [];
-      };
-      cosmetics: {
-        Row: {
-          active: boolean;
-          created_at: string;
-          description: string | null;
-          id: string;
-          kind: string;
-          metadata: Json;
-          name: string;
-          price_xp: number;
-          rarity: string | null;
-          slug: string;
-          updated_at: string;
-        };
-        Insert: {
-          active?: boolean;
-          created_at?: string;
-          description?: string | null;
-          id?: string;
-          kind: string;
-          metadata?: Json;
-          name: string;
-          price_xp?: number;
-          rarity?: string | null;
-          slug: string;
-          updated_at?: string;
-        };
-        Update: {
-          active?: boolean;
-          created_at?: string;
-          description?: string | null;
-          id?: string;
-          kind?: string;
-          metadata?: Json;
-          name?: string;
-          price_xp?: number;
-          rarity?: string | null;
-          slug?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      exercises: {
-        Row: {
           category: string;
           created_at: string;
           description: string | null;
-          equipment: string | null;
+          hint: string | null;
           id: string;
-          instructions: Json;
-          metadata: Json;
-          muscle_group: string | null;
-          name: string;
           slug: string;
+          title: string;
           updated_at: string;
         };
         Insert: {
           category: string;
           created_at?: string;
           description?: string | null;
-          equipment?: string | null;
+          hint?: string | null;
           id?: string;
-          instructions?: Json;
-          metadata?: Json;
-          muscle_group?: string | null;
-          name: string;
           slug: string;
+          title: string;
           updated_at?: string;
         };
         Update: {
           category?: string;
           created_at?: string;
           description?: string | null;
-          equipment?: string | null;
+          hint?: string | null;
           id?: string;
-          instructions?: Json;
-          metadata?: Json;
-          muscle_group?: string | null;
+          slug?: string;
+          title?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      cosmetics: {
+        Row: {
+          created_at: string;
+          id: string;
+          name: string;
+          slug: string;
+          type: string;
+          unlock_rule: Json;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          name: string;
+          slug: string;
+          type: string;
+          unlock_rule?: Json;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
           name?: string;
+          slug?: string;
+          type?: string;
+          unlock_rule?: Json;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      exercise_library: {
+        Row: {
+          beginner_variation: string | null;
+          categories: string[];
+          created_at: string;
+          id: string;
+          instruction: string | null;
+          name: string;
+          safety_note: string | null;
+          slug: string;
+          updated_at: string;
+        };
+        Insert: {
+          beginner_variation?: string | null;
+          categories?: string[];
+          created_at?: string;
+          id?: string;
+          instruction?: string | null;
+          name: string;
+          safety_note?: string | null;
+          slug: string;
+          updated_at?: string;
+        };
+        Update: {
+          beginner_variation?: string | null;
+          categories?: string[];
+          created_at?: string;
+          id?: string;
+          instruction?: string | null;
+          name?: string;
+          safety_note?: string | null;
           slug?: string;
           updated_at?: string;
         };
@@ -184,93 +160,93 @@ export type Database = {
         };
         Relationships: [];
       };
+      quest_segments: {
+        Row: {
+          created_at: string;
+          duration_sec: number;
+          exercise_id: string | null;
+          id: string;
+          kind: string;
+          position: number;
+          quest_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          duration_sec: number;
+          exercise_id?: string | null;
+          id?: string;
+          kind: string;
+          position: number;
+          quest_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          duration_sec?: number;
+          exercise_id?: string | null;
+          id?: string;
+          kind?: string;
+          position?: number;
+          quest_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'quest_segments_exercise_id_fkey';
+            columns: ['exercise_id'];
+            isOneToOne: false;
+            referencedRelation: 'exercise_library';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'quest_segments_quest_id_fkey';
+            columns: ['quest_id'];
+            isOneToOne: false;
+            referencedRelation: 'quests';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       quests: {
         Row: {
           active: boolean;
-          category: string;
+          categories: string[];
           created_at: string;
           description: string | null;
-          difficulty: string | null;
-          duration_minutes: number | null;
+          difficulty: string;
+          duration_sec: number;
           id: string;
-          metadata: Json;
-          requirement: Json;
           slug: string;
-          target_value: number | null;
           title: string;
-          type: string | null;
           updated_at: string;
           xp_reward: number;
         };
         Insert: {
           active?: boolean;
-          category: string;
+          categories?: string[];
           created_at?: string;
           description?: string | null;
-          difficulty?: string | null;
-          duration_minutes?: number | null;
+          difficulty: string;
+          duration_sec: number;
           id?: string;
-          metadata?: Json;
-          requirement?: Json;
           slug: string;
-          target_value?: number | null;
           title: string;
-          type?: string | null;
           updated_at?: string;
-          xp_reward?: number;
+          xp_reward: number;
         };
         Update: {
           active?: boolean;
-          category?: string;
+          categories?: string[];
           created_at?: string;
           description?: string | null;
-          difficulty?: string | null;
-          duration_minutes?: number | null;
+          difficulty?: string;
+          duration_sec?: number;
           id?: string;
-          metadata?: Json;
-          requirement?: Json;
           slug?: string;
-          target_value?: number | null;
           title?: string;
-          type?: string | null;
           updated_at?: string;
           xp_reward?: number;
-        };
-        Relationships: [];
-      };
-      segments: {
-        Row: {
-          active: boolean;
-          config: Json;
-          created_at: string;
-          id: string;
-          name: string;
-          slug: string;
-          sort_order: number;
-          type: string;
-          updated_at: string;
-        };
-        Insert: {
-          active?: boolean;
-          config?: Json;
-          created_at?: string;
-          id?: string;
-          name: string;
-          slug: string;
-          sort_order?: number;
-          type: string;
-          updated_at?: string;
-        };
-        Update: {
-          active?: boolean;
-          config?: Json;
-          created_at?: string;
-          id?: string;
-          name?: string;
-          slug?: string;
-          sort_order?: number;
-          type?: string;
-          updated_at?: string;
         };
         Relationships: [];
       };

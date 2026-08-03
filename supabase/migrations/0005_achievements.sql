@@ -3,10 +3,8 @@ create table if not exists public.achievements (
   slug text not null unique,
   title text not null,
   description text,
-  icon text,
-  tier text,
-  condition jsonb not null default '{}'::jsonb,
-  xp_reward integer not null default 0 check (xp_reward >= 0),
+  hint text,
+  category text not null check (category in ('beginner', 'progress', 'consistency', 'special')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
