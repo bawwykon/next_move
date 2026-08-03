@@ -127,6 +127,107 @@ export type Database = {
         };
         Relationships: [];
       };
+      mastery: {
+        Row: {
+          created_at: string;
+          points: number;
+          profile_id: string;
+          track: string;
+        };
+        Insert: {
+          created_at?: string;
+          points?: number;
+          profile_id: string;
+          track: string;
+        };
+        Update: {
+          created_at?: string;
+          points?: number;
+          profile_id?: string;
+          track?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'mastery_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      profile_achievements: {
+        Row: {
+          achievement_id: string;
+          created_at: string;
+          profile_id: string;
+          unlocked_at: string | null;
+        };
+        Insert: {
+          achievement_id: string;
+          created_at?: string;
+          profile_id: string;
+          unlocked_at?: string | null;
+        };
+        Update: {
+          achievement_id?: string;
+          created_at?: string;
+          profile_id?: string;
+          unlocked_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'profile_achievements_achievement_id_fkey';
+            columns: ['achievement_id'];
+            isOneToOne: false;
+            referencedRelation: 'achievements';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'profile_achievements_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      profile_cosmetics: {
+        Row: {
+          cosmetic_id: string;
+          created_at: string;
+          profile_id: string;
+          unlocked_at: string | null;
+        };
+        Insert: {
+          cosmetic_id: string;
+          created_at?: string;
+          profile_id: string;
+          unlocked_at?: string | null;
+        };
+        Update: {
+          cosmetic_id?: string;
+          created_at?: string;
+          profile_id?: string;
+          unlocked_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'profile_cosmetics_cosmetic_id_fkey';
+            columns: ['cosmetic_id'];
+            isOneToOne: false;
+            referencedRelation: 'cosmetics';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'profile_cosmetics_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       profiles: {
         Row: {
           activity_level: string | null;
@@ -159,6 +260,63 @@ export type Database = {
           weekly_workouts?: number | null;
         };
         Relationships: [];
+      };
+      quest_completions: {
+        Row: {
+          bonus_breakdown: Json;
+          completed_at: string | null;
+          created_at: string;
+          duration_sec: number | null;
+          id: string;
+          idempotency_key: string;
+          mastered: string[];
+          profile_id: string;
+          quest_id: string;
+          started_at: string | null;
+          xp_awarded: number | null;
+        };
+        Insert: {
+          bonus_breakdown?: Json;
+          completed_at?: string | null;
+          created_at?: string;
+          duration_sec?: number | null;
+          id?: string;
+          idempotency_key: string;
+          mastered?: string[];
+          profile_id: string;
+          quest_id: string;
+          started_at?: string | null;
+          xp_awarded?: number | null;
+        };
+        Update: {
+          bonus_breakdown?: Json;
+          completed_at?: string | null;
+          created_at?: string;
+          duration_sec?: number | null;
+          id?: string;
+          idempotency_key?: string;
+          mastered?: string[];
+          profile_id?: string;
+          quest_id?: string;
+          started_at?: string | null;
+          xp_awarded?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'quest_completions_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'quest_completions_quest_id_fkey';
+            columns: ['quest_id'];
+            isOneToOne: false;
+            referencedRelation: 'quests';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       quest_segments: {
         Row: {
@@ -249,6 +407,35 @@ export type Database = {
           xp_reward?: number;
         };
         Relationships: [];
+      };
+      streaks_rewards: {
+        Row: {
+          awarded_at: string | null;
+          created_at: string;
+          profile_id: string;
+          reward_day: number;
+        };
+        Insert: {
+          awarded_at?: string | null;
+          created_at?: string;
+          profile_id: string;
+          reward_day: number;
+        };
+        Update: {
+          awarded_at?: string | null;
+          created_at?: string;
+          profile_id?: string;
+          reward_day?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'streaks_rewards_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
       };
     };
     Views: {
