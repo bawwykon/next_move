@@ -3,12 +3,15 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Screen } from '@/components/ui/Screen';
 import { colors, fonts, spacing } from '@/lib/theme';
 
-export default function QuestBoardScreen() {
+export default function JourneyScreen() {
   return (
     <Screen>
       <View style={styles.center}>
-        <Text style={styles.appTitle}>Next Move</Text>
-        <Text style={styles.subtitle}>Your daily quests arrive in S3.</Text>
+        <Text style={styles.title}>Journey</Text>
+        <Text style={styles.subtitle}>Your path is waiting — Chapter 1 of 7.</Text>
+      </View>
+      <View style={styles.progressTrack}>
+        <View style={styles.progressFill} />
       </View>
     </Screen>
   );
@@ -21,7 +24,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.md,
   },
-  appTitle: {
+  title: {
     color: colors.reward,
     fontFamily: fonts.display.family,
     fontSize: 32,
@@ -31,5 +34,17 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body.family,
     fontSize: 16,
     textAlign: 'center',
+  },
+  progressTrack: {
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.surfaceElevated,
+    overflow: 'hidden',
+    marginBottom: spacing.xl,
+  },
+  progressFill: {
+    height: '100%',
+    width: '0%',
+    backgroundColor: colors.calm,
   },
 });
