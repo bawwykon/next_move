@@ -31,7 +31,9 @@ export default function RegisterScreen() {
     setBusy(false);
     if (message) {
       setError(message);
+      return;
     }
+    // S2: on successful sign-up (session granted) route to /(onboarding) instead.
   };
 
   return (

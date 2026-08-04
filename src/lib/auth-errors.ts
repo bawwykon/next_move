@@ -1,3 +1,6 @@
+export const SIGN_UP_CONFIRMATION_MESSAGE =
+  'We emailed you a confirmation link — open it, then sign in.';
+
 const FALLBACK_MESSAGE = 'Something went wrong — give it another try.';
 const NETWORK_MESSAGE = "Can't reach the server — check your connection and try again.";
 
@@ -34,4 +37,8 @@ export function getAuthErrorMessage(error: unknown): string {
     }
   }
   return FALLBACK_MESSAGE;
+}
+
+export function signUpConfirmation(session: unknown): string | null {
+  return session ? null : SIGN_UP_CONFIRMATION_MESSAGE;
 }

@@ -5,11 +5,13 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppTextField } from '@/components/ui/AppTextField';
 import { Screen } from '@/components/ui/Screen';
+import { postLoginRoute } from '@/lib/intended-route';
 import { colors, fonts, spacing } from '@/lib/theme';
 import { useSessionStore } from '@/state/sessionStore';
 
 export default function LoginScreen() {
   const signIn = useSessionStore((state) => state.signIn);
+  const clearIntendedRoute = useSessionStore((state) => state.clearIntendedRoute);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +28,11 @@ export default function LoginScreen() {
     setBusy(false);
     if (message) {
       setError(message);
+      return;
     }
+    const intendedRoute = useSessionStore.getState().intendedRoute;
+    clearIntendedRoute();
+    router.replace(postLoginRoute(intendedRoute));
   };
 
   return (

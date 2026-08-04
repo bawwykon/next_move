@@ -6,6 +6,7 @@ import { AppButton } from '@/components/ui/AppButton';
 import { AppTextField } from '@/components/ui/AppTextField';
 import { Screen } from '@/components/ui/Screen';
 import { supabase } from '@/data/supabase';
+import { RESET_REDIRECT_URL } from '@/lib/auth-redirect';
 import { getAuthErrorMessage } from '@/lib/auth-errors';
 import { colors, fonts, spacing } from '@/lib/theme';
 
@@ -22,7 +23,9 @@ export default function ForgotPasswordScreen() {
     }
     setBusy(true);
     setError(null);
-    const { error: authError } = await supabase.auth.resetPasswordForEmail(email.trim());
+    const { error: authError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: RESET_REDIRECT_URL,
+    });
     setBusy(false);
     if (authError) {
       setError(getAuthErrorMessage(authError));
