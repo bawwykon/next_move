@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { BackHandler, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { planSummaryLines } from '@/domain/recommendation/plan';
 import { AppButton } from '@/components/ui/AppButton';
 import { Screen } from '@/components/ui/Screen';
 import {
@@ -75,15 +76,16 @@ export default function OnboardingScreen() {
 
   if (wizard.done) {
     const payload = completedAnswers(wizard);
+    const plan = planSummaryLines(payload);
     return (
       <Screen>
         <View style={styles.hero}>
           <Text style={styles.title}>Your plan is ready</Text>
-          <Text style={styles.body}>
-            {
-              "We've set your starting plan around these answers. Your personalized quests arrive soon."
-            }
-          </Text>
+          <View style={styles.echo}>
+            <Text style={styles.echoLine}>{plan.focusLine}</Text>
+            <Text style={styles.echoLine}>{plan.difficultyLine}</Text>
+            <Text style={styles.echoLine}>{plan.rhythmLine}</Text>
+          </View>
           <View style={styles.echo}>
             <Text style={styles.echoLine}>
               <Text style={styles.echoKey}>Activity:</Text>{' '}
@@ -274,12 +276,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     gap: spacing.md,
-  },
-  body: {
-    color: colors.textMuted,
-    fontFamily: fonts.body.family,
-    fontSize: 16,
-    lineHeight: 24,
   },
   echo: {
     gap: spacing.sm,
