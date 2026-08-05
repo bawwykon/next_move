@@ -92,14 +92,17 @@ on conflict (provider_id, provider) do nothing;
 
 insert into public.profiles (
   id,
-  display_name
+  display_name,
+  onboarded
 )
 values (
   '3f8a2c1e-6f5b-4a7d-9c2e-1b4d6f8a0c3e',
-  'Adventurer'
+  'Adventurer',
+  true
 )
 on conflict (id) do update set
-  display_name = excluded.display_name;
+  display_name = excluded.display_name,
+  onboarded = excluded.onboarded;
 
 insert into public.onboarding (
   profile_id,

@@ -292,6 +292,7 @@ export type Database = {
           bonus_breakdown: Json;
           completed_at: string | null;
           created_at: string;
+          day_key: string | null;
           duration_sec: number | null;
           id: string;
           idempotency_key: string;
@@ -305,6 +306,7 @@ export type Database = {
           bonus_breakdown?: Json;
           completed_at?: string | null;
           created_at?: string;
+          day_key?: string | null;
           duration_sec?: number | null;
           id?: string;
           idempotency_key: string;
@@ -318,6 +320,7 @@ export type Database = {
           bonus_breakdown?: Json;
           completed_at?: string | null;
           created_at?: string;
+          day_key?: string | null;
           duration_sec?: number | null;
           id?: string;
           idempotency_key?: string;

@@ -6,6 +6,7 @@ import { getOnboarded, saveOnboarding } from '@/data/repositories/profile';
 import type { OnboardingPayload } from '@/features/onboarding/wizardController';
 import { getAuthErrorMessage, signUpConfirmation } from '@/lib/auth-errors';
 import { consumeManualSignOut, markManualSignOut, readCapturedTabPath } from '@/lib/intended-route';
+import { useCharacterStore } from '@/state/characterStore';
 
 export type AuthStatus = 'loading' | 'signed-out' | 'signed-in';
 
@@ -86,6 +87,7 @@ supabase.auth.onAuthStateChange((event, session) => {
       onboarded: null,
       ...(manual ? {} : { intendedRoute: readCapturedTabPath() }),
     });
+    useCharacterStore.getState().reset();
     return;
   }
   applySession(session);
