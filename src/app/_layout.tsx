@@ -16,8 +16,13 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const [loaded, error] = useLoadedFonts();
   const authStatus = useSessionStore((state) => state.authStatus);
+  const onboarded = useSessionStore((state) => state.onboarded);
   const pathname = usePathname();
-  const ready = (loaded || error) && authStatus !== 'loading';
+  const signedIn = authStatus === 'signed-in';
+  const needsOnboarding = signedIn && onboarded === false;
+  // Signed-in but onboarded flag not loaded yet: hold the splash instead of
+  // flickering between guards (Ref 04 guard pattern).
+  const ready = (loaded || error) && authStatus !== 'loading' && !(signedIn && onboarded === null);
 
   useEffect(() => {
     captureTabPath(pathname);
@@ -33,8 +38,6 @@ export default function RootLayout() {
     return null;
   }
 
-  const signedIn = authStatus === 'signed-in';
-
   return (
     <>
       <Stack screenOptions={{ headerShown: false }}>
@@ -45,8 +48,10 @@ export default function RootLayout() {
         <Stack.Protected guard={!signedIn}>
           <Stack.Screen name="(auth)" />
         </Stack.Protected>
-        {/* S2: signed-in but not onboarded -> show /(onboarding) instead of (tabs) */}
-        <Stack.Protected guard={signedIn}>
+        <Stack.Protected guard={needsOnboarding}>
+          <Stack.Screen name="(onboarding)" />
+        </Stack.Protected>
+        <Stack.Protected guard={signedIn && onboarded === true}>
           <Stack.Screen name="(tabs)" />
         </Stack.Protected>
       </Stack>

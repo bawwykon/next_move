@@ -33,7 +33,9 @@ export default function RegisterScreen() {
       setError(message);
       return;
     }
-    // S2: on successful sign-up (session granted) route to /(onboarding) instead.
+    // Session granted: the guard is still resolving profiles.onboarded,
+    // which lands the user on /(onboarding) (Ref 04 line 27).
+    router.replace('/(onboarding)');
   };
 
   return (
