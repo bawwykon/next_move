@@ -156,6 +156,41 @@ export type Database = {
           },
         ];
       };
+      onboarding: {
+        Row: {
+          activity_level: number;
+          completed_at: string | null;
+          experience: number;
+          goals: string[];
+          profile_id: string;
+          workout_time: string | null;
+        };
+        Insert: {
+          activity_level: number;
+          completed_at?: string | null;
+          experience: number;
+          goals?: string[];
+          profile_id: string;
+          workout_time?: string | null;
+        };
+        Update: {
+          activity_level?: number;
+          completed_at?: string | null;
+          experience?: number;
+          goals?: string[];
+          profile_id?: string;
+          workout_time?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'onboarding_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: true;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       profile_achievements: {
         Row: {
           achievement_id: string;
@@ -230,34 +265,25 @@ export type Database = {
       };
       profiles: {
         Row: {
-          activity_level: string | null;
-          age_range: string | null;
           created_at: string;
-          goal: string | null;
+          display_name: string;
           id: string;
-          target_steps: number | null;
+          onboarded: boolean;
           updated_at: string;
-          weekly_workouts: number | null;
         };
         Insert: {
-          activity_level?: string | null;
-          age_range?: string | null;
           created_at?: string;
-          goal?: string | null;
+          display_name?: string;
           id: string;
-          target_steps?: number | null;
+          onboarded?: boolean;
           updated_at?: string;
-          weekly_workouts?: number | null;
         };
         Update: {
-          activity_level?: string | null;
-          age_range?: string | null;
           created_at?: string;
-          goal?: string | null;
+          display_name?: string;
           id?: string;
-          target_steps?: number | null;
+          onboarded?: boolean;
           updated_at?: string;
-          weekly_workouts?: number | null;
         };
         Relationships: [];
       };

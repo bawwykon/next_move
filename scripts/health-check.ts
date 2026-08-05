@@ -32,7 +32,7 @@ async function main() {
 
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('id, age_range, activity_level, weekly_workouts, goal, target_steps, created_at')
+    .select('id, display_name, onboarded, created_at')
     .eq('id', user.id)
     .single();
 
@@ -40,10 +40,21 @@ async function main() {
     throw new Error(`profile select failed: ${profileError.message}`);
   }
 
+  const { data: onboarding, error: onboardingError } = await supabase
+    .from('onboarding')
+    .select('profile_id, activity_level, experience, goals, workout_time, completed_at')
+    .eq('profile_id', user.id)
+    .single();
+
+  if (onboardingError) {
+    throw new Error(`onboarding select failed: ${onboardingError.message}`);
+  }
+
   console.log('ROUND TRIP OK');
   console.log(`session: authenticated user "${user.email}" (id ${user.id})`);
   console.log(`session: access token present: ${Boolean(accessToken)}`);
-  console.log('profile row:', JSON.stringify(profile, null, 2));
+  console.log(`profile: display_name=${profile.display_name} onboarded=${profile.onboarded}`);
+  console.log('onboarding row:', JSON.stringify(onboarding, null, 2));
 }
 
 main().catch((error) => {

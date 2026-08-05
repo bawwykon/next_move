@@ -92,26 +92,37 @@ on conflict (provider_id, provider) do nothing;
 
 insert into public.profiles (
   id,
-  age_range,
-  activity_level,
-  weekly_workouts,
-  goal,
-  target_steps
+  display_name
 )
 values (
   '3f8a2c1e-6f5b-4a7d-9c2e-1b4d6f8a0c3e',
-  '25_34',
-  'moderate',
-  4,
-  'endurance',
-  8000
+  'Adventurer'
 )
 on conflict (id) do update set
-  age_range = excluded.age_range,
+  display_name = excluded.display_name;
+
+insert into public.onboarding (
+  profile_id,
+  activity_level,
+  experience,
+  goals,
+  workout_time,
+  completed_at
+)
+values (
+  '3f8a2c1e-6f5b-4a7d-9c2e-1b4d6f8a0c3e',
+  2,
+  2,
+  array['build_a_habit', 'more_energy'],
+  'any',
+  now()
+)
+on conflict (profile_id) do update set
   activity_level = excluded.activity_level,
-  weekly_workouts = excluded.weekly_workouts,
-  goal = excluded.goal,
-  target_steps = excluded.target_steps;
+  experience = excluded.experience,
+  goals = excluded.goals,
+  workout_time = excluded.workout_time,
+  completed_at = excluded.completed_at;
 
 -- exercise catalog (15)
 insert into public.exercise_library (slug, name, instruction, safety_note, categories, beginner_variation) values
