@@ -124,6 +124,19 @@ export default function WorkoutScreen() {
     router.dismissTo({ pathname: '/quest/[id]', params: { id: questId ?? '' } });
   }, [questId, router]);
 
+  const segmentName = segment
+    ? segment.kind === 'rest'
+      ? 'Take a breather'
+      : (names[segmentIndex ?? -1] ?? 'Move')
+    : null;
+  const nextName = next
+    ? next.kind === 'rest'
+      ? 'Take a breather'
+      : (names[(segmentIndex ?? -1) + 1] ?? 'Move')
+    : null;
+  const digits = remaining !== null ? formatCountdown(Math.ceil(remaining / 1000)) : null;
+  const countdownDigit = countdown !== null ? String(countdown) : null;
+
   if (status === 'loading') {
     return (
       <Screen>
@@ -156,19 +169,6 @@ export default function WorkoutScreen() {
       </Screen>
     );
   }
-
-  const segmentName = segment
-    ? segment.kind === 'rest'
-      ? 'Take a breather'
-      : (names[segmentIndex ?? -1] ?? 'Move')
-    : null;
-  const nextName = next
-    ? next.kind === 'rest'
-      ? 'Take a breather'
-      : (names[(segmentIndex ?? -1) + 1] ?? 'Move')
-    : null;
-  const digits = remaining !== null ? formatCountdown(Math.ceil(remaining / 1000)) : null;
-  const countdownDigit = countdown !== null ? formatCountdown(Math.ceil(countdown / 1000)) : null;
 
   return (
     <Screen>
