@@ -1,4 +1,5 @@
 import { supabase } from '@/data/supabase';
+import type { OnboardingAnswers } from '@/domain/recommendation/types';
 import type { OnboardingPayload } from '@/features/onboarding/wizardController';
 
 export async function saveOnboarding(payload: OnboardingPayload): Promise<string | null> {
@@ -51,4 +52,25 @@ export async function getOnboarded(): Promise<boolean | null> {
     return null;
   }
   return data.onboarded;
+}
+
+/**
+ * The saved plan answers (S2-02) — feeds recommendQuest's `onboarding`
+ * argument. Null when the user skipped onboarding or has no row yet.
+ */
+export async function getOnboarding(profileId: string): Promise<OnboardingAnswers | null> {
+  const { data, error } = await supabase
+    .from('onboarding')
+    .select('activity_level, experience, goals, workout_time')
+    .eq('profile_id', profileId)
+    .maybeSingle();
+  if (error || !data) {
+    return null;
+  }
+  return {
+    activity_level: data.activity_level,
+    experience: data.experience,
+    goals: data.goals,
+    workout_time: data.workout_time ?? '',
+  };
 }
