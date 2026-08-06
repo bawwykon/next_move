@@ -313,3 +313,36 @@ insert into public.cosmetics (slug, type, name, unlock_rule) values
   ('portrait-phoenix', 'portrait', 'Phoenix Portrait', '{"kind":"achievement","slug":"phoenix"}'),
   ('portrait-master', 'portrait', 'Master Portrait', '{"kind":"achievement","slug":"master-adventurer"}')
 on conflict (slug) do nothing;
+
+-- demo user progression (S3/S5 board-proof fixtures). Seeded with relative dates
+-- so board-proof's "completed today and yesterday" and "streak 2/2" assertions
+-- hold no matter when the local stack is reset. Keys are fixed so replays of
+-- db reset are idempotent.
+insert into public.quest_completions (
+  profile_id, quest_id, idempotency_key, started_at, completed_at, duration_sec, xp_awarded, day_key, mastered, bonus_breakdown
+)
+select
+  '3f8a2c1e-6f5b-4a7d-9c2e-1b4d6f8a0c3e',
+  q.id,
+  s.idem::uuid,
+  s.started,
+  s.completed,
+  q.duration_sec,
+  50,
+  to_char(s.started, 'YYYY-MM-DD'),
+  '{}',
+  jsonb_build_object('xp', jsonb_build_object('total', 50))
+from public.quests q
+join (
+  values
+    ('morning-stretch', 'a0000000-0000-4000-8000-0000000000aa', now() - interval '10 days', now() - interval '10 days' + interval '8 minutes'),
+    ('morning-stretch', 'a0000000-0000-4000-8000-0000000000bb', now() - interval '1 day',     now() - interval '1 day'     + interval '8 minutes'),
+    ('morning-stretch', 'a0000000-0000-4000-8000-0000000000cc', now(),                        now()                        + interval '8 minutes')
+) as s(slug, idem, started, completed) on s.slug = q.slug
+on conflict (profile_id, idempotency_key) do nothing;
+
+-- four mastery tracks visible on the board
+insert into public.mastery (profile_id, track, points)
+select '3f8a2c1e-6f5b-4a7d-9c2e-1b4d6f8a0c3e', t, 0
+from unnest(array['discipline', 'endurance', 'mobility', 'strength']) as t
+on conflict (profile_id, track) do nothing;

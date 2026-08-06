@@ -8,6 +8,33 @@
 /* eslint-disable @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any */
 const http: any = require('node:http');
 const https: any = require('node:https');
+const nodeFs: any = require('node:fs');
+const nodePath: any = require('node:path');
+
+// jest-expo babel inlines EXPO_PUBLIC_* for tracked modules, but modules that
+// read process.env at runtime (src/data/supabase, raw createClient) need the
+// repo .env materialized. Loading here (shared head before any repo require)
+// makes live-DB tests hermetic regardless of the caller's shell env.
+const repoEnv = nodePath.resolve(process.cwd(), '.env');
+if (nodeFs.existsSync(repoEnv)) {
+  for (const rawLine of String(nodeFs.readFileSync(repoEnv, 'utf8')).split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#')) continue;
+    const eq = line.indexOf('=');
+    if (eq === -1) continue;
+    const key = line.slice(0, eq).trim();
+    const value = line.slice(eq + 1).trim();
+    if (process.env[key] === undefined) process.env[key] = value;
+  }
+}
+// The checked-in URL targets the Android-emulator host alias (10.0.2.2), which
+// is unreachable from a host-side jest run — normalize to the local loopback.
+if (process.env.EXPO_PUBLIC_SUPABASE_URL) {
+  process.env.EXPO_PUBLIC_SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL.replace(
+    '10.0.2.2',
+    '127.0.0.1',
+  );
+}
 
 function materializeHeaders(headers: unknown): Record<string, string> {
   const out: Record<string, string> = {};

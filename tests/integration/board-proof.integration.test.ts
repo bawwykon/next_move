@@ -85,13 +85,27 @@ describe('board data path (local supabase)', () => {
     }
   });
 
+  // Seed rows store day_key computed from now() in the Postgres UTC calendar,
+  // while dayKeyDomain.dayKey uses local host time. Compute the expected
+  // today/yesterday keys in the seed's UTC frame so these assertions hold on
+  // any host zone.
+  const utcDayKey = (ms: number): string => {
+    const d = new Date(ms);
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+  const utcToday = () => utcDayKey(Date.now());
+  const utcYesterday = () => utcDayKey(Date.now() - 86_400_000);
+
   it('fetches the recent completions with day_key for the demo user', async () => {
     const result = await board.fetchRecentCompletions(profileId);
     expect(result.error).toBeNull();
     const completions = result.data!;
     expect(completions.length).toBeGreaterThanOrEqual(3);
-    const today = dayKeyDomain.dayKey(new Date());
-    const yesterday = dayKeyDomain.dayKey(new Date(Date.now() - 86_400_000));
+    const today = utcToday();
+    const yesterday = utcYesterday();
     expect(completions.some((completion) => completion.dayKey === today)).toBe(true);
     expect(completions.some((completion) => completion.dayKey === yesterday)).toBe(true);
     for (const completion of completions) {
@@ -115,7 +129,7 @@ describe('board data path (local supabase)', () => {
       completions
         .map((completion) => completion.dayKey)
         .filter((key): key is string => key !== null),
-      dayKeyDomain.dayKey(new Date()),
+      utcToday(),
     );
     expect(streak).toEqual({ current: 2, longest: 2 });
     console.log(

@@ -1,31 +1,6 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json;
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
   public: {
     Tables: {
       achievements: {
@@ -266,23 +241,56 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string;
+          current_chapter: number;
+          current_streak: number;
           display_name: string;
+          equipped_background: string | null;
+          equipped_frame: string | null;
+          equipped_portrait: string | null;
+          equipped_title: string | null;
           id: string;
+          journey_quests: number;
+          last_completed_day: string | null;
+          level: number;
+          longest_streak: number;
           onboarded: boolean;
+          total_xp: number;
           updated_at: string;
         };
         Insert: {
           created_at?: string;
+          current_chapter?: number;
+          current_streak?: number;
           display_name?: string;
+          equipped_background?: string | null;
+          equipped_frame?: string | null;
+          equipped_portrait?: string | null;
+          equipped_title?: string | null;
           id: string;
+          journey_quests?: number;
+          last_completed_day?: string | null;
+          level?: number;
+          longest_streak?: number;
           onboarded?: boolean;
+          total_xp?: number;
           updated_at?: string;
         };
         Update: {
           created_at?: string;
+          current_chapter?: number;
+          current_streak?: number;
           display_name?: string;
+          equipped_background?: string | null;
+          equipped_frame?: string | null;
+          equipped_portrait?: string | null;
+          equipped_title?: string | null;
           id?: string;
+          journey_quests?: number;
+          last_completed_day?: string | null;
+          level?: number;
+          longest_streak?: number;
           onboarded?: boolean;
+          total_xp?: number;
           updated_at?: string;
         };
         Relationships: [];
@@ -471,7 +479,12 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      chapter_for_quests: { Args: { quests: number }; Returns: number };
+      complete_quest: { Args: { ev: Json }; Returns: Json };
+      level_for_xp: { Args: { xp: number }; Returns: number };
+      level_title: { Args: { level: number }; Returns: string };
+      mastery_level_for_points: { Args: { points: number }; Returns: number };
+      next_journey_threshold: { Args: { quests: number }; Returns: number };
     };
     Enums: {
       [_ in never]: never;
@@ -594,9 +607,6 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },
