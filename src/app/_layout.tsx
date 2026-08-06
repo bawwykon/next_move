@@ -54,6 +54,8 @@ export default function RootLayout() {
         <Stack.Protected guard={signedIn && onboarded === true}>
           <Stack.Screen name="(tabs)" />
         </Stack.Protected>
+        {/* Ref 04 rule 2 — fullscreen modal, no tab bar, no accidental swipes. */}
+        <Stack.Screen name="workout/[id]" options={{ presentation: 'fullScreenModal' }} />
       </Stack>
       <StatusBar style="light" />
     </>
