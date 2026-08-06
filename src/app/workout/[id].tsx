@@ -20,9 +20,12 @@ import {
   type WorkoutSegmentKind,
 } from '@/domain/timer/workoutEngine';
 import { formatCountdown, formatTotalRemaining } from '@/features/timer/format';
+import { decideOnForeground } from '@/features/workout/decideOnForeground';
 import { segmentKindLabel } from '@/features/questDetail/segmentKind';
+import { useAppForeground } from '@/hooks/useAppForeground';
 import { useNow } from '@/hooks/useNow';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
+import { useWorkoutStore } from '@/state/workoutStore';
 
 // §7.3 — the timer digits are the largest element on screen; the 3-2-1
 // overlay out-sizes them so the countdown moment reads first.
@@ -61,10 +64,16 @@ export default function WorkoutScreen() {
       setStatus('error');
       return;
     }
-    // The workout is a snapshot built at start time; the engine reads it with
-    // wall-clock `nowMs` only, so background resume is pure arithmetic (NFR-2).
+    // S4-03 — a resumed run keeps its stored start instant (correct remaining
+    // time, FR-TIMER-5); a fresh start begins now.
+    const checkpoint = useWorkoutStore.getState().checkpoint;
+    const startedAt =
+      checkpoint && checkpoint.questId === questId ? checkpoint.startedAtEpochMs : Date.now();
+    // The checkpoint is persisted before the first frame of exercise display,
+    // so an app kill at any point leaves a resumable run behind (FR-TIMER-7).
     setNames(result.data.segments.map((s) => (s.kind === 'rest' ? null : s.exerciseName)));
-    setWorkout(buildWorkout(result.data.segments, Date.now()));
+    setWorkout(buildWorkout(result.data.segments, startedAt));
+    void useWorkoutStore.getState().startWorkout(questId, startedAt);
     setStatus('ready');
   }, [questId]);
 
@@ -90,9 +99,27 @@ export default function WorkoutScreen() {
   useEffect(() => {
     if (complete && !handledRef.current) {
       handledRef.current = true;
+      // S4-03 — the run ends here: delete the checkpoint, then hand off.
+      void useWorkoutStore.getState().clearWorkout();
       router.replace({ pathname: '/victory', params: { questId: questId ?? '' } });
     }
   }, [complete, questId, router]);
+
+  // S4-03 — foreground after a background pause (FR-TIMER-5/7, EC-2): the
+  // engine already keeps rendering from the stored start instant ('resume' is
+  // a no-op); an end that passed while backgrounded completes immediately.
+  useAppForeground(() => {
+    const checkpoint = useWorkoutStore.getState().checkpoint;
+    if (!checkpoint || !workout || handledRef.current) {
+      return;
+    }
+    const decision = decideOnForeground(checkpoint, Date.now(), workout.segments);
+    if (decision === 'complete') {
+      handledRef.current = true;
+      void useWorkoutStore.getState().clearWorkout();
+      router.replace({ pathname: '/victory', params: { questId: questId ?? '' } });
+    }
+  });
 
   // Segment-change haptic (7.7) — derived from the engine index, not per-tick.
   useEffect(() => {
@@ -119,6 +146,10 @@ export default function WorkoutScreen() {
 
   const leaveQuest = useCallback(() => {
     setQuitVisible(false);
+    // S4-03 — quit = run ends incomplete; no partial XP (FR-TIMER-7). Both
+    // quit paths (button + sheet Leave) route through here, so the
+    // checkpoint is always cleared exactly once.
+    void useWorkoutStore.getState().clearWorkout();
     // Dismiss straight back to the quest detail (the workout was presented as
     // a full-screen modal, so this pops it without stacking a duplicate).
     router.dismissTo({ pathname: '/quest/[id]', params: { id: questId ?? '' } });

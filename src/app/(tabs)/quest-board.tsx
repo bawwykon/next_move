@@ -31,6 +31,7 @@ import { greetingForHour } from '@/features/questBoard/greeting';
 import { weeklyChallengeProgress } from '@/features/questBoard/weekly';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 import { useCharacterStore } from '@/state/characterStore';
+import { useWorkoutStore } from '@/state/workoutStore';
 
 const CATEGORY_LABELS: Record<QuestCategory, string> = {
   strength: 'Strength',
@@ -54,6 +55,8 @@ const DEFAULT_ONBOARDING: OnboardingAnswers = {
 export default function QuestBoardScreen() {
   const router = useRouter();
   const { profile, streak, mastery, completions, status, refresh } = useCharacterStore();
+  // S4-03 — persisted checkpoint for the resume banner (FR-TIMER-7).
+  const checkpoint = useWorkoutStore((state) => state.checkpoint);
 
   const [catalog, setCatalog] = useState<ActiveQuest[] | null>(null);
   const [catalogStatus, setCatalogStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>(
@@ -86,12 +89,12 @@ export default function QuestBoardScreen() {
   // Catalog is static content; refresh it alongside the snapshot on focus.
   useFocusEffect(
     useCallback(() => {
-      void Promise.all([refresh(), loadContent()]);
+      void Promise.all([refresh(), loadContent(), useWorkoutStore.getState().hydrate()]);
     }, [refresh, loadContent]),
   );
 
   const onRefresh = useCallback(() => {
-    void Promise.all([refresh(), loadContent()]);
+    void Promise.all([refresh(), loadContent(), useWorkoutStore.getState().hydrate()]);
   }, [refresh, loadContent]);
 
   const isLoading = status === 'loading' || catalogStatus === 'loading';
@@ -202,6 +205,24 @@ export default function QuestBoardScreen() {
                   <Text style={styles.streakText}>{streakLine}</Text>
                 </View>
               </View>
+
+              {/* S4-03 / FR-TIMER-7 — app was killed mid-workout: the checkpoint
+                  survived, so the quest can be picked up where it stopped. */}
+              {checkpoint ? (
+                <ResumeBanner
+                  title={catalog?.find((quest) => quest.id === checkpoint.questId)?.title ?? null}
+                  onResume={() => {
+                    router.push({
+                      pathname: '/workout/[id]',
+                      params: { id: checkpoint.questId },
+                    });
+                  }}
+                  onDismiss={() => {
+                    // "Not now" — the quest stays incomplete; no partial XP.
+                    void useWorkoutStore.getState().clearWorkout();
+                  }}
+                />
+              ) : null}
 
               {recommendation?.recommended ? (
                 <View style={styles.section}>
@@ -372,6 +393,41 @@ function QuestRow({
   );
 }
 
+function ResumeBanner({
+  title,
+  onResume,
+  onDismiss,
+}: {
+  title: string | null;
+  onResume: () => void;
+  onDismiss: () => void;
+}) {
+  return (
+    <View style={styles.resumeBanner}>
+      <View style={styles.resumeHeader}>
+        <Ionicons name="timer-outline" size={20} color={colors.calm} />
+        <Text style={styles.resumeTitle}>
+          {title ? `Unfinished quest: ${title}` : 'Unfinished quest'}
+        </Text>
+      </View>
+      <Text style={styles.resumeLine}>Pick up where you left off.</Text>
+      <View style={styles.resumeActions}>
+        <TouchableOpacity accessibilityRole="button" style={styles.resumeButton} onPress={onResume}>
+          <Text style={styles.resumeButtonLabel}>Resume</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          accessibilityRole="button"
+          style={styles.resumeLater}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          onPress={onDismiss}
+        >
+          <Text style={styles.resumeLaterLabel}>Not now</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
 function SkeletonPulse() {
   const [opacity] = useState(() => new Animated.Value(0.55));
 
@@ -463,6 +519,58 @@ const styles = StyleSheet.create({
     color: colors.rewardStrong,
     fontFamily: fonts.bodyBold.family,
     fontSize: 13,
+  },
+  resumeBanner: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.calm,
+    padding: spacing.lg,
+    gap: spacing.sm,
+  },
+  resumeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  resumeTitle: {
+    color: colors.text,
+    fontFamily: fonts.bodyBold.family,
+    fontSize: 15,
+    flexShrink: 1,
+  },
+  resumeLine: {
+    color: colors.textMuted,
+    fontFamily: fonts.body.family,
+    fontSize: 13,
+  },
+  resumeActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.lg,
+    marginTop: spacing.xs,
+  },
+  resumeButton: {
+    minHeight: 40,
+    paddingHorizontal: spacing.xl,
+    borderRadius: radius.pill,
+    backgroundColor: colors.reward,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  resumeButtonLabel: {
+    color: colors.background,
+    fontFamily: fonts.display.family,
+    fontSize: 15,
+  },
+  resumeLater: {
+    minHeight: 40,
+    justifyContent: 'center',
+  },
+  resumeLaterLabel: {
+    color: colors.textMuted,
+    fontFamily: fonts.bodyBold.family,
+    fontSize: 14,
   },
   section: {
     gap: spacing.md,
