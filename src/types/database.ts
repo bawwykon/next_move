@@ -12,6 +12,7 @@ export type Database = {
           id: string;
           slug: string;
           title: string;
+          unlock_rule: Json;
           updated_at: string;
         };
         Insert: {
@@ -22,6 +23,7 @@ export type Database = {
           id?: string;
           slug: string;
           title: string;
+          unlock_rule?: Json;
           updated_at?: string;
         };
         Update: {
@@ -32,6 +34,7 @@ export type Database = {
           id?: string;
           slug?: string;
           title?: string;
+          unlock_rule?: Json;
           updated_at?: string;
         };
         Relationships: [];

@@ -11,8 +11,15 @@
 --     category, +5 discipline on every completion
 --   mastery level: same cumulative curve shape as the level curve
 --   journey chapters (FR-JOURNEY-4): 10/30/60/100/200/365 completions
---   level titles: 1 Novice, 2 Apprentice, 3 Squire, 4 Adventurer,
---     5-9 Explorer, 10-24 Trailblazer, 25-49 Voyager, 50-99 Champion, 100+ Legend
+--   level titles (FR-XP-3): Beginner <5, Apprentice 5+, Adventurer 10+,
+--     Warrior 25+, Champion 50+, Legend 100+
+--
+-- S5-02: the achievements/cosmetics payload arrays are real — after the math
+-- the function scores every not-yet-owned achievement against a generic rule
+-- (achievements.unlock_rule, ED-21) and every not-yet-owned cosmetic against
+-- the post-math profile plus owned achievements. Only rows the insert actually
+-- created (RETURNING, on-conflict-do-nothing) are returned, so the same unlock
+-- appears exactly once per player; replays are untouched.
 
 create or replace function public.level_for_xp(xp bigint)
 returns int
@@ -131,6 +138,11 @@ declare
 
   v_completion_id uuid;
   v_payload jsonb;
+
+  -- S5-02: newly-unlocked sets (achievements + cosmetics) returned to the client.
+  v_achievements jsonb := '[]'::jsonb;
+  v_cosmetics jsonb := '[]'::jsonb;
+  v_r record;
 begin
   -- Step 1 - auth (server-authoritative; the profile is the caller).
   v_profile := auth.uid();
@@ -300,7 +312,125 @@ begin
     'level_after', public.mastery_level_for_points(v_after_pts)
   );
 
-  -- Step 6 - payload (Ref 05 §#dim) and commit to the stored rows.
+  -- Step 6 - commit progression to the server-owned row (the RPC is the only
+  -- writer; the profile guard is bypassed by SECURITY DEFINER at the table
+  -- owner role).
+  update public.profiles
+     set total_xp = v_new_total,
+         level = v_new_level,
+         current_streak = v_streak,
+         longest_streak = v_longest,
+         last_completed_day = v_day,
+         journey_quests = v_new_quests,
+         current_chapter = v_chapter_after,
+         updated_at = now()
+   where id = v_profile;
+
+  -- Step 7 - achievements (S5-02, ED-21): score every un-owned rule against the
+  -- post-math state; the unique (profile_id, achievement_id) insert is the
+  -- exactly-once gate, and only rows the insert actually created (RETURNING)
+  -- enter the payload. Replay path is untouched — a stored payload returns
+  -- before any of this runs, so a re-delivered event never double-unlocks.
+  with unlocked as (
+    insert into public.profile_achievements (profile_id, achievement_id, unlocked_at)
+    select v_profile, a.id, now()
+      from public.achievements a
+     where a.unlock_rule ? 'kind'
+       and not exists (
+         select 1 from public.profile_achievements pa
+          where pa.profile_id = v_profile and pa.achievement_id = a.id
+       )
+       and case a.unlock_rule ->> 'kind'
+             when 'quests' then
+               v_new_quests >= coalesce((a.unlock_rule ->> 'count')::int, 0)
+             when 'level' then
+               v_new_level >= coalesce((a.unlock_rule ->> 'level')::int, 0)
+             when 'streak' then
+               v_streak >= coalesce((a.unlock_rule ->> 'days')::int, 0)
+             when 'distinct-days' then
+               (
+                 select count(*)
+                   from (select distinct qc.day_key
+                           from public.quest_completions qc
+                          where qc.profile_id = v_profile) distinct_days
+               ) >= coalesce((a.unlock_rule ->> 'count')::int, 0)
+             when 'gap-days' then
+               v_last_day is not null
+               and v_day - v_last_day >= coalesce((a.unlock_rule ->> 'days')::int, 0) + 1
+             when 'hour-before' then
+               (
+                 select count(*)
+                   from public.quest_completions qc
+                  where qc.profile_id = v_profile
+                    and to_char(qc.started_at at time zone 'UTC', 'HH24')::int
+                        < coalesce((a.unlock_rule ->> 'hour')::int, 0)
+               ) >= coalesce((a.unlock_rule ->> 'count')::int, 0)
+             when 'hour-after' then
+               (
+                 select count(*)
+                   from public.quest_completions qc
+                  where qc.profile_id = v_profile
+                    and to_char(qc.started_at at time zone 'UTC', 'HH24')::int
+                        >= coalesce((a.unlock_rule ->> 'hour')::int, 0)
+               ) >= coalesce((a.unlock_rule ->> 'count')::int, 0)
+             else false
+           end
+     on conflict (profile_id, achievement_id) do nothing
+     returning achievement_id, unlocked_at
+  )
+  select coalesce(jsonb_agg(jsonb_build_object(
+    'id', u.achievement_id,
+    'slug', a.slug,
+    'title', a.title,
+    'category', a.category,
+    'unlocked_at', u.unlocked_at
+  ) order by a.title asc), '[]'::jsonb)
+    into v_achievements
+    from unlocked u
+    join public.achievements a on a.id = u.achievement_id;
+
+  -- Step 8 - cosmetics (S5-02): level/chapter threshold rules score against the
+  -- new profile, achievement-slot rules against achievements the player OWNS at
+  -- this point (Step 7 already ran), so unlock chains (e.g. a 'title-adventurer'
+  -- on the same completion as the 'first-quest' achievement) resolve in one call.
+  with unlocked as (
+    insert into public.profile_cosmetics (profile_id, cosmetic_id, unlocked_at)
+    select v_profile, c.id, now()
+      from public.cosmetics c
+     where c.unlock_rule ? 'kind'
+       and not exists (
+         select 1 from public.profile_cosmetics pc
+          where pc.profile_id = v_profile and pc.cosmetic_id = c.id
+       )
+       and case c.unlock_rule ->> 'kind'
+         when 'level' then
+           v_new_level >= coalesce((c.unlock_rule ->> 'level')::int, 0)
+         when 'chapter' then
+           v_chapter_after >= coalesce((c.unlock_rule ->> 'chapter')::int, 0)
+         when 'achievement' then
+           exists (
+             select 1
+               from public.profile_achievements pa
+               join public.achievements a on a.id = pa.achievement_id
+              where pa.profile_id = v_profile and a.slug = c.unlock_rule ->> 'slug'
+           )
+         else false
+       end
+     on conflict (profile_id, cosmetic_id) do nothing
+     returning cosmetic_id, unlocked_at
+  )
+  select coalesce(jsonb_agg(jsonb_build_object(
+    'id', u.cosmetic_id,
+    'slug', c.slug,
+    'type', c.type,
+    'name', c.name,
+    'unlocked_at', u.unlocked_at
+  ) order by c.created_at desc), '[]'::jsonb)
+    into v_cosmetics
+    from unlocked u
+    join public.cosmetics c on c.id = u.cosmetic_id;
+
+  -- Step 9 - payload (Ref 05 §#dim) and commit to the stored completion row.
   v_payload := jsonb_build_object(
     'xp', jsonb_build_object(
       'quest', v_xp_quest,
@@ -315,8 +445,8 @@ begin
       'title', public.level_title(v_new_level)
     ),
     'mastery', v_mastery,
-    'achievements', '[]'::jsonb,
-    'cosmetics', '[]'::jsonb,
+    'achievements', v_achievements,
+    'cosmetics', v_cosmetics,
     'journey', jsonb_build_object(
       'quests', v_new_quests,
       'chapter_before', v_chapter_before,
@@ -325,17 +455,6 @@ begin
     ),
     'streak', jsonb_build_object('current', v_streak, 'longest', v_longest)
   );
-
-  update public.profiles
-     set total_xp = v_new_total,
-         level = v_new_level,
-         current_streak = v_streak,
-         longest_streak = v_longest,
-         last_completed_day = v_day,
-         journey_quests = v_new_quests,
-         current_chapter = v_chapter_after,
-         updated_at = now()
-   where id = v_profile;
 
   update public.quest_completions
      set xp_awarded = v_xp,

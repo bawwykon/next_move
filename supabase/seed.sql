@@ -262,34 +262,35 @@ on s.slug = q.slug
 left join public.exercise_library e on e.slug = s.exercise_slug;
 
 -- achievements (13) — unlock logic lives in the complete_quest RPC (Ref 08);
--- the trigger column below is for traceability only, the schema carries no condition column:
---   first-quest        -> complete any quest
---   first-level        -> reach level 2
---   first-week         -> quests on 7 different days
---   workouts-50        -> 50 completions
---   workouts-100       -> 100 completions
---   workouts-250       -> 250 completions
---   streak-7           -> 7-day streak
---   streak-30          -> 30-day streak
---   streak-100         -> 100-day streak
---   phoenix            -> return after a 7+ day break
---   early-bird         -> 100 quests started before 10:00 local
---   night-owl          -> 100 quests started after 20:00 local
---   master-adventurer  -> reach level 100
-insert into public.achievements (slug, title, description, hint, category) values
-  ('first-quest', 'First Quest', 'Complete your first quest.', 'Take the first step.', 'beginner'),
-  ('first-level', 'First Level', 'Reach level 2.', 'Every journey has its first summit.', 'beginner'),
-  ('first-week', 'First Week', 'Complete quests on seven different days.', 'A week of small wins adds up.', 'beginner'),
-  ('workouts-50', '50 Workouts', 'Complete 50 quests.', 'A number worth chasing.', 'progress'),
-  ('workouts-100', '100 Workouts', 'Complete 100 quests.', 'Three digits to your name.', 'progress'),
-  ('workouts-250', '250 Workouts', 'Complete 250 quests.', 'Your rhythm is your own.', 'progress'),
-  ('streak-7', '7 Day Streak', 'Keep a 7-day quest streak.', 'Seven small days, one strong chain.', 'consistency'),
-  ('streak-30', '30 Day Streak', 'Keep a 30-day quest streak.', 'A full month of showing up.', 'consistency'),
-  ('streak-100', '100 Day Streak', 'Keep a 100-day quest streak.', 'A hundred days of quiet consistency.', 'consistency'),
-  ('phoenix', 'Phoenix', 'Return after a break of a week or more.', 'Even pauses lead somewhere good.', 'special'),
-  ('early-bird', 'Early Bird', 'Start 100 quests before 10:00 AM.', 'The day starts early for some.', 'special'),
-  ('night-owl', 'Night Owl', 'Start 100 quests after 8:00 PM.', 'Night holds its own magic.', 'special'),
-  ('master-adventurer', 'Master Adventurer', 'Reach level 100.', 'The summit waits for the patient.', 'special')
+-- each row carries a machine-readable rule in `unlock_rule` (ED-21); a fresh
+-- schema run (0005 + 0022) provides the column, so no upgrade backfill is needed:
+--   first-quest        {kind:'quests',count:1}
+--   first-level        {kind:'level',level:2}
+--   first-week         {kind:'distinct-days',count:7}
+--   workouts-50        {kind:'quests',count:50}
+--   workouts-100       {kind:'quests',count:100}
+--   workouts-250       {kind:'quests',count:250}
+--   streak-7           {kind:'streak',days:7}
+--   streak-30          {kind:'streak',days:30}
+--   streak-100         {kind:'streak',days:100}
+--   phoenix            {kind:'gap-days',days:7}      (return gap >= 8 days)
+--   early-bird         {kind:'hour-before',hour:10,count:100}   (UTC)
+--   night-owl          {kind:'hour-after',hour:20,count:100}    (UTC)
+--   master-adventurer  {kind:'level',level:100}
+insert into public.achievements (slug, title, description, hint, category, unlock_rule) values
+  ('first-quest', 'First Quest', 'Complete your first quest.', 'Take the first step.', 'beginner', '{"kind":"quests","count":1}'),
+  ('first-level', 'First Level', 'Reach level 2.', 'Every journey has its first summit.', 'beginner', '{"kind":"level","level":2}'),
+  ('first-week', 'First Week', 'Complete quests on seven different days.', 'A week of small wins adds up.', 'beginner', '{"kind":"distinct-days","count":7}'),
+  ('workouts-50', '50 Workouts', 'Complete 50 quests.', 'A number worth chasing.', 'progress', '{"kind":"quests","count":50}'),
+  ('workouts-100', '100 Workouts', 'Complete 100 quests.', 'Three digits to your name.', 'progress', '{"kind":"quests","count":100}'),
+  ('workouts-250', '250 Workouts', 'Complete 250 quests.', 'Your rhythm is your own.', 'progress', '{"kind":"quests","count":250}'),
+  ('streak-7', '7 Day Streak', 'Keep a 7-day quest streak.', 'Seven small days, one strong chain.', 'consistency', '{"kind":"streak","days":7}'),
+  ('streak-30', '30 Day Streak', 'Keep a 30-day quest streak.', 'A full month of showing up.', 'consistency', '{"kind":"streak","days":30}'),
+  ('streak-100', '100 Day Streak', 'Keep a 100-day quest streak.', 'A hundred days of quiet consistency.', 'consistency', '{"kind":"streak","days":100}'),
+  ('phoenix', 'Phoenix', 'Return after a break of a week or more.', 'Even pauses lead somewhere good.', 'special', '{"kind":"gap-days","days":7}'),
+  ('early-bird', 'Early Bird', 'Start 100 quests before 10:00 AM.', 'The day starts early for some.', 'special', '{"kind":"hour-before","hour":10,"count":100}'),
+  ('night-owl', 'Night Owl', 'Start 100 quests after 8:00 PM.', 'Night holds its own magic.', 'special', '{"kind":"hour-after","hour":20,"count":100}'),
+  ('master-adventurer', 'Master Adventurer', 'Reach level 100.', 'The summit waits for the patient.', 'special', '{"kind":"level","level":100}')
 on conflict (slug) do nothing;
 
 -- cosmetics (18)

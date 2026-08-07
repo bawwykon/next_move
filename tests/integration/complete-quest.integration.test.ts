@@ -45,8 +45,20 @@ type Payload = {
     next_threshold: number | null;
   };
   streak: { current: number; longest: number };
-  achievements: unknown[];
-  cosmetics: unknown[];
+  achievements: {
+    id: string;
+    slug: string;
+    title: string;
+    category: string;
+    unlocked_at: string;
+  }[];
+  cosmetics: {
+    id: string;
+    slug: string;
+    type: string;
+    name: string;
+    unlocked_at: string;
+  }[];
 };
 
 const iso = (dayKey: string, hour: number, minute = 0) =>
@@ -171,7 +183,7 @@ describe('complete_quest RPC (live local supabase)', () => {
       email_confirm: true,
     });
     // Re-running the suite hits "user already registered" — that is fine.
-    if (createError && !/[a]lready registered/.test(createError.message)) {
+    if (createError && !/[a]lready( been)? registered/.test(String(createError.message))) {
       throw new Error(`creating test user failed: ${createError.message}`);
     }
     // The admin API must never leave a session on the service-role client,
@@ -231,8 +243,21 @@ describe('complete_quest RPC (live local supabase)', () => {
       next_threshold: 10,
     });
     expect(payload.streak).toEqual({ current: 1, longest: 1 });
-    expect(payload.achievements).toEqual([]);
-    expect(payload.cosmetics).toEqual([]);
+    // S5-02: the first completion unlocks first-quest and, chained to it, the
+    // title-adventurer cosmetic — exactly once.
+    expect(payload.achievements).toHaveLength(1);
+    expect(payload.achievements[0]).toMatchObject({
+      slug: 'first-quest',
+      title: 'First Quest',
+      category: 'beginner',
+    });
+    expect(typeof payload.achievements[0]!.unlocked_at).toBe('string');
+    expect(payload.cosmetics).toHaveLength(1);
+    expect(payload.cosmetics[0]).toMatchObject({
+      slug: 'title-adventurer',
+      type: 'title',
+      name: 'Adventurer',
+    });
 
     const mobility = payload.mastery.find((m) => m.track === 'mobility');
     const discipline = payload.mastery.find((m) => m.track === 'discipline');
@@ -597,4 +622,189 @@ describe('complete_quest RPC (live local supabase)', () => {
     expect(profile.total_xp).toBe(1000);
     expect(profile.level).toBe(5);
   });
+
+  // S5-02: achievements + cosmetics unlocks (ED-21). Each spec proves exactly-once:
+  // the unlock appears in the payload the moment it happens, a replay of the same
+  // event returns the stored payload untouched, and a later event never re-lists it.
+
+  const ownedByAchievementRows = async (slug: string) => {
+    const { data, error } = await admin
+      .from('profile_achievements')
+      .select('achievement_id')
+      .eq('profile_id', profileId);
+    if (error) throw new Error(`profile_achievements fetch failed: ${error.message}`);
+    const ids = (data ?? []).map((r: { achievement_id: string }) => r.achievement_id);
+    if (ids.length === 0) return [];
+    const { data: defs, error: defsErr } = await admin
+      .from('achievements')
+      .select('id, slug')
+      .in('id', ids);
+    if (defsErr) throw new Error(`achievements fetch failed: ${defsErr.message}`);
+    return (defs ?? []).filter((a: { slug: string }) => a.slug === slug);
+  };
+
+  it('first-quest: unlocks on completion #1, never again (replay + follow-up)', async () => {
+    await resetProgression();
+    const d = day(80);
+    await seedSameDayCompletion(d); // keep the payoff to 50/50 so first-quest is the only unlock
+    const ev = event(questMorning.id, d, 's52-fq-1', iso(d, 7), iso(d, 7, 8));
+    const first = await callOk(ev);
+    expect(first.achievements.map((a) => a.slug)).toContain('first-quest');
+    expect(first.cosmetics.map((c) => c.slug)).toContain('title-adventurer');
+
+    // replay of the same event -> identical stored payload, no new unlock
+    const replay = await callOk(ev);
+    expect(JSON.stringify(replay)).toBe(JSON.stringify(first));
+    expect(await ownedByAchievementRows('first-quest')).toHaveLength(1);
+
+    // a brand-new completion does NOT re-list first-quest (already owned)
+    const d2 = day(51);
+    const next = await callOk(easyEvent(d2, 'first52-fq-2', 7));
+    expect(next.achievements.map((a) => a.slug)).not.toContain('first-quest');
+    expect(await ownedByAchievementRows('first-quest')).toHaveLength(1);
+  }, 30000);
+
+  it('first-level: crossing level 2 unlocks first-level exactly once', async () => {
+    await resetProgression();
+    const d = day(52);
+    const r = await callOk(hardEvent(d, 'first-level-1', 8));
+    expect(r.level.before).toBe(1);
+    expect(r.level.after).toBe(2);
+    expect(r.achievements.map((a) => a.slug)).toContain('first-level');
+    expect(await ownedByAchievementRows('first-level')).toHaveLength(1);
+    const d2 = day(53);
+    const next = await callOk(hardEvent(d2, 'first-level-2', 8));
+    expect(next.achievements.map((a) => a.slug)).not.toContain('first-level');
+  }, 30000);
+
+  it('streak-7: seven consecutive days unlock streak-7 exactly once', async () => {
+    await resetProgression();
+    const slugs: string[] = [];
+    for (let i = 0; i < 7; i += 1) {
+      const d = day(60 + i);
+      const r = await callOk(easyEvent(d, `streak7-${i}`, 8));
+      slugs.push(...r.achievements.map((a) => a.slug));
+    }
+    expect(slugs).toContain('streak-7');
+    expect(await ownedByAchievementRows('streak-7')).toHaveLength(1);
+    const d8 = day(67);
+    const next = await callOk(easyEvent(d8, 'streak7-8', 8));
+    expect(next.achievements.map((a) => a.slug)).not.toContain('streak-7');
+  }, 60000);
+
+  it('first-week: 7 distinct completion days unlock first-week', async () => {
+    await resetProgression();
+    // Seed six distinct days via the trusted role, then complete a 7th via RPC.
+    const seeds = [...Array(6)].map((_, i) => ({
+      profile_id: profileId,
+      quest_id: questMorning.id,
+      idempotency_key: `10000000-0000-4000-8000-${String(i).padStart(12, '0')}`,
+      started_at: iso(day(70 + i), 6),
+      completed_at: iso(day(70 + i), 6, 8),
+      duration_sec: 480,
+      xp_awarded: 50,
+      bonus_breakdown: {},
+      mastered: ['mobility', 'discipline'],
+      day_key: day(70 + i),
+    }));
+    const ins = await admin.from('quest_completions').insert(seeds);
+    expect(ins.error).toBeNull();
+    const d = day(76);
+    const r = await callOk(easyEvent(d, 'first-week-1', 8));
+    expect(r.achievements.map((a) => a.slug)).toContain('first-week');
+    expect(await ownedByAchievementRows('first-week')).toHaveLength(1);
+  }, 30000);
+
+  it('phoenix: an 8-day gap return unlocks phoenix + portrait-phoenix', async () => {
+    await resetProgression();
+    // Day -1 then a completion 9 days later => v_day - v_last_day = 9 >= 8.
+    const d0 = day(85);
+    await callOk(easyEvent(d0, 'phoenix-before', 8));
+    const d1 = day(94);
+    const r = await callOk(easyEvent(d1, 'phoenix-return', 8));
+    expect(r.achievements.map((a) => a.slug)).toContain('phoenix');
+    expect(r.cosmetics.map((c) => c.slug)).toContain('portrait-phoenix');
+    expect(await ownedByAchievementRows('phoenix')).toHaveLength(1);
+  }, 30000);
+
+  it('master-adventurer: reaching level 100 unlocks it + frame-le-100 + portrait-master', async () => {
+    await resetProgression();
+    // Level 100 needs 50*100*99 = 495000 XP; hard quest grants 200 on top.
+    const setProfile = await admin
+      .from('profiles')
+      .update({ total_xp: 495000 - 200, level: 99, journey_quests: 0 })
+      .eq('id', profileId);
+    expect(setProfile.error).toBeNull();
+    const d = day(105);
+    await seedSameDayCompletion(d); // avoid first-of-day bonus so the total is exact
+    const r = await callOk(hardEvent(d, 'master-1', 8));
+    expect(r.level.after).toBe(100);
+    expect(r.achievements.map((a) => a.slug)).toContain('master-adventurer');
+    expect(r.cosmetics.map((c) => c.slug)).toContain('frame-level-100');
+    expect(r.cosmetics.map((c) => c.slug)).toContain('portrait-master');
+    expect(await ownedByAchievementRows('master-adventurer')).toHaveLength(1);
+  }, 30000);
+
+  it('frame-level-05: reaching level 5 unlocks the frame + title cosmetics', async () => {
+    await resetProgression();
+    const adminUpdate = await admin
+      .from('profiles')
+      .update({ total_xp: 800, level: 4 })
+      .eq('id', profileId);
+    expect(adminUpdate.error).toBeNull();
+    const d = day(108);
+    await seedSameDayCompletion(d); // 800 + 200 = 1000 -> level 5 exactly
+    const r = await callOk(hardEvent(d, 'frame-5', 8));
+    expect(r.level.after).toBe(5);
+    expect(r.cosmetics.map((c) => c.slug)).toContain('frame-level-05');
+    expect(r.cosmetics.map((c) => c.slug)).toContain('title-level-05');
+  }, 30000);
+
+  it('early-bird: the 100th pre-10:00 UTC completion unlocks early-bird, night-owl stays locked', async () => {
+    await resetProgression();
+    // Seed 99 pre-10:00 (UTC) completions; hour = 9 < 10.
+    const seeds = [...Array(99)].map((_, i) => ({
+      profile_id: profileId,
+      quest_id: questMorning.id,
+      idempotency_key: `20000000-0000-4000-8000-${String(i).padStart(12, '0')}`,
+      started_at: `${day(110 + i)}T09:00:00.000Z`,
+      completed_at: `${day(110 + i)}T09:08:00.000Z`,
+      duration_sec: 480,
+      xp_awarded: 50,
+      bonus_breakdown: {},
+      mastered: [],
+      day_key: day(110 + i),
+    }));
+    const ins = await admin.from('quest_completions').insert(seeds);
+    expect(ins.error).toBeNull();
+    const d = day(209);
+    // The 100th completion, started BEFORE 10:00 UTC (hour 8).
+    const r = await callOk(easyEvent(d, 'early-100', 8));
+    expect(r.achievements.map((a) => a.slug)).toContain('early-bird');
+    expect(r.achievements.map((a) => a.slug)).not.toContain('night-owl');
+    expect(await ownedByAchievementRows('early-bird')).toHaveLength(1);
+  }, 60000);
+
+  it('night-owl: the 100th at/after 20:00 UTC completion unlocks night-owl', async () => {
+    await resetProgression();
+    const seeds = [...Array(99)].map((_, i) => ({
+      profile_id: profileId,
+      quest_id: questMorning.id,
+      idempotency_key: `30000000-0000-4000-8000-${String(i).padStart(12, '0')}`,
+      started_at: `${day(220 + i)}T21:00:00.000Z`,
+      completed_at: `${day(220 + i)}T21:08:00.000Z`,
+      duration_sec: 480,
+      xp_awarded: 50,
+      bonus_breakdown: {},
+      mastered: [],
+      day_key: day(220 + i),
+    }));
+    const ins = await admin.from('quest_completions').insert(seeds);
+    expect(ins.error).toBeNull();
+    const d = day(319);
+    const r = await callOk(easyEvent(d, 'owl-100', 21));
+    expect(r.achievements.map((a) => a.slug)).toContain('night-owl');
+    expect(r.achievements.map((a) => a.slug)).not.toContain('early-bird');
+    expect(await ownedByAchievementRows('night-owl')).toHaveLength(1);
+  }, 60000);
 });
