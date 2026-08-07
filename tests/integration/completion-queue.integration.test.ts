@@ -22,6 +22,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { enqueueCompletion, flushOutbox, readOutbox } from '@/data/completionQueue';
 import { submitCompletion } from '@/data/repositories/completion';
 import type { CompletionEvent, CompletionResult } from '@/domain/completion/types';
+import { breakdownRowSum, reconcileCompletion, xpBreakdownRows } from '@/features/victory/format';
 
 jest.mock('@react-native-async-storage/async-storage', () => {
   const state = new Map<string, string>();
@@ -293,5 +294,33 @@ describe('outbox → complete_quest sync (live local supabase)', () => {
     } finally {
       await admin.from('quests').delete().eq('id', inactiveId);
     }
+  });
+
+  it('victory payload: the second completion is what victory reconciles to, and its breakdown rows sum to its total', async () => {
+    await resetProgression();
+    // Two consecutive days in the same ISO week (2026-07-06 is a Monday):
+    //   day 1 → quest 50 + daily 75 (+75 first completion of the day)
+    //   day 2 → quest 50 + daily 75, streak climbs to 2 (no milestone bonus)
+    const synced = await runQueueSync([eventFor(day(1), 'vic-1'), eventFor(day(2), 'vic-2')]);
+    expect(synced).toHaveLength(2);
+
+    // The LAST delivered payload is the store's lastCompletion (S5-05).
+    const last = synced[1]!;
+    expect(last.result.journey.quests).toBe(2);
+
+    // Also: reconcile picks this exact payload for the quest that was finished.
+    const reconciled = reconcileCompletion(last, last.questId);
+    expect(reconciled.synced).toBe(true);
+
+    const xp = reconciled.result!.xp;
+    expect(xp.quest).toBe(50);
+    expect(xp.daily).toBe(75);
+    expect(xp.total).toBe(125);
+
+    // FR-XP-6 — the visible breakdown rows always add up to the authoritative
+    // total, and zero stages (weekly/streak here) are simply not rendered.
+    const rows = xpBreakdownRows(xp);
+    expect(rows.map((row) => row.xp)).toEqual([50, 75]);
+    expect(breakdownRowSum(rows)).toBe(xp.total);
   });
 });

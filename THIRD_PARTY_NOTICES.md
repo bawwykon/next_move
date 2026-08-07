@@ -17,6 +17,17 @@ asset task lands.
 - License: SIL Open Font License 1.1 (OFL)
 - Used for: body typography (theme tokens `fonts.body`, `fonts.bodyBold`)
 
+## Audio
+
+### Interface Sounds (victory.wav, levelup.wav)
+
+- Source: Kenney, "Interface Sounds" (https://kenney.nl/assets/interface-sounds)
+- License: Creative Commons CC0 1.0 Universal
+  - `victory.wav` derived from `Audio/confirmation_002.ogg`
+  - `levelup.wav` derived from `Audio/glass_004.ogg`
+  - transcoded from .ogg to 16-bit PCM WAV for cross-platform playback
+- Used for: victory screen SFX (completion chime, level-up chime)
+
 ## Icons
 
 ### Ionicons

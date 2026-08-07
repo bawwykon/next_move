@@ -437,7 +437,7 @@ begin
       'daily', v_daily,
       'weekly', v_weekly,
       'streak', v_streak_xp,
-      'total', v_new_total
+      'total', v_xp
     ),
     'level', jsonb_build_object(
       'before', v_level,

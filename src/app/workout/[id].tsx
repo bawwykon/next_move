@@ -106,9 +106,12 @@ export default function WorkoutScreen() {
           ? checkpoint.startedAtEpochMs
           : (workout?.startedAtEpochMs ?? Date.now());
       await finishQuest({ questId: completedQuestId, startedAtEpochMs });
-      router.replace({ pathname: '/victory', params: { questId: completedQuestId } });
+      router.replace({
+        pathname: '/victory',
+        params: { questId: completedQuestId, title: params.title },
+      });
     },
-    [router, workout],
+    [params.title, router, workout],
   );
 
   // FR-TIMER-4 — auto-complete: replace, so back never re-enters a finished
