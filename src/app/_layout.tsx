@@ -6,7 +6,9 @@ import { LogBox } from 'react-native';
 
 import { useLoadedFonts } from '@/lib/fonts';
 import { captureTabPath } from '@/lib/intended-route';
+import { useAppForeground } from '@/hooks/useAppForeground';
 import { useSessionStore } from '@/state/sessionStore';
+import { useCompletionStore } from '@/state/completionStore';
 
 // supabase-js warns on RN that PKCE falls back to 'plain' challenge (dev-only noise).
 LogBox.ignoreLogs(['WebCrypto API is not supported']);
@@ -27,6 +29,22 @@ export default function RootLayout() {
   useEffect(() => {
     captureTabPath(pathname);
   }, [pathname]);
+
+  // S5-05 — flush the offline outbox once the session is known (auth-ready)
+  // and on every return to the foreground; hydrate keeps the pending marker
+  // honest across launches. Both are fire-and-forget and single-in-flight.
+  useEffect(() => {
+    if (signedIn) {
+      void useCompletionStore.getState().hydrate();
+      void useCompletionStore.getState().flush();
+    }
+  }, [signedIn]);
+
+  useAppForeground(() => {
+    if (useSessionStore.getState().authStatus === 'signed-in') {
+      void useCompletionStore.getState().flush();
+    }
+  });
 
   useEffect(() => {
     if (ready) {

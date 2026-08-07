@@ -32,6 +32,7 @@ import { weeklyChallengeProgress } from '@/features/questBoard/weekly';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 import { useCharacterStore } from '@/state/characterStore';
 import { useWorkoutStore } from '@/state/workoutStore';
+import { useCompletionStore } from '@/state/completionStore';
 
 const CATEGORY_LABELS: Record<QuestCategory, string> = {
   strength: 'Strength',
@@ -57,6 +58,8 @@ export default function QuestBoardScreen() {
   const { profile, streak, mastery, completions, status, refresh } = useCharacterStore();
   // S4-03 — persisted checkpoint for the resume banner (FR-TIMER-7).
   const checkpoint = useWorkoutStore((state) => state.checkpoint);
+  // S5-05 — undelivered completions; >0 renders the "Syncing…" marker.
+  const pendingCount = useCompletionStore((state) => state.pendingCount);
 
   const [catalog, setCatalog] = useState<ActiveQuest[] | null>(null);
   const [catalogStatus, setCatalogStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>(
@@ -89,12 +92,22 @@ export default function QuestBoardScreen() {
   // Catalog is static content; refresh it alongside the snapshot on focus.
   useFocusEffect(
     useCallback(() => {
-      void Promise.all([refresh(), loadContent(), useWorkoutStore.getState().hydrate()]);
+      void Promise.all([
+        refresh(),
+        loadContent(),
+        useWorkoutStore.getState().hydrate(),
+        useCompletionStore.getState().hydrate(),
+      ]);
     }, [refresh, loadContent]),
   );
 
   const onRefresh = useCallback(() => {
-    void Promise.all([refresh(), loadContent(), useWorkoutStore.getState().hydrate()]);
+    void Promise.all([
+      refresh(),
+      loadContent(),
+      useWorkoutStore.getState().hydrate(),
+      useCompletionStore.getState().hydrate(),
+    ]);
   }, [refresh, loadContent]);
 
   const isLoading = status === 'loading' || catalogStatus === 'loading';
@@ -201,8 +214,18 @@ export default function QuestBoardScreen() {
                   {greeting}, {displayName}.
                 </Text>
                 <Text style={styles.greetingLine}>{line}</Text>
-                <View style={styles.streakPill}>
-                  <Text style={styles.streakText}>{streakLine}</Text>
+                <View style={styles.pillRow}>
+                  <View style={styles.streakPill}>
+                    <Text style={styles.streakText}>{streakLine}</Text>
+                  </View>
+                  {/* S5-05 — completions are queued offline; the server
+                      (never the client) computes XP/streak/mastery. */}
+                  {pendingCount > 0 ? (
+                    <View style={styles.syncingPill}>
+                      <Ionicons name="sync" size={14} color={colors.textMuted} />
+                      <Text style={styles.syncingText}>Syncing…</Text>
+                    </View>
+                  ) : null}
                 </View>
               </View>
 
@@ -507,16 +530,36 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body.family,
     fontSize: 14,
   },
+  pillRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
   streakPill: {
     alignSelf: 'flex-start',
     backgroundColor: colors.surface,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
-    marginTop: spacing.sm,
   },
   streakText: {
     color: colors.rewardStrong,
+    fontFamily: fonts.bodyBold.family,
+    fontSize: 13,
+  },
+  syncingPill: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.surface,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  syncingText: {
+    color: colors.textMuted,
     fontFamily: fonts.bodyBold.family,
     fontSize: 13,
   },

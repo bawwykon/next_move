@@ -20,6 +20,7 @@ import {
   type WorkoutSegmentKind,
 } from '@/domain/timer/workoutEngine';
 import { formatCountdown, formatTotalRemaining } from '@/features/timer/format';
+import { finishQuest } from '@/features/workout/finishQuest';
 import { decideOnForeground } from '@/features/workout/decideOnForeground';
 import { segmentKindLabel } from '@/features/questDetail/segmentKind';
 import { useAppForeground } from '@/hooks/useAppForeground';
@@ -94,16 +95,32 @@ export default function WorkoutScreen() {
   const totalLeft = workout ? totalRemainingMs(workout, nowMs) : 0;
   const questProgress = workout ? progress(workout, nowMs) : 0;
 
+  // S5-05 — both completion paths (auto + foreground) funnel here: persist the
+  // completion event to the outbox first (await: local write only, never the
+  // network), then navigate. flush() runs fire-and-forget.
+  const handoffToVictory = useCallback(
+    async (completedQuestId: string) => {
+      const checkpoint = useWorkoutStore.getState().checkpoint;
+      const startedAtEpochMs =
+        checkpoint && checkpoint.questId === completedQuestId
+          ? checkpoint.startedAtEpochMs
+          : (workout?.startedAtEpochMs ?? Date.now());
+      await finishQuest({ questId: completedQuestId, startedAtEpochMs });
+      router.replace({ pathname: '/victory', params: { questId: completedQuestId } });
+    },
+    [router, workout],
+  );
+
   // FR-TIMER-4 — auto-complete: replace, so back never re-enters a finished
-  // workout (Ref 04 rule 3). The real completion pipeline lands in S5/S6.
+  // workout (Ref 04 rule 3). The completion event is persisted to the outbox
+  // first (S5-05); the network flush is fire-and-forget and victory consumes
+  // the authoritative result once the sync lands.
   useEffect(() => {
     if (complete && !handledRef.current) {
       handledRef.current = true;
-      // S4-03 — the run ends here: delete the checkpoint, then hand off.
-      void useWorkoutStore.getState().clearWorkout();
-      router.replace({ pathname: '/victory', params: { questId: questId ?? '' } });
+      void handoffToVictory(questId ?? '');
     }
-  }, [complete, questId, router]);
+  }, [complete, handoffToVictory, questId]);
 
   // S4-03 — foreground after a background pause (FR-TIMER-5/7, EC-2): the
   // engine already keeps rendering from the stored start instant ('resume' is
@@ -116,8 +133,7 @@ export default function WorkoutScreen() {
     const decision = decideOnForeground(checkpoint, Date.now(), workout.segments);
     if (decision === 'complete') {
       handledRef.current = true;
-      void useWorkoutStore.getState().clearWorkout();
-      router.replace({ pathname: '/victory', params: { questId: questId ?? '' } });
+      void handoffToVictory(questId ?? '');
     }
   });
 
