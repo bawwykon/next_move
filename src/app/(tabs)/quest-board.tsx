@@ -23,7 +23,7 @@ import type {
   QuestCategory,
   QuestDifficulty,
 } from '@/domain/recommendation/types';
-import { dayKey } from '@/domain/streak/dayKey';
+import { WEEKLY_TARGET, dayWindow, weeklyWindow } from '@/domain/board/window';
 import { difficultyBadge } from '@/features/questBoard/badges';
 import { isCompletedToday } from '@/features/questBoard/completedToday';
 import { formatDuration } from '@/features/questBoard/format';
@@ -113,12 +113,16 @@ export default function QuestBoardScreen() {
   const isLoading = status === 'loading' || catalogStatus === 'loading';
   const hasError = status === 'error' || catalogStatus === 'error';
 
-  const todayKey = dayKey(new Date());
+  // S6-02 — FR-BOARD-6/7: the local day window is the source of truth for
+  // "today". Re-renders after midnight roll over (useDayChange → refresh), so
+  // "done today" and the weekly window re-derive with the new key.
+  const today = dayWindow(new Date());
+  const todayKey = today.dayKey;
 
-  const weekly = useMemo(
-    () => weeklyChallengeProgress(completions ?? [], todayKey),
-    [completions, todayKey],
-  );
+  const weekly = useMemo(() => {
+    const progress = weeklyChallengeProgress(completions ?? [], todayKey);
+    return weeklyWindow(new Date(today.startMs), progress.done);
+  }, [completions, todayKey, today.startMs]);
 
   const recommendation = useMemo(() => {
     if (!catalog || catalog.length === 0 || !completions) {
@@ -280,20 +284,33 @@ export default function QuestBoardScreen() {
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Weekly Challenge</Text>
                 <View style={styles.weeklyCard}>
-                  <Text style={styles.weeklyGoal}>Complete {weekly.target} quests this week</Text>
+                  <View style={styles.weeklyHeader}>
+                    <Text style={styles.weeklyGoal}>
+                      {weekly.challengeState === 'complete'
+                        ? 'Weekly challenge complete!'
+                        : `Complete ${WEEKLY_TARGET} quests this week`}
+                    </Text>
+                    {weekly.challengeState === 'complete' ? (
+                      <Ionicons name="checkmark-circle" size={20} color={colors.success} />
+                    ) : null}
+                  </View>
                   <View style={styles.progressTrack}>
                     <View
                       style={[
                         styles.progressFill,
+                        weekly.challengeState === 'complete' ? styles.progressFillComplete : null,
                         {
-                          width: `${Math.min(100, (weekly.done / weekly.target) * 100)}%`,
+                          width: `${Math.min(
+                            100,
+                            (weekly.completionsInWindow / WEEKLY_TARGET) * 100,
+                          )}%`,
                         },
                       ]}
                     />
                   </View>
                   <View style={styles.weeklyMeta}>
                     <Text style={styles.weeklyCount}>
-                      {weekly.done}/{weekly.target}
+                      {weekly.completionsInWindow}/{WEEKLY_TARGET}
                     </Text>
                     <Text style={styles.weeklyReward}>+{WEEKLY_XP_REWARD} XP</Text>
                   </View>
@@ -707,10 +724,17 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     gap: spacing.md,
   },
+  weeklyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
   weeklyGoal: {
     color: colors.text,
     fontFamily: fonts.bodyBold.family,
     fontSize: 15,
+    flexShrink: 1,
   },
   progressTrack: {
     height: 8,
@@ -722,6 +746,9 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: radius.pill,
     backgroundColor: colors.rewardStrong,
+  },
+  progressFillComplete: {
+    backgroundColor: colors.success,
   },
   weeklyMeta: {
     flexDirection: 'row',

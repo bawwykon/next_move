@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useReducer, useRef } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/AppButton';
 import { Screen } from '@/components/ui/Screen';
+import { celebrateStep, initialCelebrationState } from '@/features/victory/celebration';
 import { ConfettiBurst } from '@/features/victory/confetti';
 import { BreakdownCard } from '@/features/victory/breakdown';
 import { JourneyCard } from '@/features/victory/journey';
@@ -32,8 +33,11 @@ export default function VictoryScreen() {
   const lastCompletion = useCompletionStore((state) => state.lastCompletion);
   const { victory: victoryTrack, levelUp: levelUpTrack } = useVictorySounds();
 
-  const [burstRun, setBurstRun] = useState(0);
-  const [upVisible, setUpVisible] = useState(false);
+  // S6-02 / FR-VIC-4 — the celebration queue lives in a pure reducer
+  // (celebration.ts); the screen only feeds events. A tap anywhere skips the
+  // whole queue to its final state, so the tap outruns any in-flight timer.
+  const [celebration, dispatchCelebration] = useReducer(celebrateStep, initialCelebrationState);
+  const skippedRef = useRef(false);
   const enterChimed = useRef(false);
   const levelUpRung = useRef(false);
 
@@ -50,11 +54,12 @@ export default function VictoryScreen() {
     }
     enterChimed.current = true;
     playOnce(victoryTrack);
-    setBurstRun((run) => run + 1);
+    dispatchCelebration('payload');
   }, [result, victoryTrack]);
 
   // FR-XP-4 — level-up celebration, timed after the initial burst: a second
-  // confetti run, the level-up chime, and the overlay flash.
+  // confetti run, the level-up chime, and the overlay flash. A tap-to-skip
+  // (FR-VIC-4) suppresses the chime; the reducer then ignores the timed events.
   useEffect(() => {
     if (!result || !leveledUp || levelUpRung.current) {
       return;
@@ -62,16 +67,15 @@ export default function VictoryScreen() {
     levelUpRung.current = true;
     let active = true;
     const show = setTimeout(() => {
-      if (!active) {
+      if (!active || skippedRef.current) {
         return;
       }
       playOnce(levelUpTrack);
-      setBurstRun((run) => run + 1);
-      setUpVisible(true);
+      dispatchCelebration('level-up');
     }, 800);
     const hide = setTimeout(() => {
       if (active) {
-        setUpVisible(false);
+        dispatchCelebration('hide');
       }
     }, 800 + 1900);
     return () => {
@@ -81,11 +85,19 @@ export default function VictoryScreen() {
     };
   }, [result, leveledUp, levelUpTrack]);
 
+  const skipCelebration = useCallback(() => {
+    if (skippedRef.current) {
+      return;
+    }
+    skippedRef.current = true;
+    dispatchCelebration('skip');
+  }, []);
+
   const headline = params.title ?? 'Great work!';
 
   return (
     <Screen>
-      <View style={styles.screen}>
+      <Pressable style={styles.screen} onPress={skipCelebration}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
             <Text style={styles.kicker}>Quest Complete</Text>
@@ -137,11 +149,11 @@ export default function VictoryScreen() {
             onPress={() => router.replace('/')}
           />
         </View>
-      </View>
+      </Pressable>
 
-      <ConfettiBurst runId={burstRun} />
+      <ConfettiBurst runId={celebration.confettiRun} />
       <LevelUpOverlay
-        visible={upVisible}
+        visible={celebration.overlayVisible}
         level={result?.level.after ?? 1}
         title={result?.level.title ?? ''}
       />

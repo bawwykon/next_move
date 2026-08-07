@@ -7,8 +7,10 @@ import { LogBox } from 'react-native';
 import { useLoadedFonts } from '@/lib/fonts';
 import { captureTabPath } from '@/lib/intended-route';
 import { useAppForeground } from '@/hooks/useAppForeground';
-import { useSessionStore } from '@/state/sessionStore';
+import { useDayChange } from '@/hooks/useDayChange';
 import { useCompletionStore } from '@/state/completionStore';
+import { useCharacterStore } from '@/state/characterStore';
+import { useSessionStore } from '@/state/sessionStore';
 
 // supabase-js warns on RN that PKCE falls back to 'plain' challenge (dev-only noise).
 LogBox.ignoreLogs(['WebCrypto API is not supported']);
@@ -43,6 +45,16 @@ export default function RootLayout() {
   useAppForeground(() => {
     if (useSessionStore.getState().authStatus === 'signed-in') {
       void useCompletionStore.getState().flush();
+    }
+  });
+
+  // S6-02 — local-midnight rollover (FR-BOARD-7). The day key is the source of
+  // truth; when it flips (timer fire or foreground re-check) the character
+  // snapshot refreshes, so the board re-derives "done today", the weekly
+  // window, and the daily recommendation for the new day.
+  useDayChange(() => {
+    if (useSessionStore.getState().authStatus === 'signed-in') {
+      void useCharacterStore.getState().refresh();
     }
   });
 

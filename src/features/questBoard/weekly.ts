@@ -1,6 +1,7 @@
+import { WEEKLY_TARGET } from '@/domain/board/window';
 import { isSameWeek } from '@/domain/streak/week';
 
-export const WEEKLY_TARGET = 3;
+export { WEEKLY_TARGET };
 
 export interface WeeklyProgress {
   done: number;

@@ -32,6 +32,8 @@ describe('board data path (local supabase)', () => {
   let questsRepo: typeof import('../../src/data/repositories/quests');
   let streakDomain: typeof import('../../src/domain/streak/streak');
   let dayKeyDomain: typeof import('../../src/domain/streak/dayKey');
+  let windowDomain: typeof import('../../src/domain/board/window');
+  let completedToday: typeof import('../../src/features/questBoard/completedToday');
   let supabase: typeof import('../../src/data/supabase').supabase;
   let profileId: string;
 
@@ -41,6 +43,8 @@ describe('board data path (local supabase)', () => {
     questsRepo = jest.requireActual('../../src/data/repositories/quests');
     streakDomain = jest.requireActual('../../src/domain/streak/streak');
     dayKeyDomain = jest.requireActual('../../src/domain/streak/dayKey');
+    windowDomain = jest.requireActual('../../src/domain/board/window');
+    completedToday = jest.requireActual('../../src/features/questBoard/completedToday');
     supabase = jest.requireActual('../../src/data/supabase').supabase;
 
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -157,5 +161,50 @@ describe('board data path (local supabase)', () => {
     expect(result.data!.displayName).toBe('Adventurer');
     expect(result.data!.onboarded).toBe(true);
     console.log(`profile: ${result.data!.displayName} onboarded=${result.data!.onboarded}`);
+  });
+
+  // S6-02 — local-day rollover against the live seed. The demo user's seed
+  // completes only today/yesterday (UTC-frame now()), so any new local day past
+  // that is guaranteed completion-free: "done today" must clear, and a brand-new
+  // weekly window must start pending (no stale card). All instants are built in
+  // the host's local calendar so the specs hold in any timezone.
+  it('local-day rollover (fake clock): prior done-today cleared, no stale weekly card', async () => {
+    const completions = (await board.fetchRecentCompletions(profileId)).data!;
+    const quests = (await questsRepo.fetchActiveQuests()).data!;
+
+    // Two days from now, in local calendar terms — past any seeded completion
+    // (today + yesterday) on every host.
+    const now = new Date();
+    const future = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2, 12, 0, 0, 0);
+    const futureKey = dayKeyDomain.dayKey(future);
+    expect(futureKey).not.toBe(dayKeyDomain.dayKey(now));
+
+    // Frame bounds stay exactly one day / one ISO week long (Mon→Sun, −1 ms).
+    const day = windowDomain.dayWindow(future);
+    expect(day.startMs + 86_400_000).toBe(day.endMs);
+    const fresh = windowDomain.weeklyWindow(future, 0);
+    expect(new Date(fresh.startMs).getUTCDay()).toBe(1); // Monday
+    expect(fresh.endMs - fresh.startMs).toBe(7 * 86_400_000 - 1);
+    expect(fresh.challengeState).toBe('pending'); // new week, not stale
+
+    // FR-BOARD-7 — "done today" re-derives from the new key: false for every
+    // quest on the board, even ones completed today.
+    for (const quest of quests) {
+      expect(completedToday.isCompletedToday(completions, quest.id, futureKey)).toBe(false);
+    }
+    console.log(
+      `rollover ${now.toISOString()} → ${futureKey}: fresh=${fresh.challengeState} done-this-week=${fresh.completionsInWindow}`,
+    );
+  });
+
+  it('weekly card keeps counting its real in-window completions (never stale-empty)', async () => {
+    const completions = (await board.fetchRecentCompletions(profileId)).data!;
+    const doneThisWeek = completions.filter((c) => c.dayKey !== null).length;
+    const current = windowDomain.weeklyWindow(new Date(), doneThisWeek);
+    expect(current.completionsInWindow).toBe(doneThisWeek);
+    expect(current.challengeState).not.toBe('pending'); // seed has ≥ 1 in-window
+    console.log(
+      `current ${current.challengeState} (${current.completionsInWindow}/${windowDomain.WEEKLY_TARGET})`,
+    );
   });
 });
