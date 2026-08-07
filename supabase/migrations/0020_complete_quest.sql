@@ -27,7 +27,7 @@ returns int
 language sql
 immutable
 as $fn$
-  select greatest(1, floor((1 + sqrt(1 + 4::numeric * points / 50::numeric)) / 2)::int)
+  select least(10, floor(points / 250) + 1)
 $fn$;
 
 create or replace function public.level_title(level int)
@@ -38,13 +38,10 @@ as $fn$
   select case
     when level >= 100 then 'Legend'
     when level >= 50 then 'Champion'
-    when level >= 25 then 'Voyager'
-    when level >= 10 then 'Trailblazer'
-    when level >= 5 then 'Explorer'
-    when level >= 4 then 'Adventurer'
-    when level = 3 then 'Squire'
-    when level = 2 then 'Apprentice'
-    else 'Novice'
+    when level >= 25 then 'Warrior'
+    when level >= 10 then 'Adventurer'
+    when level >= 5 then 'Apprentice'
+    else 'Beginner'
   end
 $fn$;
 
@@ -54,12 +51,12 @@ language sql
 immutable
 as $fn$
   select case
-    when quests >= 10 then 2
-    when quests >= 30 then 3
-    when quests >= 60 then 4
-    when quests >= 100 then 5
-    when quests >= 200 then 6
     when quests >= 365 then 7
+    when quests >= 200 then 6
+    when quests >= 100 then 5
+    when quests >= 60 then 4
+    when quests >= 30 then 3
+    when quests >= 10 then 2
     else 1
   end
 $fn$;

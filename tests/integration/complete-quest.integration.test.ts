@@ -165,14 +165,19 @@ describe('complete_quest RPC (live local supabase)', () => {
     installNativeFetch();
     user = createClient(LOCAL_URL, ANON_KEY, { auth: { persistSession: false } });
     admin = createClient(LOCAL_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
-    const { error: createError } = await admin.auth.signUp({
+    const { error: createError } = await admin.auth.admin.createUser({
       email: TEST_EMAIL,
       password: TEST_PASSWORD,
+      email_confirm: true,
     });
     // Re-running the suite hits "user already registered" — that is fine.
     if (createError && !/[a]lready registered/.test(createError.message)) {
       throw new Error(`creating test user failed: ${createError.message}`);
     }
+    // The admin API must never leave a session on the service-role client,
+    // otherwise admin writes would run as the rpc-tester (authenticated) role
+    // and be blocked by the progression guard.
+    expect(await admin.auth.getSession()).toMatchObject({ data: { session: null } });
     const { data: signin, error: signinError } = await user.auth.signInWithPassword({
       email: TEST_EMAIL,
       password: TEST_PASSWORD,
@@ -218,7 +223,7 @@ describe('complete_quest RPC (live local supabase)', () => {
     console.log('GOLDEN payload:', JSON.stringify(payload));
 
     expect(payload.xp).toEqual({ quest: 50, daily: 0, weekly: 0, streak: 0, total: 50 });
-    expect(payload.level).toEqual({ before: 1, after: 1, title: 'Novice' });
+    expect(payload.level).toEqual({ before: 1, after: 1, title: 'Beginner' });
     expect(payload.journey).toEqual({
       quests: 1,
       chapter_before: 1,
@@ -352,12 +357,12 @@ describe('complete_quest RPC (live local supabase)', () => {
     );
   });
 
-  it('level curve: crossing 100 XP lands on level 2 with title Apprentice and exact totals', async () => {
+  it('level curve: crossing 100 XP lands on level 2 with title Beginner and exact totals', async () => {
     await resetProgression();
     const d = day(30);
     const r = await callOk(hardEvent(d, 'lvl-1', 8));
     expect(r.level.after).toBe(2);
-    expect(r.level.title).toBe('Apprentice');
+    expect(r.level.title).toBe('Beginner');
     expect(r.level.before).toBe(1);
     expect(r.xp.quest).toBe(200);
     expect(r.xp.total).toBe(200 + r.xp.daily);
@@ -478,5 +483,118 @@ describe('complete_quest RPC (live local supabase)', () => {
     expect(row.total_xp).toBe(0);
     expect(row.level).toBe(1);
     console.log('TAMPER blocked, profile intact:', JSON.stringify(row));
+  });
+
+  // FR-JOURNEY-4 / FR-MAS-3 / FR-XP-3 boundary proofs. The pure SQL helpers are
+  // called through PostgREST (live DB), and the journey/title transitions are
+  // driven end-to-end through the RPC by seeding progression via the trusted
+  // service role (the RPC math then runs on top of those fixtures).
+  const sqlFn = async (fn: string, args: Record<string, unknown>): Promise<unknown> => {
+    const raw = admin as unknown as {
+      rpc: (
+        name: string,
+        params: Record<string, unknown>,
+      ) => Promise<{ data: unknown; error: { message: string } | null }>;
+    };
+    const { data, error } = await raw.rpc(fn, args);
+    if (error) throw new Error(`${fn} failed: ${error.message}`);
+    return data;
+  };
+
+  it('journey chapters: chapter_for_quests flips at 10/30/60/100/200/365 (end-to-end via RPC)', async () => {
+    await resetProgression();
+    const bounds = [
+      { below: 9, at: 10, before: 1, after: 2 },
+      { below: 29, at: 30, before: 2, after: 3 },
+      { below: 59, at: 60, before: 3, after: 4 },
+      { below: 99, at: 100, before: 4, after: 5 },
+      { below: 199, at: 200, before: 5, after: 6 },
+      { below: 364, at: 365, before: 6, after: 7 },
+    ];
+    for (let i = 0; i < bounds.length; i += 1) {
+      const b = bounds[i]!;
+      const set = await admin
+        .from('profiles')
+        .update({ journey_quests: b.below })
+        .eq('id', profileId);
+      expect(set.error).toBeNull();
+      const d = day(40 + i);
+      const r = await callOk(easyEvent(d, `ch-${b.below}`, 8));
+      expect(r.journey.quests).toBe(b.at);
+      expect(r.journey.chapter_before).toBe(b.before);
+      expect(r.journey.chapter_after).toBe(b.after);
+      expect(await sqlFn('chapter_for_quests', { quests: b.below })).toBe(b.before);
+      expect(await sqlFn('chapter_for_quests', { quests: b.at })).toBe(b.after);
+    }
+    expect(await sqlFn('chapter_for_quests', { quests: 0 })).toBe(1);
+  });
+
+  it('mastery levels: mastery_level_for_points at 0/250/500 (and cap 10)', async () => {
+    const cases = [
+      { points: 0, level: 1 },
+      { points: 249, level: 1 },
+      { points: 250, level: 2 },
+      { points: 499, level: 2 },
+      { points: 500, level: 3 },
+      { points: 2499, level: 10 },
+      { points: 2500, level: 10 },
+    ];
+    for (const c of cases) {
+      expect(await sqlFn('mastery_level_for_points', { points: c.points })).toBe(c.level);
+    }
+
+    await resetProgression();
+    // End-to-end: 240 seeded mobility points +10 from a completed quest -> 250 -> level 2.
+    const seedPts = await admin
+      .from('mastery')
+      .insert({ profile_id: profileId, track: 'mobility', points: 240 });
+    expect(seedPts.error).toBeNull();
+    const d = day(47);
+    const r = await callOk(easyEvent(d, 'mas-240', 8));
+    const mobility = r.mastery.find((m) => m.track === 'mobility')!;
+    expect(mobility.points_before).toBe(240);
+    expect(mobility.points_after).toBe(250);
+    expect(mobility.level_before).toBe(1);
+    expect(mobility.level_after).toBe(2);
+  });
+
+  it('titles: level_title matches FR-XP-3 at 5/10/25/50/100 (end-to-end via RPC)', async () => {
+    const cases = [
+      { level: 4, title: 'Beginner' },
+      { level: 5, title: 'Apprentice' },
+      { level: 9, title: 'Apprentice' },
+      { level: 10, title: 'Adventurer' },
+      { level: 24, title: 'Adventurer' },
+      { level: 25, title: 'Warrior' },
+      { level: 49, title: 'Warrior' },
+      { level: 50, title: 'Champion' },
+      { level: 99, title: 'Champion' },
+      { level: 100, title: 'Legend' },
+    ];
+    for (const c of cases) {
+      expect(await sqlFn('level_title', { level: c.level })).toBe(c.title);
+    }
+
+    await resetProgression();
+    // End-to-end: seed total_xp so the completed quest lands the level exactly
+    // on a title boundary (level 5 = 1000 XP; hard quest grants 200 XP). The
+    // profile level column must also be the level for the seeded XP so the
+    // RPC's 'before' reflects the pre-completion state.
+    const setXp = await admin
+      .from('profiles')
+      .update({ total_xp: 800, level: 4 })
+      .eq('id', profileId);
+    expect(setXp.error).toBeNull();
+    const d = day(48);
+    await seedSameDayCompletion(d); // avoid the first-of-day bonus skewing the total
+    const r = await callOk(hardEvent(d, 'ttl-5', 8));
+    expect(r.xp.quest).toBe(200);
+    expect(r.xp.daily).toBe(0);
+    expect(r.level.before).toBe(4);
+    expect(r.level.after).toBe(5);
+    expect(r.level.title).toBe('Apprentice');
+    const profile = await profileRow();
+    expect(profile.total_xp).toBe(1000);
+    expect(profile.level).toBe(5);
   });
 });
