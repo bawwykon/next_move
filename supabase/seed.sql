@@ -348,6 +348,16 @@ select '3f8a2c1e-6f5b-4a7d-9c2e-1b4d6f8a0c3e', t, 0
 from unnest(array['discipline', 'endurance', 'mobility', 'strength']) as t
 on conflict (profile_id, track) do nothing;
 
+-- S7-02 — demo fixture: exactly one achievement unlocked (first-quest, which
+-- the demo's 3 seeded completions honestly satisfy) so the achievements
+-- proofs exercise the unlocked path; the other 12 stay locked. Replays are
+-- idempotent. unlocked_at is stable per reset so the proofs can depend on it.
+insert into public.profile_achievements (profile_id, achievement_id, unlocked_at)
+select '3f8a2c1e-6f5b-4a7d-9c2e-1b4d6f8a0c3e', id, now()
+from public.achievements
+where slug = 'first-quest'
+on conflict (profile_id, achievement_id) do nothing;
+
 -- S7-01 — keep the demo fixture truthful to the server invariant
 -- (journey_quests == quest-completion count, current_chapter ==
 -- chapter_for_quests(journey_quests); M0019, complete_quest RPC). The seed
