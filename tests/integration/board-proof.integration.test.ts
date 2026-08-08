@@ -179,12 +179,23 @@ describe('board data path (local supabase)', () => {
     const futureKey = dayKeyDomain.dayKey(future);
     expect(futureKey).not.toBe(dayKeyDomain.dayKey(now));
 
-    // Frame bounds stay exactly one day / one ISO week long (Mon→Sun, −1 ms).
+    // Frame bounds are literal local midnights: the day ends exactly at the next
+    // local midnight and the week runs Monday 00:00 → next Monday 00:00 − 1ms
+    // (both DST-safe); `challengeState` on a zero-completion week is never stale.
     const day = windowDomain.dayWindow(future);
-    expect(day.startMs + 86_400_000).toBe(day.endMs);
+    expect(day.endMs).toBe(
+      new Date(future.getFullYear(), future.getMonth(), future.getDate() + 1).getTime(),
+    );
     const fresh = windowDomain.weeklyWindow(future, 0);
-    expect(new Date(fresh.startMs).getUTCDay()).toBe(1); // Monday
-    expect(fresh.endMs - fresh.startMs).toBe(7 * 86_400_000 - 1);
+    expect(fresh.startMs).toBe(
+      new Date(
+        future.getFullYear(),
+        future.getMonth(),
+        future.getDate() - ((future.getDay() + 6) % 7),
+      ).getTime(),
+    );
+    expect(new Date(fresh.startMs).getDay()).toBe(1); // literal Monday, local frame
+    expect(fresh.endMs).toBe(fresh.rollsOverOn - 1);
     expect(fresh.challengeState).toBe('pending'); // new week, not stale
 
     // FR-BOARD-7 — "done today" re-derives from the new key: false for every

@@ -5,50 +5,59 @@ import {
   rollsOverOn,
   weeklyWindow,
 } from '@/domain/board/window';
-import { dayKeyToUtcMs } from '@/domain/streak/dayKey';
 
 const DAY_MS = 86_400_000;
 
 /**
- * `refMs(key)` is the domain's frame-consistent reference instant for a local
- * calendar day (same shape as mondayOfWeek/dayKeyToUtcMs use), so the window
- * bounds are asserted against it — host-independent.
- *
- * `local(y, m, d, ...)` builds a Date whose LOCAL fields match the argument —
- * this is what "local midnight"/"23:59:59.999" really means and is what the
- * boundary units must use so they hold in any timezone.
+ * Host-agnostic suites. Expected bounds are computed live in the host's own
+ * local frame (`new Date(y, m-1, d [+ n])` normalizes rollovers and DST), so
+ * these hold in any timezone; the exact instant-level pins (23h/25h DST days,
+ * Asia/Tokyo midnight) live in the TZ-pinned suites window-dst / window-tz.
  */
-const refMs = (key: string): number => dayKeyToUtcMs(key) ?? 0;
 const local = (year: number, month: number, day: number, h = 0, min = 0, s = 0, ms = 0): Date =>
   new Date(year, month - 1, day, h, min, s, ms);
 
+const midnightMs = (year: number, month: number, day: number): number =>
+  new Date(year, month - 1, day).getTime();
+
+const nextMidnightMs = (year: number, month: number, day: number): number =>
+  new Date(year, month - 1, day + 1).getTime();
+
+const mondayMs = (year: number, month: number, day: number): number => {
+  const d = new Date(year, month - 1, day);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() - ((d.getDay() + 6) % 7)).getTime();
+};
+
+const nextMondayMs = (year: number, month: number, day: number): number => {
+  const d = new Date(year, month - 1, day);
+  return new Date(
+    d.getFullYear(),
+    d.getMonth(),
+    d.getDate() - ((d.getDay() + 6) % 7) + 7,
+  ).getTime();
+};
+
 describe('dayWindow', () => {
-  it('keys the local calendar day with one full-DAY_MS frame after its reference', () => {
+  it('keys the local calendar day with literal local-midnight bounds', () => {
     // Wed 2026-08-05, 12:00:30 local.
     const w = dayWindow(local(2026, 8, 5, 12, 0, 30));
     expect(w.dayKey).toBe('2026-08-05');
-    expect(w.startMs).toBe(refMs('2026-08-05'));
-    expect(w.endMs).toBe(refMs('2026-08-06'));
-    expect(w.endMs - w.startMs).toBe(DAY_MS);
+    expect(w.startMs).toBe(midnightMs(2026, 8, 5));
+    expect(w.endMs).toBe(nextMidnightMs(2026, 8, 5));
   });
 
   it('rolls over the local Sunday→Monday boundary (23:59:59.999 → 00:00:00.000)', () => {
     const sundayEnd = local(2026, 8, 9, 23, 59, 59, 999);
     const mondayStart = local(2026, 8, 10, 0, 0, 0, 0);
     expect(dayWindow(sundayEnd).dayKey).toBe('2026-08-09');
-    expect(dayWindow(sundayEnd).endMs).toBe(dayWindow(mondayStart).startMs);
+    expect(dayWindow(sundayEnd).endMs).toBe(midnightMs(2026, 8, 10));
     expect(dayWindow(mondayStart).dayKey).toBe('2026-08-10');
-    expect(dayWindow(sundayEnd).endMs - dayWindow(sundayEnd).startMs).toBe(DAY_MS);
+    expect(dayWindow(mondayStart).startMs).toBe(dayWindow(sundayEnd).endMs);
   });
 
-  it('keeps DST-safe spans: full DAY_MS across US DST edges because the math is calendar-based', () => {
-    // 2026-03-08 spring-forward and 2026-11-01 fall-back. The window spans the
-    // whole local day by calendar arithmetic on keys, never by walking wall
-    // clocks, so it survives the 23h/25h days (Ref 05 §tz).
-    expect(refMs('2026-03-09') - refMs('2026-03-08')).toBe(DAY_MS);
-    expect(refMs('2026-11-02') - refMs('2026-11-01')).toBe(DAY_MS);
-    expect(dayWindow(local(2026, 3, 8, 12)).endMs).toBe(refMs('2026-03-09'));
-    expect(dayWindow(local(2026, 11, 1, 12)).endMs).toBe(refMs('2026-11-02'));
+  it('handles month and year rollovers through Date normalization', () => {
+    expect(dayWindow(local(2026, 12, 31, 23)).endMs).toBe(midnightMs(2027, 1, 1));
+    expect(dayWindow(local(2026, 8, 31, 23)).endMs).toBe(midnightMs(2026, 9, 1));
   });
 
   it('is a pure function of the input date', () => {
@@ -60,29 +69,27 @@ describe('dayWindow', () => {
 });
 
 describe('weeklyWindow', () => {
-  it('spans the Mon→Sun reference frame (7 days minus 1 ms)', () => {
+  it('spans literal Monday 00:00 → next Monday 00:00 − 1ms', () => {
     // Wed 2026-08-05; week is Mon 08-03 .. Sun 08-09.
-    const w = weeklyWindow(local(2026, 8, 5, 0), 2);
-    expect(w.startMs).toBe(refMs('2026-08-03'));
-    expect(w.endMs).toBe(refMs('2026-08-03') + 7 * DAY_MS - 1);
-    expect(w.expiresAt).toBe(refMs('2026-08-10'));
-    expect(w.rollsOverOn).toBe(refMs('2026-08-10'));
+    const w = weeklyWindow(local(2026, 8, 5, 12), 2);
+    expect(w.startMs).toBe(mondayMs(2026, 8, 5));
+    expect(w.endMs).toBe(nextMondayMs(2026, 8, 5) - 1);
+    expect(w.expiresAt).toBe(nextMondayMs(2026, 8, 5));
+    expect(w.rollsOverOn).toBe(w.expiresAt);
     expect(w.isActive).toBe(true);
     expect(w.completionsInWindow).toBe(2);
   });
 
-  it('rolls the next week at the local Sunday 23:59:59.999 → Monday 00:00 boundary', () => {
-    const sundayEnd = local(2026, 8, 9, 23, 59, 59, 999);
-    const sundayWeek = weeklyWindow(sundayEnd, 1);
-    expect(sundayWeek.startMs).toBe(refMs('2026-08-03'));
-    expect(sundayWeek.endMs).toBe(refMs('2026-08-10') - 1);
+  it('stays in the same week through Sunday 23:59:59.999 and rolls at Monday 00:00', () => {
+    const sundayWeek = weeklyWindow(local(2026, 8, 9, 23, 59, 59, 999), 1);
+    expect(sundayWeek.startMs).toBe(mondayMs(2026, 8, 9));
+    expect(sundayWeek.endMs).toBe(mondayMs(2026, 8, 9) + 7 * DAY_MS - 1); // DST-free week
+    expect(sundayWeek.isActive).toBe(true);
     expect(sundayWeek.challengeState).toBe('in-progress');
 
-    const mondayStart = local(2026, 8, 10, 0, 0, 0, 0);
-    const mondayWeek = weeklyWindow(mondayStart, 0);
-    expect(mondayWeek.startMs).toBe(refMs('2026-08-10')); // fresh week
-    expect(mondayWeek.endMs).toBe(refMs('2026-08-17') - 1);
-    expect(mondayWeek.expiresAt).toBe(refMs('2026-08-17'));
+    const mondayWeek = weeklyWindow(local(2026, 8, 10, 0, 0, 0, 0), 0);
+    expect(mondayWeek.startMs).toBe(mondayMs(2026, 8, 10)); // fresh week
+    expect(mondayWeek.isActive).toBe(true);
     expect(mondayWeek.challengeState).toBe('pending'); // no stale card
   });
 
@@ -112,11 +119,11 @@ describe('challengeState', () => {
 });
 
 describe('rollsOverOn', () => {
-  it('is next Monday of the local reference frame from any day of the current week', () => {
-    expect(rollsOverOn(local(2026, 8, 3))).toBe(refMs('2026-08-10'));
-    expect(rollsOverOn(local(2026, 8, 5, 14, 30))).toBe(refMs('2026-08-10'));
-    expect(rollsOverOn(local(2026, 8, 9, 23, 59, 59, 999))).toBe(refMs('2026-08-10'));
-    expect(rollsOverOn(local(2026, 8, 10))).toBe(refMs('2026-08-17'));
+  it('is literal next Monday 00:00 local from any day of the current week', () => {
+    expect(rollsOverOn(local(2026, 8, 3))).toBe(nextMondayMs(2026, 8, 3));
+    expect(rollsOverOn(local(2026, 8, 5, 14, 30))).toBe(nextMondayMs(2026, 8, 5));
+    expect(rollsOverOn(local(2026, 8, 9, 23, 59, 59, 999))).toBe(nextMondayMs(2026, 8, 9));
+    expect(rollsOverOn(local(2026, 8, 10))).toBe(nextMondayMs(2026, 8, 10));
   });
 
   it('agrees with the weekly window expiry', () => {

@@ -1,49 +1,50 @@
-import { dayKey, dayKeyToUtcMs } from '@/domain/streak/dayKey';
-import { mondayOfWeek } from '@/domain/streak/week';
+import { dayKey } from '@/domain/streak/dayKey';
 
 /**
  * S6-02 — recurring windows in local time (FR-BOARD-6/7, FR-QUES-6, Ref 08 §7).
  *
- * All math runs in the client's local calendar frame: `dayKey(now)` gives the
- * local 'YYYY-MM-DD', and `dayKeyToUtcMs`/`mondayOfWeek` map those keys to
- * UTC-ms instants that are DST-safe for day arithmetic. `now` is always
- * injected; every function is pure and never mutates its inputs.
+ * Bounds are LITERAL local midnights, built from the injected `now`'s local
+ * fields (`new Date(y, m, d [+ n])` normalizes month/year rollovers and DST),
+ * so a day that gains/loses an hour is genuinely 23h or 25h long — and the
+ * midnight-change timer really fires at local midnight on any device/zone
+ * (ED-26 fix). Data membership ("done today", weekly count) keeps using the
+ * local `dayKey` string via src/domain/streak, never these instants. Every
+ * function is pure; `now` is always injected.
  */
 
 /** Ref 08 §7 — quests per Mon–Sun window that award the weekly bonus. */
 export const WEEKLY_TARGET = 3;
 
-const DAY_MS = 86_400_000;
-
 export interface DayWindow {
   /** Local calendar day key for `now` (YYYY-MM-DD). */
   dayKey: string;
-  /** UTC-ms of this local midnight (inclusive start). */
+  /** Literal local midnight — inclusive start. */
   startMs: number;
-  /** UTC-ms of the next local midnight — exclusive end of the day. */
+  /** Literal next local midnight — exclusive end of the day. */
   endMs: number;
 }
 
 /** One local calendar day, from its own midnight to the next. */
 export function dayWindow(now: Date): DayWindow {
-  const key = dayKey(now);
-  // dayKey(now) is always well-formed, so the null branch is unreachable.
-  const startMs = dayKeyToUtcMs(key) ?? 0;
-  return { dayKey: key, startMs, endMs: startMs + DAY_MS };
+  return {
+    dayKey: dayKey(now),
+    startMs: new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime(),
+    endMs: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime(),
+  };
 }
 
 export type WeeklyChallengeState = 'pending' | 'in-progress' | 'complete';
 
 export interface WeeklyWindow {
-  /** Mon 00:00 local — inclusive start. */
+  /** Literal Monday 00:00 local — inclusive start. */
   startMs: number;
-  /** Sun 23:59:59.999 local — inclusive end of the week. */
+  /** Literal Sunday 23:59:59.999 local — inclusive end of the week. */
   endMs: number;
-  /** Next Monday 00:00 local, when this window rolls over. */
+  /** Literal next Monday 00:00 local, when this window rolls over. */
   expiresAt: number;
   /** Alias of `expiresAt` for the board's rollover copy. */
   rollsOverOn: number;
-  /** Whether `now` falls inside [startMs, endMs] (always true when derived from now). */
+  /** Whether `now` falls inside [startMs, endMs]. */
   isActive: boolean;
   challengeState: WeeklyChallengeState;
   completionsInWindow: number;
@@ -63,16 +64,27 @@ export function challengeState(count: number): WeeklyChallengeState {
   return 'pending';
 }
 
+/** Literal Monday 00:00 local of the week containing `now`. */
+function mondayMidnightMs(now: Date): number {
+  const daysSinceMonday = (now.getDay() + 6) % 7;
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysSinceMonday).getTime();
+}
+
+/** Literal next Monday 00:00 local — the instant the current week rolls over. */
+export function rollsOverOn(now: Date): number {
+  const daysSinceMonday = (now.getDay() + 6) % 7;
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysSinceMonday + 7).getTime();
+}
+
 /**
- * The local week containing `now`: Monday 00:00 → Sunday 23:59:59.999.
+ * The local week containing `now`: literal Monday 00:00 → Sunday 23:59:59.999.
  * `completionsInWindow` is read-only metadata; the state it implies is
  * derived through `challengeState`, never mutated here.
  */
 export function weeklyWindow(now: Date, completionsInWindow = 0): WeeklyWindow {
-  // dayKey(now) is always well-formed, so the null branch is unreachable.
-  const startMs = mondayOfWeek(dayKey(now)) ?? 0;
-  const endMs = startMs + 7 * DAY_MS - 1;
-  const expiresAt = startMs + 7 * DAY_MS;
+  const startMs = mondayMidnightMs(now);
+  const expiresAt = rollsOverOn(now);
+  const endMs = expiresAt - 1;
   const nowMs = now.getTime();
   return {
     startMs,
@@ -83,11 +95,4 @@ export function weeklyWindow(now: Date, completionsInWindow = 0): WeeklyWindow {
     challengeState: challengeState(completionsInWindow),
     completionsInWindow,
   };
-}
-
-/** Next Monday 00:00 local — the instant the current week rolls over. */
-export function rollsOverOn(now: Date): number {
-  // dayKey(now) is always well-formed, so the null branch is unreachable.
-  const startMs = mondayOfWeek(dayKey(now)) ?? 0;
-  return startMs + 7 * DAY_MS;
 }
