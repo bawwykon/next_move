@@ -358,12 +358,13 @@ from public.achievements
 where slug = 'first-quest'
 on conflict (profile_id, achievement_id) do nothing;
 
--- S7-01 — keep the demo fixture truthful to the server invariant
+-- S7-01 / S8-01 — keep the demo fixture truthful to the server invariants
 -- (journey_quests == quest-completion count, current_chapter ==
--- chapter_for_quests(journey_quests); M0019, complete_quest RPC). The seed
--- inserts completions directly (bypassing the RPC), so the progression
--- columns must be backfilled here or the journey proofs misread the data.
--- Runs as postgres (seed), so the progression guard trigger allows it.
+-- chapter_for_quests(journey_quests); total_xp/level/streaks mirror what the
+-- complete_quest RPC would hold after these completions; M0019 line 5). The
+-- seed inserts completions directly (bypassing the RPC), so the progression
+-- columns must be backfilled here or the journey/profile proofs misread the
+-- data. Runs as postgres (seed), so the progression guard trigger allows it.
 update public.profiles
    set journey_quests = (
          select count(*) from public.quest_completions qc
@@ -372,5 +373,42 @@ update public.profiles
      , current_chapter = public.chapter_for_quests(
          (select count(*)::int from public.quest_completions qc
            where qc.profile_id = '3f8a2c1e-6f5b-4a7d-9c2e-1b4d6f8a0c3e')
+       )
+     , total_xp = (
+         select coalesce(sum(qc.xp_awarded), 0) from public.quest_completions qc
+          where qc.profile_id = '3f8a2c1e-6f5b-4a7d-9c2e-1b4d6f8a0c3e'
+       )
+     , level = public.level_for_xp(
+         (select coalesce(sum(qc.xp_awarded), 0) from public.quest_completions qc
+           where qc.profile_id = '3f8a2c1e-6f5b-4a7d-9c2e-1b4d6f8a0c3e')
+       )
+     , current_streak = (
+         with days as (
+           select distinct day_key::date as day from public.quest_completions qc
+            where qc.profile_id = '3f8a2c1e-6f5b-4a7d-9c2e-1b4d6f8a0c3e'
+              and qc.day_key is not null
+         ), runs as (
+           select day, day - row_number() over (order by day)::int as grp from days
+         ), tails as (
+           select grp, count(*) as len, max(day) as end_day from runs group by grp
+         )
+         select coalesce(
+           (select len from tails where end_day = (select max(day) from days)), 0)
+       )
+     , longest_streak = (
+         with days as (
+           select distinct day_key::date as day from public.quest_completions qc
+            where qc.profile_id = '3f8a2c1e-6f5b-4a7d-9c2e-1b4d6f8a0c3e'
+              and qc.day_key is not null
+         ), runs as (
+           select day, day - row_number() over (order by day)::int as grp from days
+         )
+         select coalesce(max(cnt), 0)
+           from (select count(*) as cnt from runs group by grp) as streak_lengths
+       )
+     , last_completed_day = (
+         select max(day_key::date) from public.quest_completions qc
+          where qc.profile_id = '3f8a2c1e-6f5b-4a7d-9c2e-1b4d6f8a0c3e'
+            and qc.day_key is not null
        )
  where id = '3f8a2c1e-6f5b-4a7d-9c2e-1b4d6f8a0c3e';

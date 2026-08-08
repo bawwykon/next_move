@@ -15,6 +15,22 @@ export interface CharacterProfile {
   journeyQuestCount: number;
   /** S7-01 — server-authoritative chapter position, 1-based (M0019). */
   currentChapter: number;
+  /**
+   * S8-01 — server-authoritative progression (M0019, written only by
+   * `complete_quest`): level/total XP/streaks/equipped loadout are read
+   * verbatim from the profile row, never recomputed client-side (FR-XP-7).
+   */
+  totalXp: number;
+  level: number;
+  currentStreak: number;
+  longestStreak: number;
+  lastCompletedDay: string | null;
+  equipped: {
+    frame: string | null;
+    title: string | null;
+    background: string | null;
+    portrait: string | null;
+  };
 }
 
 export interface CompletionRow {
@@ -32,7 +48,9 @@ export interface MasteryRow {
 export async function fetchProfile(profileId: string): Promise<RepoResult<CharacterProfile>> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, display_name, onboarded, journey_quests, current_chapter')
+    .select(
+      'id, display_name, onboarded, journey_quests, current_chapter, total_xp, level, current_streak, longest_streak, last_completed_day, equipped_frame, equipped_title, equipped_background, equipped_portrait',
+    )
     .eq('id', profileId)
     .maybeSingle();
 
@@ -48,6 +66,17 @@ export async function fetchProfile(profileId: string): Promise<RepoResult<Charac
     onboarded: data.onboarded,
     journeyQuestCount: data.journey_quests,
     currentChapter: data.current_chapter,
+    totalXp: data.total_xp,
+    level: data.level,
+    currentStreak: data.current_streak,
+    longestStreak: data.longest_streak,
+    lastCompletedDay: data.last_completed_day,
+    equipped: {
+      frame: data.equipped_frame,
+      title: data.equipped_title,
+      background: data.equipped_background,
+      portrait: data.equipped_portrait,
+    },
   });
 }
 
