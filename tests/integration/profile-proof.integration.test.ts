@@ -96,7 +96,7 @@ describe('profile data path (live local supabase)', () => {
     console.log(`level ${profile.level} holds ${start}…<${next.start} (total ${profile.totalXp})`);
   });
 
-  it('the cosmetic catalogue is exactly 18 items with only id/slug/name', async () => {
+  it('the cosmetic catalogue is exactly 18 items with only id/kind/name/slug', async () => {
     const result = await cosmeticsRepo.fetchCosmeticCatalog();
     expect(result.error).toBeNull();
     const catalog = result.data ?? [];
@@ -104,7 +104,7 @@ describe('profile data path (live local supabase)', () => {
     const slugs = new Set(catalog.map((row) => row.slug));
     expect(slugs.size).toBe(18);
     for (const row of catalog) {
-      expect(Object.keys(row).sort()).toEqual(['id', 'name', 'slug']);
+      expect(Object.keys(row).sort()).toEqual(['id', 'kind', 'name', 'slug']);
     }
     expect(catalog.some((row) => row.slug === 'frame-default')).toBe(true);
     expect(catalog.some((row) => row.slug === 'portrait-default')).toBe(true);

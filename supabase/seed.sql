@@ -358,6 +358,17 @@ from public.achievements
 where slug = 'first-quest'
 on conflict (profile_id, achievement_id) do nothing;
 
+-- S8-02 — demo fixture: the demo owns exactly the loadout items its honest
+-- facts grant — frame-default & portrait-default (unlock rule {} — owned by
+-- every player) and title-adventurer (rule: own the first-quest achievement,
+-- which the demo does). The other 15 stay unowned so the picker proofs cover
+-- both states. Replays are idempotent.
+insert into public.profile_cosmetics (profile_id, cosmetic_id, unlocked_at)
+select '3f8a2c1e-6f5b-4a7d-9c2e-1b4d6f8a0c3e', id, now()
+from public.cosmetics
+where slug in ('frame-default', 'title-adventurer', 'portrait-default')
+on conflict (profile_id, cosmetic_id) do nothing;
+
 -- S7-01 / S8-01 — keep the demo fixture truthful to the server invariants
 -- (journey_quests == quest-completion count, current_chapter ==
 -- chapter_for_quests(journey_quests); total_xp/level/streaks mirror what the

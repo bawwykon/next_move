@@ -9,6 +9,7 @@ import { fetchProfileAchievements } from '@/data/repositories/achievements';
 import {
   fetchProfile,
   fetchMastery,
+  equipCosmetic,
   type CharacterProfile,
   type MasteryRow,
 } from '@/data/repositories/board';
@@ -18,12 +19,14 @@ import {
   HISTORY_PAGE_SIZE,
   type CompletionHistoryRow,
 } from '@/data/repositories/history';
+import { fetchProfileCosmetics } from '@/data/repositories/profileCosmetics';
 import { supabase } from '@/data/supabase';
 import { dayKey } from '@/domain/streak/dayKey';
+import { ownedBySlug, validateEquip, type CosmeticSlot } from '@/domain/cosmetics/loadout';
+import { LoadoutCard } from '@/features/profile/LoadoutCard';
 import {
   historyExhausted,
   historyLines,
-  loadoutSlots,
   levelLine,
   masteryRows,
   streakCopy,
@@ -48,6 +51,7 @@ export default function ProfileScreen() {
   const [profile, setProfile] = useState<CharacterProfile | null>(null);
   const [mastery, setMastery] = useState<MasteryRow[]>([]);
   const [catalog, setCatalog] = useState<CosmeticRow[]>([]);
+  const [owned, setOwned] = useState<ReadonlySet<string>>(new Set());
   const [unlockedCount, setUnlockedCount] = useState(0);
   const [history, setHistory] = useState<CompletionHistoryRow[]>([]);
   const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
@@ -61,11 +65,12 @@ export default function ProfileScreen() {
       setStatus('error');
       return;
     }
-    const [profileResult, masteryResult, catalogResult, unlocksResult, historyResult] =
+    const [profileResult, masteryResult, catalogResult, ownedResult, unlocksResult, historyResult] =
       await Promise.all([
         fetchProfile(user.id),
         fetchMastery(user.id),
         fetchCosmeticCatalog(),
+        fetchProfileCosmetics(user.id),
         fetchProfileAchievements(user.id),
         fetchCompletionHistory(user.id, { limit: HISTORY_PAGE_SIZE, offset: 0 }),
       ]);
@@ -73,6 +78,7 @@ export default function ProfileScreen() {
       profileResult,
       masteryResult,
       catalogResult,
+      ownedResult,
       unlocksResult,
       historyResult,
     ].find((result) => result.error);
@@ -83,6 +89,7 @@ export default function ProfileScreen() {
     setProfile(profileResult.data ?? null);
     setMastery(masteryResult.data ?? []);
     setCatalog(catalogResult.data ?? []);
+    setOwned(ownedBySlug(ownedResult.data ?? []));
     setUnlockedCount(unlocksResult.data?.length ?? 0);
     setHistory(historyResult.data ?? []);
     setStatus('ready');
@@ -107,6 +114,37 @@ export default function ProfileScreen() {
     }
   }, [profile, history.length]);
 
+  /**
+   * S8-02 — optimistic equip with revert-on-error. The domain verdict gates
+   * the write first (unowned items can never reach the database through this
+   * path, even if the picker skipped a tap); the DB statement only touches
+   * the equipped_* column (guard: client-writable).
+   */
+  const handleEquip = useCallback(
+    async (slot: CosmeticSlot, itemId: string | null): Promise<string | null> => {
+      if (!profile) {
+        return 'Not ready yet — try again in a moment.';
+      }
+      const verdict = validateEquip(slot, itemId, owned, catalog);
+      if (!verdict.ok) {
+        return 'This one is still locked for you.';
+      }
+      const previous = profile.equipped[slot];
+      setProfile((current) =>
+        current ? { ...current, equipped: { ...current.equipped, [slot]: itemId } } : current,
+      );
+      const result = await equipCosmetic(profile.id, slot, itemId);
+      if (result.error) {
+        setProfile((current) =>
+          current ? { ...current, equipped: { ...current.equipped, [slot]: previous } } : current,
+        );
+        return 'Could not save. Give it one more try.';
+      }
+      return null;
+    },
+    [profile, owned, catalog],
+  );
+
   const initials = email ? (email.split('@')[0] ?? '').slice(0, 2).toUpperCase() : 'A';
   const todayKey = dayKey(new Date());
   const bar = useMemo(
@@ -118,10 +156,6 @@ export default function ProfileScreen() {
     [profile],
   );
   const masteryRowsView = useMemo(() => masteryRows(mastery), [mastery]);
-  const loadout = useMemo(
-    () => loadoutSlots(profile?.equipped ?? emptyEquipped, catalog),
-    [profile, catalog],
-  );
   const historyView = useMemo(() => historyLines(history, todayKey), [history, todayKey]);
   const exhausted = historyExhausted(history.length, HISTORY_PAGE_SIZE);
 
@@ -220,20 +254,13 @@ export default function ProfileScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Cosmetic loadout — display-only (FR-PROF-2). */}
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Loadout</Text>
-              <View style={styles.loadoutList}>
-                {loadout.map((slot) => (
-                  <View key={slot.slot} style={styles.loadoutRow}>
-                    <Text style={styles.loadoutSlot}>{slot.slot}</Text>
-                    <Text style={[styles.loadoutName, !slot.name && styles.loadoutNameEmpty]}>
-                      {slot.name ?? 'None equipped'}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </View>
+            {/* Cosmetic loadout — FR-COS-1/2: tap a slot to open the picker. */}
+            <LoadoutCard
+              catalog={catalog}
+              owned={owned}
+              equipped={profile?.equipped ?? emptyEquipped}
+              onEquip={handleEquip}
+            />
 
             {/* Quest history — 30-day window, paged (FR-PROF-1). */}
             <View style={styles.card}>
@@ -449,28 +476,6 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontFamily: fonts.body.family,
     fontSize: 13,
-  },
-  loadoutList: {
-    gap: spacing.sm,
-  },
-  loadoutRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  loadoutSlot: {
-    color: colors.textMuted,
-    fontFamily: fonts.body.family,
-    fontSize: 14,
-  },
-  loadoutName: {
-    color: colors.text,
-    fontFamily: fonts.bodyBold.family,
-    fontSize: 14,
-  },
-  loadoutNameEmpty: {
-    color: colors.textMuted,
-    fontStyle: 'italic',
   },
   historyList: {
     gap: spacing.md,

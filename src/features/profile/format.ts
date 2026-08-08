@@ -6,6 +6,7 @@
  * (src/domain/xp/level.ts) over server-authoritative columns — display only.
  */
 import { masteryProgress, masteryLevelForPoints, xpProgress } from '@/domain/xp/level';
+import { COSMETIC_SLOTS, resolveEquipped, type CosmeticSlot } from '@/domain/cosmetics/loadout';
 import { masteryLevelTitle, masteryTrackLabel } from '@/features/victory/format';
 
 /** Thousands-grouped, locale-independent (tests pin the exact grouping). */
@@ -125,11 +126,18 @@ export interface CosmeticRef {
   name: string;
 }
 
+const SLOT_LABELS: Record<CosmeticSlot, LoadoutSlot['slot']> = {
+  frame: 'Frame',
+  title: 'Title',
+  background: 'Background',
+  portrait: 'Portrait',
+};
+
 /**
- * FR-PROF-2 — the equipped loadout is display-only. Resolves the four
+ * FR-PROF-2 — the equipped loadout (display-only). Resolves the four
  * `equipped_*` profile uuids against the catalogue; an unset slot falls back
  * to the seeded defaults ('frame-default', 'portrait-default'); the others
- * render as empty.
+ * render as empty. Delegates to the S8-02 domain resolver (single source).
  */
 export function loadoutSlots(
   equipped: {
@@ -140,26 +148,32 @@ export function loadoutSlots(
   },
   catalog: readonly CosmeticRef[],
 ): LoadoutSlot[] {
-  const byId = new Map(catalog.map((row) => [row.id, row]));
-  const bySlug = new Map(catalog.map((row) => [row.slug, row.name]));
-  const resolve = (id: string | null, fallbackSlug: string | null): string | null => {
-    if (id && byId.has(id)) {
-      return byId.get(id)?.name ?? null;
-    }
-    if (!id && fallbackSlug && bySlug.has(fallbackSlug)) {
-      return bySlug.get(fallbackSlug) ?? null;
-    }
-    return null;
-  };
-  return [
-    { slot: 'Frame', name: resolve(equipped.frame, 'frame-default') },
-    { slot: 'Title', name: resolve(equipped.title, null) },
-    { slot: 'Background', name: resolve(equipped.background, null) },
-    { slot: 'Portrait', name: resolve(equipped.portrait, 'portrait-default') },
-  ];
+  const resolved = resolveEquipped(equipped, catalog);
+  return COSMETIC_SLOTS.map((slot) => ({
+    slot: SLOT_LABELS[slot]!,
+    // A broken equipped id (no catalogue match) renders as empty rather than
+    // claiming the default look; only a truly unset slot falls back.
+    name:
+      resolved[slot].equippedName ??
+      (resolved[slot].usingDefault ? resolved[slot].defaultName : null) ??
+      null,
+  }));
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** S8-02 — locked picker rows show a "?" emblem (like achievements), never a rule. */
+export const LOCKED_PICKER_EMBLEM = '?';
+
+/**
+ * The exact strings a picker row renders. Owned items show just their name;
+ * unowned items show the emblem + name. This is the leak-guard surface: the
+ * rules that DERIVED ownership live server-side and are never projected, so
+ * this output can carry nothing but names and the "?" mark.
+ */
+export function pickerRowStrings(item: { owned: boolean; name: string }): readonly string[] {
+  return item.owned ? [item.name] : [LOCKED_PICKER_EMBLEM, item.name];
+}
 
 /**
  * Calendar-day label, deterministic on plain YYYY-MM-DD keys (the day the

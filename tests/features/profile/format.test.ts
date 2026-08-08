@@ -12,6 +12,8 @@ import {
   levelLine,
   loadoutSlots,
   masteryRows,
+  pickerRowStrings,
+  LOCKED_PICKER_EMBLEM,
   streakCopy,
   xpBar,
 } from '@/features/profile/format';
@@ -156,5 +158,27 @@ describe('achievementsEntry', () => {
   it('counts unlocks with singular/plural copy', () => {
     expect(achievementsEntry(1)).toBe('1 unlock earned');
     expect(achievementsEntry(13)).toBe('13 unlocks earned');
+  });
+});
+
+describe('pickerRowStrings (S8-02, FR-COS-2)', () => {
+  it('owned items render just their name; unowned ones get the ? emblem', () => {
+    expect(pickerRowStrings({ owned: true, name: 'Adventurer' })).toEqual(['Adventurer']);
+    expect(pickerRowStrings({ owned: false, name: 'Level 100 Frame' })).toEqual([
+      LOCKED_PICKER_EMBLEM,
+      'Level 100 Frame',
+    ]);
+  });
+
+  it('LEAK GUARD: picker rows can never render the machine-readable rule syntax', () => {
+    const ruleSyntax =
+      /"kind"|"count"|"days"|"level"|"hour"|"chapter"|"distinct"|"gap"|"unlock_rule"|\{|\}|>=|<=/;
+    const owned = ['Classic Frame', 'Adventurer', 'Classic Portrait'];
+    const locked = ['Level 5 Frame', 'Explorer', 'Chapter 2 Scene', 'Phoenix Portrait'];
+    for (const name of [...owned, ...locked]) {
+      for (const text of pickerRowStrings({ owned: owned.includes(name), name })) {
+        expect(text).not.toMatch(ruleSyntax);
+      }
+    }
   });
 });

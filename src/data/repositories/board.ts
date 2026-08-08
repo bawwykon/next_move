@@ -1,5 +1,7 @@
 import { supabase } from '@/data/supabase';
 import type { QuestCategory } from '@/domain/recommendation/types';
+import { slotColumn } from '@/domain/cosmetics/loadout';
+import { fetchProfileCosmetics } from '@/data/repositories/profileCosmetics';
 import { fail, ok, type RepoResult } from '@/data/repositories/repoResult';
 
 const RECENT_WINDOW_DAYS = 30;
@@ -127,4 +129,72 @@ export async function fetchMastery(profileId: string): Promise<RepoResult<Master
       points: row.points,
     })),
   );
+}
+
+/**
+ * S8-02 — equip/unequip a cosmetic on the profile row (FR-COS-1/2). This is
+ * the first client-writable path beside the completion queue: it writes ONLY
+ * the `equipped_*` column for the slot — columns the `protect_progression`
+ * guard deliberately leaves client-writable — through the same update-own RLS
+ * as everything else. `itemId` null unequips (back to the default look).
+ *
+ * Defence in depth: the helper re-validates ownership against the user's own
+ * `profile_cosmetics` rows (RLS read-own) before issuing the UPDATE, so an
+ * unowned item can never be persisted through this path even if the picker
+ * were bypassed. (The database itself carries no ownership check on
+ * `equipped_*` — adding one would need a migration, out of S8-02 scope; the
+ * gate lives in the one write path the app uses.)
+ */
+export async function equipCosmetic(
+  profileId: string,
+  slot: string,
+  itemId: string | null,
+): Promise<RepoResult<null>> {
+  const column = slotColumn(slot);
+  if (!column) {
+    return fail(`Unknown cosmetic slot: ${slot}`);
+  }
+  if (itemId !== null) {
+    const ownedResult = await fetchProfileCosmetics(profileId);
+    if (ownedResult.error) {
+      return fail(`Could not verify ownership: ${ownedResult.error}`);
+    }
+    const ownedSlugs = new Set((ownedResult.data ?? []).map((row) => row.slug));
+    const item = await catalogItemById(itemId);
+    if (item.error || !item.data) {
+      return fail(`Unknown cosmetic item: ${itemId}`);
+    }
+    if (!ownedSlugs.has(item.data.slug)) {
+      return fail(`Cosmetic is not owned: ${item.data.slug}`);
+    }
+  }
+  const patch =
+    column === 'equipped_frame'
+      ? { equipped_frame: itemId }
+      : column === 'equipped_title'
+        ? { equipped_title: itemId }
+        : column === 'equipped_background'
+          ? { equipped_background: itemId }
+          : { equipped_portrait: itemId };
+  const { error } = await supabase.from('profiles').update(patch).eq('id', profileId);
+
+  if (error) {
+    return fail(`Could not equip ${slot}: ${error.message}`);
+  }
+  return ok(null);
+}
+
+/** Minimal catalogue lookup used by the equip gate (id → slug). */
+async function catalogItemById(
+  itemId: string,
+): Promise<RepoResult<{ id: string; slug: string } | null>> {
+  const { data, error } = await supabase
+    .from('cosmetics')
+    .select('id, slug')
+    .eq('id', itemId)
+    .maybeSingle();
+  if (error) {
+    return fail(`Could not look up cosmetic: ${error.message}`);
+  }
+  return ok(data ?? null);
 }
