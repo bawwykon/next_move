@@ -8,6 +8,13 @@ export interface CharacterProfile {
   id: string;
   displayName: string | null;
   onboarded: boolean;
+  /**
+   * S7-01 — server-authoritative journey progress (M0019, `journey_quests`).
+   * Total quests completed, permanent, never decreases (FR-JOURNEY-3).
+   */
+  journeyQuestCount: number;
+  /** S7-01 — server-authoritative chapter position, 1-based (M0019). */
+  currentChapter: number;
 }
 
 export interface CompletionRow {
@@ -25,7 +32,7 @@ export interface MasteryRow {
 export async function fetchProfile(profileId: string): Promise<RepoResult<CharacterProfile>> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, display_name, onboarded')
+    .select('id, display_name, onboarded, journey_quests, current_chapter')
     .eq('id', profileId)
     .maybeSingle();
 
@@ -39,6 +46,8 @@ export async function fetchProfile(profileId: string): Promise<RepoResult<Charac
     id: data.id,
     displayName: data.display_name,
     onboarded: data.onboarded,
+    journeyQuestCount: data.journey_quests,
+    currentChapter: data.current_chapter,
   });
 }
 

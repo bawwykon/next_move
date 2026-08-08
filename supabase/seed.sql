@@ -347,3 +347,20 @@ insert into public.mastery (profile_id, track, points)
 select '3f8a2c1e-6f5b-4a7d-9c2e-1b4d6f8a0c3e', t, 0
 from unnest(array['discipline', 'endurance', 'mobility', 'strength']) as t
 on conflict (profile_id, track) do nothing;
+
+-- S7-01 — keep the demo fixture truthful to the server invariant
+-- (journey_quests == quest-completion count, current_chapter ==
+-- chapter_for_quests(journey_quests); M0019, complete_quest RPC). The seed
+-- inserts completions directly (bypassing the RPC), so the progression
+-- columns must be backfilled here or the journey proofs misread the data.
+-- Runs as postgres (seed), so the progression guard trigger allows it.
+update public.profiles
+   set journey_quests = (
+         select count(*) from public.quest_completions qc
+          where qc.profile_id = '3f8a2c1e-6f5b-4a7d-9c2e-1b4d6f8a0c3e'
+       )
+     , current_chapter = public.chapter_for_quests(
+         (select count(*)::int from public.quest_completions qc
+           where qc.profile_id = '3f8a2c1e-6f5b-4a7d-9c2e-1b4d6f8a0c3e')
+       )
+ where id = '3f8a2c1e-6f5b-4a7d-9c2e-1b4d6f8a0c3e';
