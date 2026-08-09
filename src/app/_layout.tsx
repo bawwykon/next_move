@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { LogBox } from 'react-native';
 
 import { useLoadedFonts } from '@/lib/fonts';
+import { track } from '@/data/analytics';
 import { captureTabPath } from '@/lib/intended-route';
 import { useAppForeground } from '@/hooks/useAppForeground';
 import { useDayChange } from '@/hooks/useDayChange';
@@ -16,6 +17,9 @@ import { useSessionStore } from '@/state/sessionStore';
 LogBox.ignoreLogs(['WebCrypto API is not supported']);
 
 SplashScreen.preventAutoHideAsync();
+
+// NFR-9 — one `app_opened` per process launch, once.
+let appOpenedTracked = false;
 
 export default function RootLayout() {
   const [loaded, error] = useLoadedFonts();
@@ -31,6 +35,15 @@ export default function RootLayout() {
   useEffect(() => {
     captureTabPath(pathname);
   }, [pathname]);
+
+  // NFR-9 — app_opened fires once per process launch (device open/foreground
+  // events are deliberately out of scope: privacy-lean, per PRD §8.2).
+  useEffect(() => {
+    if (ready && !appOpenedTracked) {
+      appOpenedTracked = true;
+      void track('app_opened');
+    }
+  }, [ready]);
 
   // S5-05 — flush the offline outbox once the session is known (auth-ready)
   // and on every return to the foreground; hydrate keeps the pending marker

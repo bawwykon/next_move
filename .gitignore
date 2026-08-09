@@ -50,3 +50,7 @@ supabase/.temp/
 
 # device-specific Expo Go QR (local LAN)
 assets/expo-go-qr.png
+
+expo.log
+artifacts/
+

@@ -3,9 +3,18 @@ import * as Haptics from 'expo-haptics';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { BackHandler, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  AccessibilityInfo,
+  BackHandler,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 import { Screen } from '@/components/ui/Screen';
+import { track } from '@/data/analytics';
 import { fetchQuestDetail } from '@/data/repositories/quests';
 import {
   buildWorkout,
@@ -70,6 +79,10 @@ export default function WorkoutScreen() {
     const checkpoint = useWorkoutStore.getState().checkpoint;
     const startedAt =
       checkpoint && checkpoint.questId === questId ? checkpoint.startedAtEpochMs : Date.now();
+    if (!(checkpoint && checkpoint.questId === questId)) {
+      // NFR-9 — a fresh (not resumed) run.
+      void track('quest_started', { questId });
+    }
     // The checkpoint is persisted before the first frame of exercise display,
     // so an app kill at any point leaves a resumable run behind (FR-TIMER-7).
     setNames(result.data.segments.map((s) => (s.kind === 'rest' ? null : s.exerciseName)));
@@ -106,6 +119,8 @@ export default function WorkoutScreen() {
           ? checkpoint.startedAtEpochMs
           : (workout?.startedAtEpochMs ?? Date.now());
       await finishQuest({ questId: completedQuestId, startedAtEpochMs });
+      // NFR-9 — completion event persisted (outbox wrote), navigation happens.
+      void track('quest_completed', { questId: completedQuestId });
       router.replace({
         pathname: '/victory',
         params: { questId: completedQuestId, title: params.title },
@@ -151,6 +166,44 @@ export default function WorkoutScreen() {
     }
     prevIndexRef.current = segmentIndex;
   }, [segmentIndex]);
+
+  // EC-10 — screen-reader announcements. Segment changes are announced once
+  // (name + kind); the countdown is announced only at full-minute boundaries
+  // ("3 minutes left") — never the ticking digits themselves.
+  const announcedSegmentRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (segmentIndex === null || !workout) {
+      return;
+    }
+    const seg = workout.segments[segmentIndex];
+    if (!seg || announcedSegmentRef.current === segmentIndex) {
+      return;
+    }
+    announcedSegmentRef.current = segmentIndex;
+    const label = seg.kind === 'rest' ? 'Take a breather' : (names[segmentIndex] ?? 'Move');
+    AccessibilityInfo.announceForAccessibility(`${label} — ${segmentKindLabel(seg.kind)}`);
+  }, [names, segmentIndex, workout]);
+
+  const announcedMinuteRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (remaining === null) {
+      return;
+    }
+    const minute = Math.floor(remaining / 60000);
+    if (announcedMinuteRef.current === null) {
+      announcedMinuteRef.current = minute; // settle without a first-frame announce
+      return;
+    }
+    if (minute === announcedMinuteRef.current) {
+      return;
+    }
+    announcedMinuteRef.current = minute;
+    if (minute === 0) {
+      AccessibilityInfo.announceForAccessibility('Less than a minute left');
+    } else if (minute > 0) {
+      AccessibilityInfo.announceForAccessibility(`${minute} minute${minute === 1 ? '' : 's'} left`);
+    }
+  }, [remaining]);
 
   // Android back during a workout = Quit Quest with the one allowed
   // confirmation sheet (Ref 04 rule 5, FR-TIMER-6). The explicit Quit button

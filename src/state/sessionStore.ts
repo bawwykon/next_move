@@ -2,6 +2,7 @@ import type { Session } from '@supabase/supabase-js';
 import { create } from 'zustand';
 
 import { supabase } from '@/data/supabase';
+import { track } from '@/data/analytics';
 import { getOnboarded, saveOnboarding } from '@/data/repositories/profile';
 import type { OnboardingPayload } from '@/features/onboarding/wizardController';
 import { getAuthErrorMessage, signUpConfirmation } from '@/lib/auth-errors';
@@ -54,7 +55,8 @@ export const useSessionStore = create<SessionStore>()((set) => ({
       return error;
     }
     set({ onboarded: true });
-    // TODO(NFR-9): emit onboarding_completed analytics event once an SDK is wired up.
+    // NFR-9 — onboarding_completed fires once the server accepted the payload.
+    void track('onboarding_completed');
     return null;
   },
 

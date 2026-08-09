@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/AppButton';
 import { Screen } from '@/components/ui/Screen';
+import { track } from '@/data/analytics';
 import { celebrateStep, initialCelebrationState } from '@/features/victory/celebration';
 import { ConfettiBurst } from '@/features/victory/confetti';
 import { BreakdownCard } from '@/features/victory/breakdown';
@@ -55,6 +56,10 @@ export default function VictoryScreen() {
     enterChimed.current = true;
     playOnce(victoryTrack);
     dispatchCelebration('payload');
+    // NFR-9 — each new unlock in this payload, exactly once per visit.
+    for (const unlock of result.achievements) {
+      void track('achievement_unlocked', { slug: unlock.slug });
+    }
   }, [result, victoryTrack]);
 
   // FR-XP-4 — level-up celebration, timed after the initial burst: a second
@@ -65,6 +70,8 @@ export default function VictoryScreen() {
       return;
     }
     levelUpRung.current = true;
+    // NFR-9 — level_up fires with the span the server reported.
+    void track('level_up', { before: result.level.before, after: result.level.after });
     let active = true;
     const show = setTimeout(() => {
       if (!active || skippedRef.current) {
