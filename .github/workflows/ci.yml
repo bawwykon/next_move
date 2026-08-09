@@ -23,6 +23,10 @@ jobs:
         run: TZ=America/New_York npx jest tests/domain/board/window-dst.test.ts --ci
       - name: Window midnight pins (Asia/Tokyo — literal local midnight)
         run: TZ=Asia/Tokyo npx jest tests/domain/board/window-tz.test.ts --ci
+      - name: Habit-surface midnight pins (Asia/Tokyo — daily/weekly flip)
+        run: TZ=Asia/Tokyo npx jest tests/domain/streak/habit-tz.test.ts --ci
+      - name: Habit-surface DST pins (America/New_York — 23h/25h days)
+        run: TZ=America/New_York npx jest tests/domain/streak/habit-dst.test.ts --ci
       - run: npm run format:check
 
   db:

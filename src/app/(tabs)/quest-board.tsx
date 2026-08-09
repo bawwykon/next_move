@@ -26,6 +26,14 @@ import type {
 import { WEEKLY_TARGET, dayWindow, weeklyWindow } from '@/domain/board/window';
 import { difficultyBadge } from '@/features/questBoard/badges';
 import { isCompletedToday } from '@/features/questBoard/completedToday';
+import {
+  WEEKLY_BONUS_XP,
+  dailyCellCopy,
+  dailyChallengeProgress,
+  daysUntilNextMonday,
+  streakPillCopy,
+  weeklyEarnCopy,
+} from '@/features/questBoard/earn';
 import { formatDuration } from '@/features/questBoard/format';
 import { greetingForHour } from '@/features/questBoard/greeting';
 import { weeklyChallengeProgress } from '@/features/questBoard/weekly';
@@ -40,9 +48,6 @@ const CATEGORY_LABELS: Record<QuestCategory, string> = {
   mobility: 'Mobility',
   discipline: 'Focus',
 };
-
-// Ref 08 §7 — weekly challenge reward.
-const WEEKLY_XP_REWARD = 500;
 
 // recommendQuest accepts onboarding for parity with Ref 06; its rules do not
 // consume it, so a fresh (unskipped) session can still get a recommendation.
@@ -124,6 +129,19 @@ export default function QuestBoardScreen() {
     return weeklyWindow(new Date(today.startMs), progress.done);
   }, [completions, todayKey, today.startMs]);
 
+  // S9-01 — the daily cell derives from the same completions snapshot: any
+  // completion whose local day key is today means the +75 XP bonus has paid.
+  const daily = useMemo(
+    () => dailyChallengeProgress(completions ?? [], todayKey),
+    [completions, todayKey],
+  );
+  const dailyCell = dailyCellCopy(daily.done);
+  const weeklyEarn = weeklyEarnCopy(
+    weekly.completionsInWindow,
+    WEEKLY_TARGET,
+    daysUntilNextMonday(new Date()),
+  );
+
   const recommendation = useMemo(() => {
     if (!catalog || catalog.length === 0 || !completions) {
       return null;
@@ -177,10 +195,7 @@ export default function QuestBoardScreen() {
   const { greeting, line } = greetingForHour(new Date().getHours());
   const displayName = profile?.displayName ?? 'Adventurer';
   const streakCount = streak?.current ?? 0;
-  const streakLine =
-    streakCount > 0
-      ? `${streakCount} day${streakCount === 1 ? '' : 's'} strong!`
-      : 'Your adventure is waiting.';
+  const streakPill = streakPillCopy(streakCount);
 
   return (
     <Screen>
@@ -220,8 +235,15 @@ export default function QuestBoardScreen() {
                 <Text style={styles.greetingLine}>{line}</Text>
                 <View style={styles.pillRow}>
                   <View style={styles.streakPill}>
-                    <Text style={styles.streakText}>{streakLine}</Text>
+                    <Text style={styles.streakText}>{streakPill.main}</Text>
                   </View>
+                  {/* S9-01 — countdown to the next server streak milestone.
+                      Null past the top of the ladder or on a dead streak. */}
+                  {streakPill.milestone ? (
+                    <View style={styles.streakPill}>
+                      <Text style={styles.streakText}>{streakPill.milestone}</Text>
+                    </View>
+                  ) : null}
                   {/* S5-05 — completions are queued offline; the server
                       (never the client) computes XP/streak/mastery. */}
                   {pendingCount > 0 ? (
@@ -282,6 +304,32 @@ export default function QuestBoardScreen() {
               ) : null}
 
               <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Daily Challenge</Text>
+                <View style={styles.weeklyCard}>
+                  <View style={styles.weeklyHeader}>
+                    <Text style={styles.weeklyGoal}>{dailyCell.goal}</Text>
+                    {daily.done ? (
+                      <Ionicons name="checkmark-circle" size={20} color={colors.success} />
+                    ) : null}
+                  </View>
+                  <Text style={styles.dailyMessage}>{dailyCell.message}</Text>
+                  <View style={styles.progressTrack}>
+                    <View
+                      style={[
+                        styles.progressFill,
+                        daily.done ? styles.progressFillComplete : null,
+                        { width: daily.done ? '100%' : '0%' },
+                      ]}
+                    />
+                  </View>
+                  <View style={styles.weeklyMeta}>
+                    <Text style={styles.weeklyCount}>{dailyCell.meta}</Text>
+                    <Text style={styles.weeklyReward}>{dailyCell.reward}</Text>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Weekly Challenge</Text>
                 <View style={styles.weeklyCard}>
                   <View style={styles.weeklyHeader}>
@@ -312,8 +360,11 @@ export default function QuestBoardScreen() {
                     <Text style={styles.weeklyCount}>
                       {weekly.completionsInWindow}/{WEEKLY_TARGET}
                     </Text>
-                    <Text style={styles.weeklyReward}>+{WEEKLY_XP_REWARD} XP</Text>
+                    <Text style={styles.weeklyReward}>+{WEEKLY_BONUS_XP} XP</Text>
                   </View>
+                  {/* S9-01 — next-earn line: remaining quests to the bonus, or
+                      the Monday rollover once it has paid. */}
+                  <Text style={styles.weeklyEarnLine}>{weeklyEarn}</Text>
                 </View>
               </View>
 
@@ -735,6 +786,16 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodyBold.family,
     fontSize: 15,
     flexShrink: 1,
+  },
+  dailyMessage: {
+    color: colors.textMuted,
+    fontFamily: fonts.body.family,
+    fontSize: 13,
+  },
+  weeklyEarnLine: {
+    color: colors.textMuted,
+    fontFamily: fonts.body.family,
+    fontSize: 13,
   },
   progressTrack: {
     height: 8,
