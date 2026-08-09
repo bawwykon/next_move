@@ -15,8 +15,10 @@ import {
   pickerRowStrings,
   LOCKED_PICKER_EMBLEM,
   streakCopy,
+  streakMilestoneLine,
   xpBar,
 } from '@/features/profile/format';
+import { streakPillCopy } from '@/features/questBoard/earn';
 
 const CATALOG = [
   { id: 'c-frame', slug: 'frame-default', name: 'Classic Frame' },
@@ -62,6 +64,27 @@ describe('streakCopy (FR-STR-2)', () => {
     expect(streakCopy(0, 0).primary).toBe('Your adventure is waiting. Your next quest is ready.');
     expect(streakCopy(0, 0).longest).toBeNull();
     expect(streakCopy(0, 12).longest).toBe('Best: 12 days');
+  });
+});
+
+describe('streakMilestoneLine (S9-02, shared with the board pill)', () => {
+  it('counts whole days down to the next paid milestone', () => {
+    expect(streakMilestoneLine(1)).toBe('2 days to a 3-day bonus');
+    expect(streakMilestoneLine(2)).toBe('1 day to a 3-day bonus');
+    expect(streakMilestoneLine(5)).toBe('2 days to a 7-day bonus');
+    expect(streakMilestoneLine(7)).toBe('23 days to a 30-day bonus');
+    expect(streakMilestoneLine(29)).toBe('1 day to a 30-day bonus');
+    expect(streakMilestoneLine(99)).toBe('1 day to a 100-day bonus');
+  });
+
+  it('says nothing once the ladder is exhausted', () => {
+    expect(streakMilestoneLine(100)).toBeNull();
+    expect(streakMilestoneLine(101)).toBeNull();
+  });
+
+  it('matches the board pill wording exactly (unified string)', () => {
+    const { milestone } = streakPillCopy(2);
+    expect(milestone).toBe(streakMilestoneLine(2));
   });
 });
 

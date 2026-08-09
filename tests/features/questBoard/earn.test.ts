@@ -112,7 +112,7 @@ describe('streakPillCopy', () => {
   it('has no countdown past the top of the ladder or on a dead streak', () => {
     expect(streakPillCopy(100).milestone).toBeNull();
     expect(streakPillCopy(0).milestone).toBeNull();
-    expect(streakPillCopy(0).main).toBe('Your adventure is waiting.');
+    expect(streakPillCopy(0).main).toBe('Your adventure is waiting. Your next quest is ready.');
   });
 
   it('keeps tone familiar and positive (§7.5), no banned words', () => {

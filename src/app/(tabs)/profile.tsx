@@ -30,6 +30,7 @@ import {
   levelLine,
   masteryRows,
   streakCopy,
+  streakMilestoneLine,
   xpBar,
   achievementsEntry,
   formatXp,
@@ -155,6 +156,8 @@ export default function ProfileScreen() {
     () => (profile ? streakCopy(profile.currentStreak, profile.longestStreak) : streakCopy(0, 0)),
     [profile],
   );
+  // S9-02 — shared milestone countdown (same wording as the board pill).
+  const milestoneLine = streakMilestoneLine(profile?.currentStreak ?? 0);
   const masteryRowsView = useMemo(() => masteryRows(mastery), [mastery]);
   const historyView = useMemo(() => historyLines(history, todayKey), [history, todayKey]);
   const exhausted = historyExhausted(history.length, HISTORY_PAGE_SIZE);
@@ -218,6 +221,7 @@ export default function ProfileScreen() {
                 <Text style={styles.streakPrimary}>{streaks.primary}</Text>
               </View>
               {streaks.longest ? <Text style={styles.streakLongest}>{streaks.longest}</Text> : null}
+              {milestoneLine ? <Text style={styles.streakLongest}>{milestoneLine}</Text> : null}
             </View>
 
             {/* Mastery bars (FR-MAS-4). */}

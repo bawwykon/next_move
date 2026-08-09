@@ -4,8 +4,10 @@
  * server math in supabase/migrations/0020_complete_quest.sql (daily bonus,
  * weekly bonus, streak ladder) — nothing here fetches, mutates, or renders.
  * Copy is encouragement-only (Ref 05 §7.5 / FR-STR-2: no pressure phrasing).
+ * The streak countdown line is the S9-02-unified builder shared with the
+ * Profile row (src/features/profile/format.ts).
  */
-import { nextStreakMilestone } from '@/domain/streak/milestone';
+import { streakMilestoneLine } from '@/features/profile/format';
 
 /** Mirror of `v_daily` — paid on the first completion of the local day. */
 export const DAILY_BONUS_XP = 75;
@@ -90,23 +92,20 @@ export interface StreakPillCopy {
 }
 
 /**
- * The streak pill's lines. Live streaks get a countdown to the next server
- * milestone; a dead streak gets the first-rung invitation; past the top of the
- * ladder there is no countdown (already at/past every server reward).
+ * The streak pill's lines. Live streaks carry the S9-02-unified milestone
+ * countdown (identical wording to the Profile row); a dead streak shares the
+ * Profile's full two-sentence invitation (FR-STR-2).
  */
 export function streakPillCopy(current: number): StreakPillCopy {
   if (current > 0) {
     const unit = current === 1 ? 'day' : 'days';
-    const milestone = nextStreakMilestone(current);
     return {
       main: `${current} ${unit} strong`,
-      milestone: milestone
-        ? `${milestone.daysTo} ${milestone.daysTo === 1 ? 'day' : 'days'} to a ${milestone.days}-day bonus`
-        : null,
+      milestone: streakMilestoneLine(current),
     };
   }
   return {
-    main: 'Your adventure is waiting.',
+    main: 'Your adventure is waiting. Your next quest is ready.',
     milestone: null,
   };
 }

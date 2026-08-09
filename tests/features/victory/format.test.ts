@@ -1,4 +1,6 @@
 import type { CompletionResult } from '@/domain/completion/types';
+import { STREAK_MILESTONE_DAYS, streakMilestoneXp } from '@/domain/streak/milestone';
+import { DAILY_BONUS_XP, WEEKLY_BONUS_XP } from '@/features/questBoard/earn';
 
 import {
   breakdownRowSum,
@@ -79,6 +81,36 @@ describe('xpBreakdownRows', () => {
 
   it('returns no rows when every stage paid zero', () => {
     expect(xpBreakdownRows({ quest: 0, daily: 0, weekly: 0, streak: 0, total: 0 })).toEqual([]);
+  });
+
+  it('S9-02 audit: bonus rows equal the server payouts exactly (0020 mirrors)', () => {
+    const daily = xpBreakdownRows({
+      quest: 0,
+      daily: DAILY_BONUS_XP,
+      weekly: 0,
+      streak: 0,
+      total: DAILY_BONUS_XP,
+    });
+    expect(daily).toEqual([{ label: 'Daily bonus', xp: 75 }]);
+    expect(daily[0]?.xp).toBe(DAILY_BONUS_XP);
+
+    const weekly = xpBreakdownRows({
+      quest: 0,
+      daily: 0,
+      weekly: WEEKLY_BONUS_XP,
+      streak: 0,
+      total: WEEKLY_BONUS_XP,
+    });
+    expect(weekly).toEqual([{ label: 'Weekly bonus', xp: 500 }]);
+    expect(weekly[0]?.xp).toBe(WEEKLY_BONUS_XP);
+  });
+
+  it('S9-02 audit — the streak bonus row matches the 3/7/30/100 ladder payouts', () => {
+    for (const days of STREAK_MILESTONE_DAYS) {
+      const xp = streakMilestoneXp(days);
+      const rows = xpBreakdownRows({ quest: 0, daily: 0, weekly: 0, streak: xp, total: xp });
+      expect(rows).toEqual([{ label: 'Streak bonus', xp }]);
+    }
   });
 
   it('the visible rows always sum to the authoritative total', () => {

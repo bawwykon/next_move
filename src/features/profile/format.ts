@@ -7,6 +7,7 @@
  */
 import { masteryProgress, masteryLevelForPoints, xpProgress } from '@/domain/xp/level';
 import { COSMETIC_SLOTS, resolveEquipped, type CosmeticSlot } from '@/domain/cosmetics/loadout';
+import { nextStreakMilestone } from '@/domain/streak/milestone';
 import { masteryLevelTitle, masteryTrackLabel } from '@/features/victory/format';
 
 /** Thousands-grouped, locale-independent (tests pin the exact grouping). */
@@ -68,6 +69,20 @@ export function streakCopy(current: number, longest: number): StreakCopy {
     primary: 'Your adventure is waiting. Your next quest is ready.',
     longest: longest > 0 ? `Best: ${longest} days` : null,
   };
+}
+
+/**
+ * S9-02 — the streak-milestone countdown line, shared by the Profile streak
+ * row and the board pill. Uses the S9-01 domain mirror of the server ladder
+ * (0011/0020): whole days until the next paid milestone, null once the top
+ * (100-day) rung is passed. Encouragement-only phrasing (FR-STR-2).
+ */
+export function streakMilestoneLine(current: number): string | null {
+  const next = nextStreakMilestone(current);
+  if (!next) {
+    return null;
+  }
+  return `${next.daysTo} ${next.daysTo === 1 ? 'day' : 'days'} to a ${next.days}-day bonus`;
 }
 
 export interface MasteryDisplayRow {
