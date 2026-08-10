@@ -146,7 +146,7 @@ insert into public.exercise_library (slug, name, instruction, safety_note, categ
   ('standing-quad-stretch', 'Standing Quad Stretch', 'Stand tall and hold a wall or chair for balance. Bend one knee and bring your heel toward your glute, hold gently, then switch legs.', 'Keep both knees close together and stop if your hip feels tight.', '{"mobility"}', 'Hold your ankle with a towel or band for a longer reach.')
 on conflict (slug) do nothing;
 
--- quest definitions (10)
+-- quest definitions (11 — S11-01 adds the elite tier: interval-peak)
 insert into public.quests (slug, title, description, difficulty, xp_reward, duration_sec, categories) values
   ('morning-stretch', 'Morning Stretch', 'Wake up your whole body with a gentle stretch routine that eases you into the day.', 'easy', 50, 480, '{"mobility"}'),
   ('first-steps', 'First Steps', 'A friendly introduction to daily movement with easy marching and walking steps.', 'easy', 50, 480, '{"endurance"}'),
@@ -157,15 +157,20 @@ insert into public.quests (slug, title, description, difficulty, xp_reward, dura
   ('core-basics', 'Core Basics', 'Foundation moves that strengthen your middle from the ground up.', 'normal', 100, 600, '{"strength"}'),
   ('full-body-flow', 'Full Body Flow', 'A flowing sequence that gently moves every major joint.', 'normal', 100, 720, '{"mobility"}'),
   ('interval-boost', 'Interval Boost', 'Structured work and rest intervals that lift your conditioning.', 'hard', 200, 900, '{"endurance"}'),
-  ('strength-builder', 'Strength Builder', 'A structured circuit that builds whole-body strength safely.', 'hard', 200, 900, '{"strength"}')
+  ('strength-builder', 'Strength Builder', 'A structured circuit that builds whole-body strength safely.', 'hard', 200, 900, '{"strength"}'),
+  ('interval-peak', 'Interval Peak', 'Three rounds of intervals, each a little harder than the last — the elite endurance climb.', 'elite', 400, 900, '{"endurance"}')
 on conflict (slug) do nothing;
 
 -- quest segments (position 1-based, first warmup, last cooldown, sum = quest duration)
+-- S11-01 rebalance: beginner-safe pacing (short first work blocks, generous rests,
+-- static holds under 45s on easy, stretches 60-90s), density carries difficulty,
+-- warmup + cooldown on every quest, totals stay within 480-900s (FR-QUES-7).
 delete from public.quest_segments
 where quest_id in (
   select id from public.quests where slug in (
     'morning-stretch', 'first-steps', 'desk-break', 'home-circuit', 'steady-flow',
-    'power-walk', 'core-basics', 'full-body-flow', 'interval-boost', 'strength-builder'
+    'power-walk', 'core-basics', 'full-body-flow', 'interval-boost', 'strength-builder',
+    'interval-peak'
   )
 );
 
@@ -175,40 +180,60 @@ from public.quests q
 join (
   values
     ('morning-stretch', 1, 'warmup', 'neck-shoulder-rolls', 60),
-    ('morning-stretch', 2, 'work', 'cat-cow', 120),
-    ('morning-stretch', 3, 'work', 'standing-quad-stretch', 90),
-    ('morning-stretch', 4, 'work', 'seated-hamstring-stretch', 90),
-    ('morning-stretch', 5, 'cooldown', 'march-in-place', 120),
+    ('morning-stretch', 2, 'work', 'cat-cow', 90),
+    ('morning-stretch', 3, 'rest', null, 30),
+    ('morning-stretch', 4, 'work', 'standing-quad-stretch', 60),
+    ('morning-stretch', 5, 'rest', null, 30),
+    ('morning-stretch', 6, 'work', 'seated-hamstring-stretch', 60),
+    ('morning-stretch', 7, 'rest', null, 30),
+    ('morning-stretch', 8, 'cooldown', 'march-in-place', 120),
 
     ('first-steps', 1, 'warmup', 'march-in-place', 60),
-    ('first-steps', 2, 'work', 'step-touch', 120),
-    ('first-steps', 3, 'work', 'side-steps', 120),
-    ('first-steps', 4, 'rest', null, 60),
-    ('first-steps', 5, 'work', 'seated-march', 60),
-    ('first-steps', 6, 'cooldown', 'neck-shoulder-rolls', 60),
+    ('first-steps', 2, 'work', 'step-touch', 30),
+    ('first-steps', 3, 'rest', null, 30),
+    ('first-steps', 4, 'work', 'side-steps', 30),
+    ('first-steps', 5, 'rest', null, 30),
+    ('first-steps', 6, 'work', 'step-touch', 60),
+    ('first-steps', 7, 'rest', null, 30),
+    ('first-steps', 8, 'work', 'side-steps', 60),
+    ('first-steps', 9, 'rest', null, 30),
+    ('first-steps', 10, 'work', 'seated-march', 60),
+    ('first-steps', 11, 'cooldown', 'neck-shoulder-rolls', 60),
 
-    ('desk-break', 1, 'warmup', 'neck-shoulder-rolls', 90),
-    ('desk-break', 2, 'work', 'seated-hamstring-stretch', 120),
-    ('desk-break', 3, 'work', 'standing-quad-stretch', 90),
-    ('desk-break', 4, 'work', 'cat-cow', 90),
-    ('desk-break', 5, 'cooldown', 'seated-march', 90),
+    ('desk-break', 1, 'warmup', 'neck-shoulder-rolls', 60),
+    ('desk-break', 2, 'work', 'seated-hamstring-stretch', 60),
+    ('desk-break', 3, 'rest', null, 30),
+    ('desk-break', 4, 'work', 'standing-quad-stretch', 60),
+    ('desk-break', 5, 'rest', null, 30),
+    ('desk-break', 6, 'work', 'cat-cow', 90),
+    ('desk-break', 7, 'rest', null, 30),
+    ('desk-break', 8, 'cooldown', 'seated-march', 120),
 
     ('home-circuit', 1, 'warmup', 'march-in-place', 60),
-    ('home-circuit', 2, 'work', 'wall-push-up', 90),
+    ('home-circuit', 2, 'work', 'wall-push-up', 45),
     ('home-circuit', 3, 'rest', null, 30),
-    ('home-circuit', 4, 'work', 'chair-squat', 90),
+    ('home-circuit', 4, 'work', 'chair-squat', 45),
     ('home-circuit', 5, 'rest', null, 30),
-    ('home-circuit', 6, 'work', 'glute-bridge', 90),
+    ('home-circuit', 6, 'work', 'glute-bridge', 45),
     ('home-circuit', 7, 'rest', null, 30),
-    ('home-circuit', 8, 'work', 'bird-dog', 90),
-    ('home-circuit', 9, 'cooldown', 'neck-shoulder-rolls', 90),
+    ('home-circuit', 8, 'work', 'bird-dog', 45),
+    ('home-circuit', 9, 'rest', null, 30),
+    ('home-circuit', 10, 'work', 'wall-push-up', 45),
+    ('home-circuit', 11, 'rest', null, 30),
+    ('home-circuit', 12, 'work', 'chair-squat', 45),
+    ('home-circuit', 13, 'rest', null, 30),
+    ('home-circuit', 14, 'cooldown', 'neck-shoulder-rolls', 90),
 
     ('steady-flow', 1, 'warmup', 'neck-shoulder-rolls', 60),
-    ('steady-flow', 2, 'work', 'cat-cow', 120),
-    ('steady-flow', 3, 'work', 'standing-quad-stretch', 90),
-    ('steady-flow', 4, 'work', 'seated-hamstring-stretch', 90),
-    ('steady-flow', 5, 'work', 'wall-sit', 60),
-    ('steady-flow', 6, 'cooldown', 'march-in-place', 60),
+    ('steady-flow', 2, 'work', 'cat-cow', 90),
+    ('steady-flow', 3, 'rest', null, 30),
+    ('steady-flow', 4, 'work', 'wall-sit', 40),
+    ('steady-flow', 5, 'rest', null, 30),
+    ('steady-flow', 6, 'work', 'standing-quad-stretch', 60),
+    ('steady-flow', 7, 'rest', null, 20),
+    ('steady-flow', 8, 'work', 'seated-hamstring-stretch', 60),
+    ('steady-flow', 9, 'rest', null, 30),
+    ('steady-flow', 10, 'cooldown', 'march-in-place', 60),
 
     ('power-walk', 1, 'warmup', 'march-in-place', 90),
     ('power-walk', 2, 'work', 'side-steps', 120),
@@ -227,16 +252,20 @@ join (
     ('core-basics', 5, 'rest', null, 30),
     ('core-basics', 6, 'work', 'glute-bridge', 90),
     ('core-basics', 7, 'rest', null, 30),
-    ('core-basics', 8, 'work', 'wall-sit', 90),
-    ('core-basics', 9, 'cooldown', 'seated-hamstring-stretch', 90),
+    ('core-basics', 8, 'work', 'wall-sit', 60),
+    ('core-basics', 9, 'rest', null, 30),
+    ('core-basics', 10, 'cooldown', 'seated-hamstring-stretch', 90),
 
     ('full-body-flow', 1, 'warmup', 'neck-shoulder-rolls', 90),
     ('full-body-flow', 2, 'work', 'cat-cow', 120),
-    ('full-body-flow', 3, 'rest', null, 60),
-    ('full-body-flow', 4, 'work', 'standing-quad-stretch', 120),
-    ('full-body-flow', 5, 'work', 'seated-hamstring-stretch', 120),
-    ('full-body-flow', 6, 'work', 'glute-bridge', 90),
-    ('full-body-flow', 7, 'cooldown', 'seated-march', 120),
+    ('full-body-flow', 3, 'rest', null, 30),
+    ('full-body-flow', 4, 'work', 'standing-quad-stretch', 90),
+    ('full-body-flow', 5, 'rest', null, 30),
+    ('full-body-flow', 6, 'work', 'seated-hamstring-stretch', 90),
+    ('full-body-flow', 7, 'rest', null, 30),
+    ('full-body-flow', 8, 'work', 'glute-bridge', 90),
+    ('full-body-flow', 9, 'rest', null, 30),
+    ('full-body-flow', 10, 'cooldown', 'seated-march', 120),
 
     ('interval-boost', 1, 'warmup', 'march-in-place', 90),
     ('interval-boost', 2, 'work', 'step-touch', 150),
@@ -254,9 +283,32 @@ join (
     ('strength-builder', 4, 'work', 'chair-squat', 150),
     ('strength-builder', 5, 'rest', null, 30),
     ('strength-builder', 6, 'work', 'glute-bridge', 150),
-    ('strength-builder', 7, 'rest', null, 30),
-    ('strength-builder', 8, 'work', 'wall-sit', 120),
-    ('strength-builder', 9, 'cooldown', 'seated-hamstring-stretch', 150)
+    ('strength-builder', 7, 'rest', null, 60),
+    ('strength-builder', 8, 'work', 'wall-sit', 60),
+    ('strength-builder', 9, 'rest', null, 30),
+    ('strength-builder', 10, 'work', 'bird-dog', 60),
+    ('strength-builder', 11, 'cooldown', 'seated-hamstring-stretch', 90),
+
+    ('interval-peak', 1, 'warmup', 'march-in-place', 60),
+    ('interval-peak', 2, 'work', 'step-touch', 60),
+    ('interval-peak', 3, 'rest', null, 20),
+    ('interval-peak', 4, 'work', 'side-steps', 60),
+    ('interval-peak', 5, 'rest', null, 20),
+    ('interval-peak', 6, 'work', 'gentle-hops', 60),
+    ('interval-peak', 7, 'rest', null, 20),
+    ('interval-peak', 8, 'work', 'step-touch', 60),
+    ('interval-peak', 9, 'rest', null, 20),
+    ('interval-peak', 10, 'work', 'side-steps', 60),
+    ('interval-peak', 11, 'rest', null, 20),
+    ('interval-peak', 12, 'work', 'gentle-hops', 60),
+    ('interval-peak', 13, 'rest', null, 20),
+    ('interval-peak', 14, 'work', 'march-in-place', 60),
+    ('interval-peak', 15, 'rest', null, 20),
+    ('interval-peak', 16, 'work', 'step-touch', 90),
+    ('interval-peak', 17, 'rest', null, 20),
+    ('interval-peak', 18, 'work', 'side-steps', 90),
+    ('interval-peak', 19, 'rest', null, 20),
+    ('interval-peak', 20, 'cooldown', 'seated-march', 60)
 ) as s(slug, position, kind, exercise_slug, duration_sec)
 on s.slug = q.slug
 left join public.exercise_library e on e.slug = s.exercise_slug;

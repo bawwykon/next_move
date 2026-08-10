@@ -57,11 +57,11 @@ describe('board data path (local supabase)', () => {
     profileId = data.user.id;
   });
 
-  it('returns 10 active quests sorted by difficulty then slug, with segment counts', async () => {
+  it('returns 11 active quests sorted by difficulty then slug, with segment counts', async () => {
     const result = await questsRepo.fetchActiveQuests();
     expect(result.error).toBeNull();
     const quests = result.data!;
-    expect(quests).toHaveLength(10);
+    expect(quests).toHaveLength(11);
 
     expect(quests.map((quest) => quest.difficulty)).toEqual([
       'easy',
@@ -74,15 +74,20 @@ describe('board data path (local supabase)', () => {
       'normal',
       'hard',
       'hard',
+      'elite',
     ]);
     const slugs = quests.map((quest) => quest.slug);
     expect(slugs.slice(0, 5)).toEqual(slugs.slice(0, 5).sort());
     expect(slugs.slice(5, 8)).toEqual(slugs.slice(5, 8).sort());
-    expect(slugs.slice(8)).toEqual(slugs.slice(8).sort());
+    expect(slugs.slice(8, 10)).toEqual(slugs.slice(8, 10).sort());
+    expect(slugs[10]).toBe('interval-peak');
 
     const morningStretch = quests.find((quest) => quest.slug === 'morning-stretch')!;
-    expect(morningStretch.segmentCount).toBe(5);
+    expect(morningStretch.segmentCount).toBe(8);
     expect(morningStretch.totalDurationSec).toBe(480);
+    expect(
+      quests.some((quest) => quest.slug === 'interval-peak' && quest.difficulty === 'elite'),
+    ).toBe(true);
     for (const quest of quests) {
       expect(quest.segmentCount).toBeGreaterThan(0);
       expect(quest.totalDurationSec).toBeGreaterThan(0);
