@@ -44,4 +44,4 @@ jobs:
           counts=$(docker exec "$db_container" psql -U postgres -d postgres -t -A -c \
             "select (select count(*) from public.quests) || '|' || (select count(*) from public.exercise_library) || '|' || (select count(*) from public.achievements) || '|' || (select count(*) from public.cosmetics);")
           echo "seed counts: $counts"
-          test "$counts" = "10|15|13|18"
+          test "$counts" = "11|15|13|18"
