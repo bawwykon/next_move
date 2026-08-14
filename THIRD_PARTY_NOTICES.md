@@ -19,14 +19,14 @@ asset task lands.
 
 ## Audio
 
-### Interface Sounds (victory.wav, levelup.wav)
+### ElevenLabs SFX set
 
-- Source: Kenney, "Interface Sounds" (https://kenney.nl/assets/interface-sounds)
-- License: Creative Commons CC0 1.0 Universal
-  - `victory.wav` derived from `Audio/confirmation_002.ogg`
-  - `levelup.wav` derived from `Audio/glass_004.ogg`
-  - transcoded from .ogg to 16-bit PCM WAV for cross-platform playback
-- Used for: victory screen SFX (completion chime, level-up chime)
+- Source: ElevenLabs (https://elevenlabs.io) — custom sound-effect generation
+- License: per ElevenLabs Terms of Service (account owner retains usage rights)
+- Files: `click.wav`, `countdown.wav`, `exercise_end.wav`, `levelup.wav`,
+  `quest_complete.wav`, `rest_end.wav`, `rest_start.wav`, `victory_fanfare.wav`
+- Used for: onboarding/quest UI clicks, workout countdown tick, segment
+  transitions, quest completion, level-up, victory fanfare
 
 ## Icons
 

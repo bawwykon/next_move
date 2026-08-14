@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
@@ -28,6 +29,7 @@ import {
   type Workout,
   type WorkoutSegmentKind,
 } from '@/domain/timer/workoutEngine';
+import { exerciseArt } from '@/features/assets/assetMap';
 import { formatCountdown, formatTotalRemaining } from '@/features/timer/format';
 import { finishQuest } from '@/features/workout/finishQuest';
 import { decideOnForeground } from '@/features/workout/decideOnForeground';
@@ -35,6 +37,7 @@ import { segmentKindLabel } from '@/features/questDetail/segmentKind';
 import { useAppForeground } from '@/hooks/useAppForeground';
 import { useNow } from '@/hooks/useNow';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
+import { playCue } from '@/lib/sounds';
 import { useWorkoutStore } from '@/state/workoutStore';
 
 // §7.3 — the timer digits are the largest element on screen; the 3-2-1
@@ -59,6 +62,7 @@ export default function WorkoutScreen() {
 
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [names, setNames] = useState<(string | null)[]>([]);
+  const [slugs, setSlugs] = useState<(string | null)[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [quitVisible, setQuitVisible] = useState(false);
   const handledRef = useRef(false);
@@ -86,6 +90,7 @@ export default function WorkoutScreen() {
     // The checkpoint is persisted before the first frame of exercise display,
     // so an app kill at any point leaves a resumable run behind (FR-TIMER-7).
     setNames(result.data.segments.map((s) => (s.kind === 'rest' ? null : s.exerciseName)));
+    setSlugs(result.data.segments.map((s) => s.exerciseSlug));
     setWorkout(buildWorkout(result.data.segments, startedAt));
     void useWorkoutStore.getState().startWorkout(questId, startedAt);
     setStatus('ready');
@@ -113,6 +118,9 @@ export default function WorkoutScreen() {
   // network), then navigate. flush() runs fire-and-forget.
   const handoffToVictory = useCallback(
     async (completedQuestId: string) => {
+      // AT-01D — the completion cue fires exactly once, on either the
+      // auto-complete or the foreground-complete path.
+      playCue('questComplete');
       const checkpoint = useWorkoutStore.getState().checkpoint;
       const startedAtEpochMs =
         checkpoint && checkpoint.questId === completedQuestId
@@ -155,17 +163,36 @@ export default function WorkoutScreen() {
     }
   });
 
-  // Segment-change haptic (7.7) — derived from the engine index, not per-tick.
+  // Segment-change haptic (7.7) + timer cues (AT-01D sound set) — derived
+  // from the engine index, not per-tick. One cue per transition: restStart
+  // into a rest, restEnd out of a rest, exerciseEnd when a work-like segment
+  // ends straight into another work-like segment (no rest in between).
   useEffect(() => {
-    if (
-      prevIndexRef.current !== null &&
-      segmentIndex !== null &&
-      segmentIndex !== prevIndexRef.current
+    if (!workout || prevIndexRef.current === null || segmentIndex === null) {
+      return;
+    }
+    const prevKind = workout.segments[prevIndexRef.current]?.kind;
+    const nextKind = workout.segments[segmentIndex]?.kind;
+    if (prevKind && nextKind && segmentIndex !== prevIndexRef.current && prevKind !== nextKind) {
+      if (nextKind === 'rest') {
+        playCue('restStart');
+      } else if (prevKind === 'rest') {
+        playCue('restEnd');
+      }
+    } else if (
+      prevKind &&
+      nextKind &&
+      segmentIndex !== prevIndexRef.current &&
+      prevKind === nextKind &&
+      prevKind !== 'rest'
     ) {
+      playCue('exerciseEnd');
+    }
+    if (segmentIndex !== prevIndexRef.current) {
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     prevIndexRef.current = segmentIndex;
-  }, [segmentIndex]);
+  }, [segmentIndex, workout]);
 
   // EC-10 — screen-reader announcements. Segment changes are announced once
   // (name + kind); the countdown is announced only at full-minute boundaries
@@ -232,6 +259,9 @@ export default function WorkoutScreen() {
       ? 'Take a breather'
       : (names[segmentIndex ?? -1] ?? 'Move')
     : null;
+  const currentSlug =
+    segment && segment.kind !== 'rest' ? (slugs[segmentIndex ?? -1] ?? null) : null;
+  const heroSource = currentSlug ? exerciseArt(currentSlug) : null;
   const nextName = next
     ? next.kind === 'rest'
       ? 'Take a breather'
@@ -239,6 +269,14 @@ export default function WorkoutScreen() {
     : null;
   const digits = remaining !== null ? formatCountdown(Math.ceil(remaining / 1000)) : null;
   const countdownDigit = countdown !== null ? String(countdown) : null;
+  // 3-2-1 countdown tick (AT-01D) — one cue per digit change.
+  const prevDigitRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (countdownDigit !== null && countdownDigit !== prevDigitRef.current) {
+      playCue('countdown');
+    }
+    prevDigitRef.current = countdownDigit;
+  }, [countdownDigit]);
 
   if (status === 'loading') {
     return (
@@ -291,6 +329,17 @@ export default function WorkoutScreen() {
         <View style={styles.center}>
           {segment ? (
             <>
+              {heroSource !== null ? (
+                // AT-01D — exercise guide illustration per workout segment
+                // (FR-TIMER-2b); no art → the screen renders exactly as before.
+                <Image
+                  source={heroSource}
+                  style={styles.hero}
+                  contentFit="contain"
+                  accessibilityLabel={segmentName ?? 'Exercise'}
+                  transition={150}
+                />
+              ) : null}
               <View style={[styles.badge, { backgroundColor: KIND_COLORS[segment.kind] }]}>
                 <Text style={styles.badgeLabel}>{segmentKindLabel(segment.kind)}</Text>
               </View>
@@ -387,6 +436,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.md,
+  },
+  hero: {
+    height: 160,
+    width: 200,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
   },
   badge: {
     borderRadius: radius.pill,

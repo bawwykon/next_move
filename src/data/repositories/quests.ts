@@ -29,6 +29,8 @@ export interface QuestSegment {
   kind: QuestSegmentKind;
   durationSec: number;
   exerciseName: string | null;
+  /** Exercise slug (kebab-case) — key into the exercise guide illustrations. */
+  exerciseSlug: string | null;
 }
 
 export interface QuestDetail {
@@ -93,7 +95,7 @@ export async function fetchQuestDetail(questId: string): Promise<RepoResult<Ques
   const { data, error } = await supabase
     .from('quests')
     .select(
-      'id, slug, title, description, difficulty, xp_reward, duration_sec, categories, quest_segments(position, kind, duration_sec, exercise_library(name))',
+      'id, slug, title, description, difficulty, xp_reward, duration_sec, categories, quest_segments(position, kind, duration_sec, exercise_library(name, slug))',
     )
     .eq('id', questId)
     .maybeSingle();
@@ -111,6 +113,7 @@ export async function fetchQuestDetail(questId: string): Promise<RepoResult<Ques
       kind: row.kind as QuestSegmentKind,
       durationSec: row.duration_sec,
       exerciseName: row.exercise_library?.name ?? null,
+      exerciseSlug: row.exercise_library?.slug ?? null,
     }))
     .sort((a, b) => a.position - b.position);
 

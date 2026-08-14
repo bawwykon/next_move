@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Animated, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -6,6 +7,7 @@ import { Animated, ScrollView, StyleSheet, Text, TouchableOpacity, View } from '
 import { Screen } from '@/components/ui/Screen';
 import { fetchQuestDetail, type QuestDetail, type QuestSegment } from '@/data/repositories/quests';
 import { dayKey } from '@/domain/streak/dayKey';
+import { difficultyArt, exerciseArt } from '@/features/assets/assetMap';
 import { difficultyBadge } from '@/features/questBoard/badges';
 import { isCompletedToday } from '@/features/questBoard/completedToday';
 import { formatDuration } from '@/features/questBoard/format';
@@ -13,6 +15,7 @@ import { formatSegmentDuration } from '@/features/questDetail/segmentDuration';
 import { segmentKindLabel } from '@/features/questDetail/segmentKind';
 import { segmentsTotal } from '@/features/questDetail/segmentsTotal';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
+import { playCue } from '@/lib/sounds';
 import { useCharacterStore } from '@/state/characterStore';
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -62,6 +65,7 @@ export default function QuestDetailScreen() {
     if (!detail) {
       return;
     }
+    playCue('click');
     router.push({
       pathname: '/workout/[id]',
       params: { id: detail.id, title: detail.title },
@@ -162,8 +166,10 @@ export default function QuestDetailScreen() {
 
 function Badge({ difficulty }: { difficulty: QuestDetail['difficulty'] }) {
   const badge = difficultyBadge(difficulty);
+  const icon = difficultyArt(difficulty);
   return (
     <View style={[styles.badge, { backgroundColor: badge.color }]}>
+      {icon !== null ? <Image source={icon} style={styles.badgeIcon} contentFit="contain" /> : null}
       <Text style={styles.badgeLabel}>{badge.label}</Text>
     </View>
   );
@@ -173,8 +179,12 @@ function SegmentRow({ segment }: { segment: QuestSegment }) {
   const isRest = segment.kind === 'rest';
   const isEdge = segment.kind === 'warmup' || segment.kind === 'cooldown';
   const labelColor = isRest ? colors.textMuted : isEdge ? colors.calm : colors.text;
+  const thumb = isRest ? null : exerciseArt(segment.exerciseSlug);
   return (
     <View style={styles.segmentRow}>
+      {thumb !== null ? (
+        <Image source={thumb} style={styles.segmentThumb} contentFit="contain" />
+      ) : null}
       <View style={styles.segmentLeft}>
         <Text style={[styles.segmentKind, { color: labelColor }]}>
           {segmentKindLabel(segment.kind)}
@@ -249,9 +259,16 @@ const styles = StyleSheet.create({
   },
   badge: {
     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
+  },
+  badgeIcon: {
+    width: 16,
+    height: 16,
   },
   badgeLabel: {
     color: colors.background,
@@ -318,6 +335,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     minHeight: 44,
+    gap: spacing.md,
+  },
+  segmentThumb: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surfaceElevated,
   },
   segmentLeft: {
     gap: 2,

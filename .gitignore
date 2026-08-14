@@ -54,3 +54,6 @@ assets/expo-go-qr.png
 expo.log
 artifacts/
 
+# VOIDED pre-approval asset delivery (ED-30) — never committed
+assets/wooden_dummy/
+

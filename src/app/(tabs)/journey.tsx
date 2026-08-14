@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { Screen } from '@/components/ui/Screen';
 import { CHAPTERS, chapterForQuests } from '@/domain/journey/chapter';
+import { chapterArt } from '@/features/assets/assetMap';
 import { artForChapterId } from '@/features/journey/art';
 import { goalLine, journeyNodes, milestoneLine, type ChapterNode } from '@/features/journey/format';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
@@ -75,6 +77,7 @@ export default function JourneyScreen() {
 
 function JourneyNode({ node, index }: { node: ChapterNode; index: number }) {
   const art = artForChapterId(node.id);
+  const emblem = chapterArt(node.id);
   const isCurrent = node.state === 'current';
   const isDone = node.state === 'completed';
   const isLocked = node.state === 'locked';
@@ -82,18 +85,29 @@ function JourneyNode({ node, index }: { node: ChapterNode; index: number }) {
   return (
     <View style={styles.nodeRow}>
       <View style={styles.rail}>
-        <View
-          style={[
-            styles.blob,
-            { backgroundColor: isLocked ? colors.surfaceElevated : art?.blobColor },
-          ]}
-        >
-          <Ionicons
-            name={art?.icon ?? 'map-outline'}
-            size={22}
-            color={isLocked ? colors.textMuted : art?.iconColor}
-          />
-        </View>
+        {emblem !== null ? (
+          // AT-01D — journey emblems; locked chapters render desaturated.
+          <View style={[styles.blob, isLocked && styles.blobLocked]}>
+            <Image
+              source={emblem}
+              style={[styles.emblem, isLocked && styles.emblemLocked]}
+              contentFit="contain"
+            />
+          </View>
+        ) : (
+          <View
+            style={[
+              styles.blob,
+              { backgroundColor: isLocked ? colors.surfaceElevated : art?.blobColor },
+            ]}
+          >
+            <Ionicons
+              name={art?.icon ?? 'map-outline'}
+              size={22}
+              color={isLocked ? colors.textMuted : art?.iconColor}
+            />
+          </View>
+        )}
         {index < CHAPTERS.length - 1 ? <View style={styles.railLine} /> : null}
       </View>
 
@@ -195,6 +209,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1,
+  },
+  blobLocked: {
+    backgroundColor: colors.surfaceElevated,
+  },
+  emblem: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.lg,
+  },
+  emblemLocked: {
+    // AT-01D locked treatment — code grayscale + dim.
+    opacity: 0.45,
+    filter: [{ grayscale: 1 }],
   },
   railLine: {
     position: 'absolute',

@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image, ImageBackground } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -22,7 +23,13 @@ import {
 import { fetchProfileCosmetics } from '@/data/repositories/profileCosmetics';
 import { supabase } from '@/data/supabase';
 import { dayKey } from '@/domain/streak/dayKey';
-import { ownedBySlug, validateEquip, type CosmeticSlot } from '@/domain/cosmetics/loadout';
+import {
+  ownedBySlug,
+  validateEquip,
+  DEFAULT_SLOT_SLUGS,
+  type CosmeticSlot,
+} from '@/domain/cosmetics/loadout';
+import { cosmeticArt, masteryArt } from '@/features/assets/assetMap';
 import { LoadoutCard } from '@/features/profile/LoadoutCard';
 import {
   historyExhausted,
@@ -148,6 +155,22 @@ export default function ProfileScreen() {
 
   const initials = email ? (email.split('@')[0] ?? '').slice(0, 2).toUpperCase() : 'A';
   const todayKey = dayKey(new Date());
+  // AT-01D — resolve the equipped item ids to catalogue slugs for the art
+  // lookup (a null id falls back to the slot's default slug when it has one).
+  const equippedSlug = useCallback(
+    (slot: CosmeticSlot): string | null => {
+      const id = profile?.equipped?.[slot] ?? null;
+      if (id) {
+        return catalog.find((item) => item.id === id)?.slug ?? null;
+      }
+      return DEFAULT_SLOT_SLUGS[slot] ?? null;
+    },
+    [catalog, profile],
+  );
+  const portraitArt = equippedSlug('portrait') ? cosmeticArt(equippedSlug('portrait')) : null;
+  const frameArt = equippedSlug('frame') ? cosmeticArt(equippedSlug('frame')) : null;
+  const titleArt = equippedSlug('title') ? cosmeticArt(equippedSlug('title')) : null;
+  const backgroundArt = equippedSlug('background') ? cosmeticArt(equippedSlug('background')) : null;
   const bar = useMemo(
     () => (profile ? xpBar(profile.totalXp, profile.level) : xpBar(0, 1)),
     [profile],
@@ -186,12 +209,48 @@ export default function ProfileScreen() {
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.header}>
-              <View style={styles.avatar} accessibilityLabel={`Profile for ${email}`}>
-                <Text style={styles.initials}>{initials}</Text>
+              {backgroundArt !== null ? (
+                <ImageBackground
+                  source={backgroundArt}
+                  style={styles.headerBg}
+                  contentFit="cover"
+                  accessibilityLabel="Character background"
+                />
+              ) : null}
+              <View style={styles.avatarWrap}>
+                <View style={styles.avatar} accessibilityLabel={`Profile for ${email}`}>
+                  {portraitArt !== null ? (
+                    <Image
+                      source={portraitArt}
+                      style={styles.avatarImage}
+                      contentFit="cover"
+                      accessibilityLabel="Character portrait"
+                    />
+                  ) : (
+                    <Text style={styles.initials}>{initials}</Text>
+                  )}
+                </View>
+                {frameArt !== null ? (
+                  <Image
+                    source={frameArt}
+                    style={styles.avatarFrame}
+                    contentFit="contain"
+                    pointerEvents="none"
+                    accessibilityLabel="Frame"
+                  />
+                ) : null}
               </View>
               <Text style={styles.name}>
                 {profile?.displayName ?? (email ? `Signed in as ${email}` : 'Your journey')}
               </Text>
+              {titleArt !== null ? (
+                <Image
+                  source={titleArt}
+                  style={styles.titleBanner}
+                  contentFit="contain"
+                  accessibilityLabel="Title"
+                />
+              ) : null}
               <Text style={styles.levelLine}>
                 {profile ? levelLine(profile.level) : 'Level 1 · Beginner'}
               </Text>
@@ -228,19 +287,27 @@ export default function ProfileScreen() {
             <View style={styles.card}>
               <Text style={styles.cardTitle}>Mastery</Text>
               <View style={styles.masteryList}>
-                {masteryRowsView.map((row) => (
-                  <View key={row.track} style={styles.masteryRow}>
-                    <View style={styles.masteryLabels}>
-                      <Text style={styles.masteryLabel}>{row.label}</Text>
-                      <Text style={styles.masteryLevel}>
-                        Lv {row.level} · {row.levelTitle}
-                      </Text>
+                {masteryRowsView.map((row) => {
+                  const icon = masteryArt(row.track);
+                  return (
+                    <View key={row.track} style={styles.masteryRow}>
+                      <View style={styles.masteryLabels}>
+                        <View style={styles.masteryLabelRow}>
+                          {icon !== null ? (
+                            <Image source={icon} style={styles.masteryIcon} contentFit="contain" />
+                          ) : null}
+                          <Text style={styles.masteryLabel}>{row.label}</Text>
+                        </View>
+                        <Text style={styles.masteryLevel}>
+                          Lv {row.level} · {row.levelTitle}
+                        </Text>
+                      </View>
+                      <View style={styles.barTrack}>
+                        <View style={[styles.barFillCalm, { width: `${row.fraction * 100}%` }]} />
+                      </View>
                     </View>
-                    <View style={styles.barTrack}>
-                      <View style={[styles.barFillCalm, { width: `${row.fraction * 100}%` }]} />
-                    </View>
-                  </View>
-                ))}
+                  );
+                })}
               </View>
             </View>
 
@@ -360,6 +427,22 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     gap: spacing.xs,
+    overflow: 'hidden',
+    borderRadius: radius.lg,
+    paddingVertical: spacing.lg,
+  },
+  headerBg: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 260,
+  },
+  avatarWrap: {
+    width: 120,
+    height: 120,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   avatar: {
     width: 96,
@@ -368,6 +451,21 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceElevated,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+  avatarFrame: {
+    position: 'absolute',
+    width: 118,
+    height: 118,
+  },
+  titleBanner: {
+    height: 34,
+    width: 220,
+    marginTop: spacing.xs,
   },
   initials: {
     color: colors.reward,
@@ -450,9 +548,16 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   masteryLabels: {
+    gap: 2,
+  },
+  masteryLabelRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: spacing.xs,
+  },
+  masteryIcon: {
+    width: 16,
+    height: 16,
   },
   masteryLabel: {
     color: colors.text,

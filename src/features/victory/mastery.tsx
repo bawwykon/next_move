@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
+import { Image } from 'expo-image';
 import { StyleSheet, Text, View } from 'react-native';
 
 import type { MasteryResult } from '@/domain/completion/types';
+import { masteryArt } from '@/features/assets/assetMap';
 import { masteryDeltas } from '@/features/victory/format';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 
@@ -21,24 +23,32 @@ export function MasteryCard({ rows }: MasteryCardProps) {
   return (
     <View style={styles.card}>
       <Text style={styles.cardTitle}>Skill levels</Text>
-      {deltas.map((delta) => (
-        <View key={delta.track} style={styles.row}>
-          <View style={styles.rowLabelGroup}>
-            <Text style={styles.rowLabel}>{delta.trackLabel}</Text>
-            <Text style={styles.rowPoints}>
-              {delta.pointsBefore} → {delta.pointsAfter}
-            </Text>
+      {deltas.map((delta) => {
+        const icon = masteryArt(delta.track);
+        return (
+          <View key={delta.track} style={styles.row}>
+            <View style={styles.rowLabelGroup}>
+              <View style={styles.rowLabelLine}>
+                {icon !== null ? (
+                  <Image source={icon} style={styles.rowIcon} contentFit="contain" />
+                ) : null}
+                <Text style={styles.rowLabel}>{delta.trackLabel}</Text>
+              </View>
+              <Text style={styles.rowPoints}>
+                {delta.pointsBefore} → {delta.pointsAfter}
+              </Text>
+            </View>
+            <View
+              style={[
+                styles.chip,
+                { backgroundColor: delta.leveledUp ? colors.reward : colors.calm },
+              ]}
+            >
+              <Text style={styles.chipText}>{delta.levelTitle}</Text>
+            </View>
           </View>
-          <View
-            style={[
-              styles.chip,
-              { backgroundColor: delta.leveledUp ? colors.reward : colors.calm },
-            ]}
-          >
-            <Text style={styles.chipText}>{delta.levelTitle}</Text>
-          </View>
-        </View>
-      ))}
+        );
+      })}
     </View>
   );
 }
@@ -66,6 +76,15 @@ const styles = StyleSheet.create({
   rowLabelGroup: {
     flex: 1,
     gap: 2,
+  },
+  rowLabelLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  rowIcon: {
+    width: 16,
+    height: 16,
   },
   rowLabel: {
     color: colors.text,

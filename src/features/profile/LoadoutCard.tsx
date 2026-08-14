@@ -1,11 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import type { CosmeticRow } from '@/data/repositories/cosmetics';
 import { catalogBySlot, DEFAULT_SLOT_SLUGS, type CosmeticSlot } from '@/domain/cosmetics/loadout';
+import { cosmeticArt } from '@/features/assets/assetMap';
 import { pickerRowStrings } from '@/features/profile/format';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
+import { playCue } from '@/lib/sounds';
 
 const SLOT_LABELS: Record<CosmeticSlot, string> = {
   frame: 'Frame',
@@ -136,16 +139,31 @@ export function LoadoutCard({ catalog, owned, equipped, onEquip }: LoadoutCardPr
               {bySlot[openSlot].map((item) => {
                 const strings = pickerRowStrings(item);
                 const locked = !item.owned;
+                const art = cosmeticArt(item.slug);
                 return (
                   <TouchableOpacity
                     key={item.id}
                     accessibilityRole="button"
                     disabled={locked || saving}
                     style={styles.optionRow}
-                    onPress={() => setSelected(item.id)}
+                    onPress={() => {
+                      playCue('click');
+                      setSelected(item.id);
+                    }}
                   >
                     {locked ? (
                       <Text style={styles.lockEmblem}>{strings[0]}</Text>
+                    ) : art !== null ? (
+                      // AT-01D — owned rows show the cosmetic thumbnail; the
+                      // selection ring marks the currently equipped one.
+                      <Image
+                        source={art}
+                        style={[
+                          styles.optionThumb,
+                          selected === item.id && styles.optionThumbSelected,
+                        ]}
+                        contentFit="contain"
+                      />
                     ) : (
                       <Ionicons
                         name={selected === item.id ? 'checkmark-circle' : 'ellipse-outline'}
@@ -284,6 +302,15 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontFamily: fonts.display.family,
     fontSize: 18,
+  },
+  optionThumb: {
+    width: 28,
+    height: 28,
+    borderRadius: radius.sm,
+  },
+  optionThumbSelected: {
+    borderWidth: 2,
+    borderColor: colors.reward,
   },
   errorLine: {
     color: colors.danger,

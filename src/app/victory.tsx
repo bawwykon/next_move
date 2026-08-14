@@ -14,8 +14,8 @@ import { LevelUpOverlay } from '@/features/victory/levelUp';
 import { MasteryCard } from '@/features/victory/mastery';
 import { reconcileCompletion, unlockOverview } from '@/features/victory/format';
 import { UnlocksCard } from '@/features/victory/unlocks';
-import { playOnce, useVictorySounds } from '@/features/victory/sounds';
 import { colors, fonts, spacing } from '@/lib/theme';
+import { playCue } from '@/lib/sounds';
 import { useCompletionStore } from '@/state/completionStore';
 
 /**
@@ -32,7 +32,6 @@ export default function VictoryScreen() {
   const questId = params.questId;
 
   const lastCompletion = useCompletionStore((state) => state.lastCompletion);
-  const { victory: victoryTrack, levelUp: levelUpTrack } = useVictorySounds();
 
   // S6-02 / FR-VIC-4 — the celebration queue lives in a pure reducer
   // (celebration.ts); the screen only feeds events. A tap anywhere skips the
@@ -54,13 +53,13 @@ export default function VictoryScreen() {
       return;
     }
     enterChimed.current = true;
-    playOnce(victoryTrack);
+    playCue('victoryFanfare');
     dispatchCelebration('payload');
     // NFR-9 — each new unlock in this payload, exactly once per visit.
     for (const unlock of result.achievements) {
       void track('achievement_unlocked', { slug: unlock.slug });
     }
-  }, [result, victoryTrack]);
+  }, [result]);
 
   // FR-XP-4 — level-up celebration, timed after the initial burst: a second
   // confetti run, the level-up chime, and the overlay flash. A tap-to-skip
@@ -77,7 +76,7 @@ export default function VictoryScreen() {
       if (!active || skippedRef.current) {
         return;
       }
-      playOnce(levelUpTrack);
+      playCue('levelup');
       dispatchCelebration('level-up');
     }, 800);
     const hide = setTimeout(() => {
@@ -90,7 +89,7 @@ export default function VictoryScreen() {
       clearTimeout(show);
       clearTimeout(hide);
     };
-  }, [result, leveledUp, levelUpTrack]);
+  }, [result, leveledUp]);
 
   const skipCelebration = useCallback(() => {
     if (skippedRef.current) {

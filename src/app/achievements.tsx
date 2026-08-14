@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -15,6 +16,7 @@ import {
   type AchievementRow,
   type AchievementUnlock,
 } from '@/domain/achievements/merge';
+import { achievementArt } from '@/features/assets/assetMap';
 import {
   ACHIEVEMENT_CATEGORY_ART,
   lockedRowStrings,
@@ -123,6 +125,7 @@ export default function AchievementsScreen() {
 
 function AchievementRowView({ row }: { row: AchievementRow }) {
   const art = ACHIEVEMENT_CATEGORY_ART[row.category];
+  const badge = achievementArt(row.slug);
   const isLocked = row.state === 'locked';
 
   if (isLocked) {
@@ -130,7 +133,12 @@ function AchievementRowView({ row }: { row: AchievementRow }) {
     return (
       <View style={[styles.row, styles.rowLocked]}>
         <View style={[styles.emblem, styles.emblemLocked]}>
-          <Text style={styles.questionMark}>{strings[0]}</Text>
+          {badge !== null ? (
+            // AT-01D — locked badges render desaturated (code grayscale).
+            <Image source={badge} style={[styles.badge, styles.badgeLocked]} contentFit="contain" />
+          ) : (
+            <Text style={styles.questionMark}>{strings[0]}</Text>
+          )}
         </View>
         <View style={styles.rowBody}>
           <Text style={[styles.rowTitle, styles.rowTitleLocked]}>{strings[1]}</Text>
@@ -143,9 +151,15 @@ function AchievementRowView({ row }: { row: AchievementRow }) {
   const strings = unlockedRowStrings(row);
   return (
     <View style={styles.row}>
-      <View style={[styles.emblem, { backgroundColor: art.blobColor }]}>
-        <Ionicons name={art.icon} size={26} color={art.iconColor} />
-      </View>
+      {badge !== null ? (
+        <View style={styles.emblem}>
+          <Image source={badge} style={styles.badge} contentFit="contain" />
+        </View>
+      ) : (
+        <View style={[styles.emblem, { backgroundColor: art.blobColor }]}>
+          <Ionicons name={art.icon} size={26} color={art.iconColor} />
+        </View>
+      )}
       <View style={styles.rowBody}>
         <Text style={styles.rowTitle}>{strings[0]}</Text>
         <Text style={styles.rowDescription}>{strings[1]}</Text>
@@ -244,6 +258,16 @@ const styles = StyleSheet.create({
     borderRadius: radius.xl,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  badge: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.lg,
+  },
+  badgeLocked: {
+    // AT-01D locked treatment — code grayscale + dim.
+    opacity: 0.45,
+    filter: [{ grayscale: 1 }],
   },
   emblemLocked: {
     backgroundColor: colors.surfaceElevated,

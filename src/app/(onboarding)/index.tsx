@@ -1,10 +1,12 @@
 import { router } from 'expo-router';
+import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
 import { BackHandler, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { planSummaryLines } from '@/domain/recommendation/plan';
 import { AppButton } from '@/components/ui/AppButton';
 import { Screen } from '@/components/ui/Screen';
+import { onboardingArt } from '@/features/assets/assetMap';
 import {
   ONBOARDING_STEPS,
   optionLabel,
@@ -22,6 +24,7 @@ import {
   type WizardState,
 } from '@/features/onboarding/wizardController';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
+import { playCue } from '@/lib/sounds';
 import { useSessionStore } from '@/state/sessionStore';
 
 const STEP_COUNT = ONBOARDING_STEPS.length;
@@ -33,6 +36,8 @@ export default function OnboardingScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const step = ONBOARDING_STEPS[wizard.stepIndex]!;
+  // AT-01D — one hero illustration per onboarding step (assets/onboarding/).
+  const hero = onboardingArt(wizard.stepIndex + 1);
 
   useEffect(() => {
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -54,6 +59,7 @@ export default function OnboardingScreen() {
 
   const handleAdvance = () => {
     setError(null);
+    playCue('click');
     setWizard((current) => advance(current));
   };
 
@@ -128,6 +134,9 @@ export default function OnboardingScreen() {
           ))}
         </View>
         <View style={styles.header}>
+          {hero !== null ? (
+            <Image source={hero} style={styles.heroImage} contentFit="contain" />
+          ) : null}
           <Text style={styles.title}>{step.title}</Text>
           {step.subtitle ? <Text style={styles.subtitle}>{step.subtitle}</Text> : null}
         </View>
@@ -140,7 +149,10 @@ export default function OnboardingScreen() {
                 accessibilityRole="button"
                 accessibilityState={{ selected }}
                 accessibilityLabel={option.label}
-                onPress={() => setWizard((current) => selectAnswer(current, option.value))}
+                onPress={() => {
+                  playCue('click');
+                  setWizard((current) => selectAnswer(current, option.value));
+                }}
                 style={({ pressed }) => [
                   styles.option,
                   selected && styles.optionSelected,
@@ -207,6 +219,12 @@ const styles = StyleSheet.create({
   header: {
     marginTop: spacing.xxl,
     gap: spacing.sm,
+  },
+  heroImage: {
+    width: '100%',
+    height: 220,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
   },
   title: {
     color: colors.text,

@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -24,6 +25,7 @@ import type {
   QuestDifficulty,
 } from '@/domain/recommendation/types';
 import { WEEKLY_TARGET, dayWindow, weeklyWindow } from '@/domain/board/window';
+import { DAILY_QUEST_ART, WEEKLY_CHALLENGE_ART, difficultyArt } from '@/features/assets/assetMap';
 import { difficultyBadge } from '@/features/questBoard/badges';
 import { isCompletedToday } from '@/features/questBoard/completedToday';
 import {
@@ -38,6 +40,7 @@ import { formatDuration } from '@/features/questBoard/format';
 import { greetingForHour } from '@/features/questBoard/greeting';
 import { weeklyChallengeProgress } from '@/features/questBoard/weekly';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
+import { playCue } from '@/lib/sounds';
 import { useCharacterStore } from '@/state/characterStore';
 import { useWorkoutStore } from '@/state/workoutStore';
 import { useCompletionStore } from '@/state/completionStore';
@@ -179,6 +182,7 @@ export default function QuestBoardScreen() {
 
   const openQuest = useCallback(
     (quest: ActiveQuest) => {
+      playCue('click');
       router.push({
         pathname: '/quest/[id]',
         params: {
@@ -307,6 +311,11 @@ export default function QuestBoardScreen() {
                 <Text style={styles.sectionTitle}>Daily Challenge</Text>
                 <View style={styles.weeklyCard}>
                   <View style={styles.weeklyHeader}>
+                    <Image
+                      source={DAILY_QUEST_ART}
+                      style={styles.weeklyIcon}
+                      contentFit="contain"
+                    />
                     <Text style={styles.weeklyGoal}>{dailyCell.goal}</Text>
                     {daily.done ? (
                       <Ionicons name="checkmark-circle" size={20} color={colors.success} />
@@ -333,6 +342,11 @@ export default function QuestBoardScreen() {
                 <Text style={styles.sectionTitle}>Weekly Challenge</Text>
                 <View style={styles.weeklyCard}>
                   <View style={styles.weeklyHeader}>
+                    <Image
+                      source={WEEKLY_CHALLENGE_ART}
+                      style={styles.weeklyIcon}
+                      contentFit="contain"
+                    />
                     <Text style={styles.weeklyGoal}>
                       {weekly.challengeState === 'complete'
                         ? 'Weekly challenge complete!'
@@ -395,8 +409,10 @@ export default function QuestBoardScreen() {
 
 function BadgePill({ difficulty }: { difficulty: QuestDifficulty }) {
   const badge = difficultyBadge(difficulty);
+  const icon = difficultyArt(difficulty);
   return (
     <View style={[styles.badgePill, { backgroundColor: badge.color }]}>
+      {icon !== null ? <Image source={icon} style={styles.badgeIcon} contentFit="contain" /> : null}
       <Text style={styles.badgeLabel}>{badge.label}</Text>
     </View>
   );
@@ -745,9 +761,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   badgePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
     paddingVertical: 4,
+  },
+  badgeIcon: {
+    width: 14,
+    height: 14,
   },
   badgeLabel: {
     color: colors.background,
@@ -780,6 +803,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.sm,
+  },
+  weeklyIcon: {
+    width: 24,
+    height: 24,
   },
   weeklyGoal: {
     color: colors.text,
