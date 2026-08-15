@@ -51,10 +51,11 @@ import { useSessionStore } from '@/state/sessionStore';
 // exactly on the wrap center (60,60), and each frame's box is sized so the
 // ring clears the header card (the art moved from a high-hole to a centered
 // ring, which no longer fits the old 280 dp box; ED-36 polish trims the
-// default to 255 dp). Unmeasured frames fall back to the canvas center +
-// 280 dp until their art is measured.
+// default to 255 dp, and a later pass trims it 10% further to 229.5 dp).
+// Unmeasured frames fall back to the canvas center + 280 dp until their art
+// is measured.
 const FRAME_HOLE_CENTER: Record<string, { x: number; y: number; size: number }> = {
-  'frame-default': { x: 253.8, y: 236.3, size: 255 },
+  'frame-default': { x: 253.8, y: 236.3, size: 229.5 },
   'frame-level-05': { x: 255.8, y: 233.9, size: 176 },
   'frame-level-10': { x: 255.4, y: 243.5, size: 176 },
   'frame-level-25': { x: 232.3, y: 247.5, size: 176 },
@@ -203,7 +204,6 @@ export default function ProfileScreen() {
   const portraitArt = equippedSlug('portrait') ? cosmeticArt(equippedSlug('portrait')) : null;
   const frameSlug = equippedSlug('frame');
   const frameArt = frameSlug ? cosmeticArt(frameSlug) : null;
-  const titleArt = equippedSlug('title') ? cosmeticArt(equippedSlug('title')) : null;
   const backgroundArt = equippedSlug('background') ? cosmeticArt(equippedSlug('background')) : null;
   const bar = useMemo(
     () => (profile ? xpBar(profile.totalXp, profile.level) : xpBar(0, 1)),
@@ -280,14 +280,6 @@ export default function ProfileScreen() {
               <Text style={styles.name}>
                 {profile?.displayName ?? (email ? `Signed in as ${email}` : 'Your journey')}
               </Text>
-              {titleArt !== null ? (
-                <Image
-                  source={titleArt}
-                  style={styles.titleBanner}
-                  contentFit="contain"
-                  accessibilityLabel="Title"
-                />
-              ) : null}
               <Text style={styles.levelLine}>
                 {profile ? levelLine(profile.level) : 'Level 1 · Beginner'}
               </Text>
@@ -496,13 +488,6 @@ const styles = StyleSheet.create({
   },
   avatarFrame: {
     position: 'absolute',
-  },
-  titleBanner: {
-    height: 34,
-    width: 220,
-    // AT-01F — the title ribbon belongs to the name: tight under it (the
-    // header gap handles the 4 px), with room before the level line.
-    marginBottom: spacing.xs,
   },
   initials: {
     color: colors.reward,
