@@ -40,10 +40,11 @@ describe('decideOnForeground', () => {
   });
 
   it('returns complete exactly at the end boundary (EC-2, inclusive)', () => {
+    // wall clock = 10 + 3s pre-phase + 20 + 10 = 43s (only the first segment has a countdown)
     expect(
       decideOnForeground(
         { questId: 'q', startedAtEpochMs: STARTED_AT },
-        STARTED_AT + 40_000,
+        STARTED_AT + 43_000,
         SEGMENTS,
       ),
     ).toBe('complete');

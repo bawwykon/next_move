@@ -83,8 +83,8 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   rowIcon: {
-    width: 16,
-    height: 16,
+    width: 30,
+    height: 30,
   },
   rowLabel: {
     color: colors.text,

@@ -224,7 +224,9 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 220,
     borderRadius: radius.lg,
-    backgroundColor: colors.surface,
+    // AT-01E — onboarding PNGs share the uniform art background (#4C6971);
+    // blend the rectangle away so the art reads flush with the screen.
+    backgroundColor: '#4C6971',
   },
   title: {
     color: colors.text,

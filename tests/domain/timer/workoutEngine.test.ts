@@ -11,7 +11,9 @@ import {
   type Workout,
 } from '@/domain/timer/workoutEngine';
 
-// warmup 60 / work 120 / rest 30 / work 90 / cooldown 60 => 360s total
+// warmup 60 / work 120 / rest 30 / work 90 / cooldown 60 => 360s of segments
+// plus two 3s countdown pre-phases (segment 0 and the work after the rest) =>
+// 366s wall clock. Boundaries: [0,63) [63,183) [183,213) [213,306) [306,366).
 const SEGMENTS = [
   { kind: 'warmup', durationSec: 60 },
   { kind: 'work', durationSec: 120 },
@@ -22,13 +24,13 @@ const SEGMENTS = [
 
 const START = 1_000_000;
 const workout: Workout = buildWorkout(SEGMENTS, START);
-// cumulative ends (ms): 60s, 180s, 210s, 300s, 360s
+// cumulative ends (ms), countdown pre-phases included: 63s, 183s, 213s, 306s, 366s
 const C = {
-  w0End: START + 60_000,
-  w1End: START + 180_000,
-  w2End: START + 210_000,
-  w3End: START + 300_000,
-  end: START + 360_000,
+  w0End: START + 63_000,
+  w1End: START + 183_000,
+  w2End: START + 213_000,
+  w3End: START + 306_000,
+  end: START + 366_000,
 };
 
 describe('buildWorkout', () => {
@@ -104,13 +106,13 @@ describe('segmentIndexAt — boundary-exact walk', () => {
 describe('remainingMs / totalRemainingMs', () => {
   it('gives the full segment at t=0', () => {
     expect(remainingMs(workout, START)).toBe(60_000);
-    expect(totalRemainingMs(workout, START)).toBe(360_000);
+    expect(totalRemainingMs(workout, START)).toBe(366_000);
   });
 
   it('counts down mid-segment', () => {
-    expect(remainingMs(workout, START + 30_000)).toBe(30_000);
-    expect(remainingMs(workout, START + 120_000)).toBe(60_000);
-    expect(remainingMs(workout, START + 330_000)).toBe(30_000);
+    expect(remainingMs(workout, START + 30_000)).toBe(33_000); // 63s window: 3s pre-phase + 60s warmup
+    expect(remainingMs(workout, START + 120_000)).toBe(63_000); // 183s boundary: 3s pre-phase + 60s warmup + 120s work
+    expect(remainingMs(workout, START + 330_000)).toBe(36_000);
   });
 
   it('resets to the next full segment exactly on a boundary', () => {
@@ -126,7 +128,7 @@ describe('remainingMs / totalRemainingMs', () => {
 
   it('is the full total before start', () => {
     expect(remainingMs(workout, START - 1000)).toBeNull();
-    expect(totalRemainingMs(workout, START - 1000)).toBe(360_000);
+    expect(totalRemainingMs(workout, START - 1000)).toBe(366_000);
   });
 });
 
@@ -209,7 +211,7 @@ describe('countdownMs — FR-TIMER-3', () => {
       ],
       START,
     );
-    const cooldownStart = START + 90_000;
+    const cooldownStart = START + 93_000; // work 60 + 3s pre-phase + rest 30
     expect(countdownMs(restTail, cooldownStart)).toBe(3);
     expect(countdownMs(restTail, cooldownStart + 1000)).toBe(2);
     expect(countdownMs(restTail, cooldownStart + COUNTDOWN_DURATION_MS)).toBeNull();
@@ -218,6 +220,22 @@ describe('countdownMs — FR-TIMER-3', () => {
   it('is null when idle', () => {
     expect(countdownMs(workout, START - 1000)).toBeNull();
     expect(countdownMs(workout, C.end)).toBeNull();
+  });
+
+  it('does not consume exercise duration — full segment ahead at countdown end (AT-01E)', () => {
+    // during the 3s pre-phase the clock is untouched
+    expect(remainingMs(workout, START)).toBe(60_000);
+    expect(remainingMs(workout, START + 2000)).toBe(60_000);
+    expect(remainingMs(workout, START + COUNTDOWN_DURATION_MS)).toBe(60_000);
+    // one second later the segment finally ticks
+    expect(remainingMs(workout, START + COUNTDOWN_DURATION_MS + 1000)).toBe(59_000);
+  });
+
+  it('keeps the full 90s after the post-rest countdown (AT-01E)', () => {
+    expect(countdownMs(workout, C.w2End)).toBe(3);
+    expect(remainingMs(workout, C.w2End)).toBe(90_000);
+    expect(remainingMs(workout, C.w2End + COUNTDOWN_DURATION_MS)).toBe(90_000);
+    expect(remainingMs(workout, C.w2End + COUNTDOWN_DURATION_MS + 5000)).toBe(85_000);
   });
 
   it('exported countdown constant is 3000ms', () => {
@@ -234,9 +252,9 @@ describe('progress — clamped 0..1, monotonic mid-run', () => {
   });
 
   it('tracks the whole-workout fraction mid-run', () => {
-    expect(progress(workout, START + 90_000)).toBeCloseTo(0.25, 6);
-    expect(progress(workout, START + 180_000)).toBeCloseTo(0.5, 6);
-    expect(progress(workout, START + 270_000)).toBeCloseTo(0.75, 6);
+    expect(progress(workout, START + 90_000)).toBeCloseTo(90_000 / 366_000, 6);
+    expect(progress(workout, START + 180_000)).toBeCloseTo(180_000 / 366_000, 6);
+    expect(progress(workout, START + 270_000)).toBeCloseTo(270_000 / 366_000, 6);
   });
 
   it('is monotonic across a run', () => {
@@ -262,14 +280,18 @@ describe('background gaps — pure arithmetic resume (NFR-2 / EC-2)', () => {
   it('lands mid-segment exactly like a continuous run', () => {
     const long = buildWorkout([{ kind: 'work', durationSec: 1800 }], START);
     const nowMs = START + 900_000; // 15 min into a 30 min quest, "after a gap"
+    // the single segment still carries its 3s countdown pre-phase (1_803_000 total)
     expect(segmentIndexAt(long, nowMs)).toBe(0);
-    expect(remainingMs(long, nowMs)).toBe(900_000);
+    expect(remainingMs(long, nowMs)).toBe(903_000);
     expect(isComplete(long, nowMs)).toBe(false);
   });
 
   it('boundary semantics survive a gap landing exactly on a boundary', () => {
-    const nowMs = START + 180_000;
+    const nowMs = START + 183_000; // rest segment start (after the 3s pre-phase + 60s warmup + 120s work)
     expect(segmentIndexAt(workout, nowMs)).toBe(2);
     expect(remainingMs(workout, nowMs)).toBe(30_000);
+    // one second before the boundary still belongs to the work segment's tail
+    expect(segmentIndexAt(workout, nowMs - 1000)).toBe(1);
+    expect(remainingMs(workout, nowMs - 1000)).toBe(1000);
   });
 });

@@ -253,15 +253,15 @@ const styles = StyleSheet.create({
     borderColor: colors.surfaceElevated,
   },
   emblem: {
-    width: 48,
-    height: 48,
+    width: 60,
+    height: 60,
     borderRadius: radius.xl,
     alignItems: 'center',
     justifyContent: 'center',
   },
   badge: {
-    width: 44,
-    height: 44,
+    width: 56,
+    height: 56,
     borderRadius: radius.lg,
   },
   badgeLocked: {

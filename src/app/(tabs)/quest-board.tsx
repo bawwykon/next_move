@@ -769,8 +769,8 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   badgeIcon: {
-    width: 14,
-    height: 14,
+    width: 20,
+    height: 20,
   },
   badgeLabel: {
     color: colors.background,

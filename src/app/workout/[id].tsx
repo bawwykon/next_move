@@ -344,13 +344,13 @@ export default function WorkoutScreen() {
                 <Text style={styles.badgeLabel}>{segmentKindLabel(segment.kind)}</Text>
               </View>
               <View style={styles.digitsBox}>
-                {digits !== null ? <Text style={styles.digits}>{digits}</Text> : null}
                 {countdownDigit !== null ? (
-                  // 3-2-1 overlay — shown only while the engine says so (first
-                  // segment + after rests); never derived in the UI.
-                  <View style={styles.countdownOverlay} pointerEvents="none">
-                    <Text style={styles.countdownDigit}>{countdownDigit}</Text>
-                  </View>
+                  // AT-01E — the 3-2-1 roll-in is shown INSTEAD of the ticking
+                  // digits (never stacked on top of them); the engine keeps it
+                  // a pre-phase that does not consume segment time.
+                  <Text style={styles.countdownDigit}>{countdownDigit}</Text>
+                ) : digits !== null ? (
+                  <Text style={styles.digits}>{digits}</Text>
                 ) : null}
               </View>
               <Text style={styles.segmentName}>{segmentName}</Text>
@@ -441,7 +441,9 @@ const styles = StyleSheet.create({
     height: 160,
     width: 200,
     borderRadius: radius.lg,
-    backgroundColor: colors.surface,
+    // AT-01E — the exercise PNGs share one uniform art background (#4C6971);
+    // blend the rectangle away so the art reads flush with the screen.
+    backgroundColor: '#4C6971',
   },
   badge: {
     borderRadius: radius.pill,
@@ -465,15 +467,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.display.family,
     fontSize: DIGIT_SIZE,
     lineHeight: COUNTDOWN_SIZE,
-  },
-  countdownOverlay: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   countdownDigit: {
     color: colors.reward,

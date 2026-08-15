@@ -45,6 +45,38 @@ import {
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 import { useSessionStore } from '@/state/sessionStore';
 
+// AT-01E — per-frame ring-hole centers measured on the shipped PNGs (512
+// canvas convention; the 1254 px frames normalize to it). The avatar sits in
+// a 120 dp wrap; the frame image is positioned so its ring hole lands
+// exactly on the wrap center (60,60), and each frame's box is sized so the
+// ring clears the header card (the art moved from a high-hole to a centered
+// ring, which no longer fits the old 280 dp box). Unmeasured frames fall
+// back to the canvas center + 280 dp until their art is measured.
+const FRAME_HOLE_CENTER: Record<string, { x: number; y: number; size: number }> = {
+  'frame-default': { x: 253.8, y: 236.3, size: 280 },
+  'frame-level-05': { x: 255.8, y: 233.9, size: 176 },
+  'frame-level-10': { x: 255.4, y: 243.5, size: 176 },
+  'frame-level-25': { x: 232.3, y: 247.5, size: 176 },
+  'frame-level-50': { x: 265.1, y: 250.5, size: 176 },
+  'frame-level-100': { x: 277.6, y: 254.5, size: 176 },
+};
+const DEFAULT_HOLE_CENTER = { x: 256, y: 256, size: 280 };
+
+function frameAvatarStyle(slug: string | null): {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+} {
+  const { x, y, size } = (slug && FRAME_HOLE_CENTER[slug]) || DEFAULT_HOLE_CENTER;
+  return {
+    left: 60 - (x / 512) * size,
+    top: 60 - (y / 512) * size,
+    width: size,
+    height: size,
+  };
+}
+
 /**
  * S8-01 — the character page (FR-PROF-1/2). Read-only: every figure is either
  * a server-authoritative column (level, total XP, streaks, equipped_*) or a
@@ -168,7 +200,8 @@ export default function ProfileScreen() {
     [catalog, profile],
   );
   const portraitArt = equippedSlug('portrait') ? cosmeticArt(equippedSlug('portrait')) : null;
-  const frameArt = equippedSlug('frame') ? cosmeticArt(equippedSlug('frame')) : null;
+  const frameSlug = equippedSlug('frame');
+  const frameArt = frameSlug ? cosmeticArt(frameSlug) : null;
   const titleArt = equippedSlug('title') ? cosmeticArt(equippedSlug('title')) : null;
   const backgroundArt = equippedSlug('background') ? cosmeticArt(equippedSlug('background')) : null;
   const bar = useMemo(
@@ -218,6 +251,18 @@ export default function ProfileScreen() {
                 />
               ) : null}
               <View style={styles.avatarWrap}>
+                {frameArt !== null ? (
+                  // AT-01E — frame paints BEHIND the portrait; each frame
+                  // image is positioned from its measured ring-hole center
+                  // (see frameAvatarStyle) so the hole lands on the avatar.
+                  <Image
+                    source={frameArt}
+                    style={[styles.avatarFrame, frameAvatarStyle(frameSlug)]}
+                    contentFit="contain"
+                    pointerEvents="none"
+                    accessibilityLabel="Frame"
+                  />
+                ) : null}
                 <View style={styles.avatar} accessibilityLabel={`Profile for ${email}`}>
                   {portraitArt !== null ? (
                     <Image
@@ -230,15 +275,6 @@ export default function ProfileScreen() {
                     <Text style={styles.initials}>{initials}</Text>
                   )}
                 </View>
-                {frameArt !== null ? (
-                  <Image
-                    source={frameArt}
-                    style={styles.avatarFrame}
-                    contentFit="contain"
-                    pointerEvents="none"
-                    accessibilityLabel="Frame"
-                  />
-                ) : null}
               </View>
               <Text style={styles.name}>
                 {profile?.displayName ?? (email ? `Signed in as ${email}` : 'Your journey')}
@@ -459,8 +495,6 @@ const styles = StyleSheet.create({
   },
   avatarFrame: {
     position: 'absolute',
-    width: 118,
-    height: 118,
   },
   titleBanner: {
     height: 34,
@@ -556,8 +590,8 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   masteryIcon: {
-    width: 16,
-    height: 16,
+    width: 30,
+    height: 30,
   },
   masteryLabel: {
     color: colors.text,

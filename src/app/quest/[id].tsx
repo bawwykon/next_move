@@ -267,8 +267,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   badgeIcon: {
-    width: 16,
-    height: 16,
+    width: 22,
+    height: 22,
   },
   badgeLabel: {
     color: colors.background,
