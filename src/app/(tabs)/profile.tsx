@@ -50,10 +50,11 @@ import { useSessionStore } from '@/state/sessionStore';
 // a 120 dp wrap; the frame image is positioned so its ring hole lands
 // exactly on the wrap center (60,60), and each frame's box is sized so the
 // ring clears the header card (the art moved from a high-hole to a centered
-// ring, which no longer fits the old 280 dp box). Unmeasured frames fall
-// back to the canvas center + 280 dp until their art is measured.
+// ring, which no longer fits the old 280 dp box; ED-36 polish trims the
+// default to 255 dp). Unmeasured frames fall back to the canvas center +
+// 280 dp until their art is measured.
 const FRAME_HOLE_CENTER: Record<string, { x: number; y: number; size: number }> = {
-  'frame-default': { x: 253.8, y: 236.3, size: 280 },
+  'frame-default': { x: 253.8, y: 236.3, size: 255 },
   'frame-level-05': { x: 255.8, y: 233.9, size: 176 },
   'frame-level-10': { x: 255.4, y: 243.5, size: 176 },
   'frame-level-25': { x: 232.3, y: 247.5, size: 176 },
@@ -499,7 +500,9 @@ const styles = StyleSheet.create({
   titleBanner: {
     height: 34,
     width: 220,
-    marginTop: spacing.xs,
+    // AT-01F — the title ribbon belongs to the name: tight under it (the
+    // header gap handles the 4 px), with room before the level line.
+    marginBottom: spacing.xs,
   },
   initials: {
     color: colors.reward,
@@ -515,7 +518,7 @@ const styles = StyleSheet.create({
   levelLine: {
     color: colors.textMuted,
     fontFamily: fonts.body.family,
-    fontSize: 14,
+    fontSize: 16,
   },
   card: {
     backgroundColor: colors.surface,

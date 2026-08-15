@@ -287,7 +287,6 @@ export default function QuestBoardScreen() {
                       recommendation.recommended.id,
                       todayKey,
                     )}
-                    hero
                     onPress={() => openQuest(recommendation.recommended!)}
                   />
                 </View>
@@ -433,23 +432,21 @@ function CategoryChips({ categories }: { categories: QuestCategory[] }) {
 function QuestCard({
   quest,
   completedToday,
-  hero,
   onPress,
 }: {
   quest: ActiveQuest;
   completedToday: boolean;
-  hero?: boolean;
   onPress: () => void;
 }) {
   return (
     <TouchableOpacity
       accessibilityRole="button"
-      style={[styles.card, hero && styles.heroCard]}
+      style={styles.card}
       onPress={onPress}
       activeOpacity={0.85}
     >
       <View style={styles.cardHeader}>
-        <Text style={[styles.cardTitle, hero && styles.heroTitle]}>{quest.title}</Text>
+        <Text style={styles.cardTitle}>{quest.title}</Text>
         <BadgePill difficulty={quest.difficulty} />
       </View>
       <Text style={styles.cardMeta}>
@@ -714,10 +711,6 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     minHeight: 44,
   },
-  heroCard: {
-    backgroundColor: colors.surfaceElevated,
-    padding: spacing.xl,
-  },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -729,10 +722,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodyBold.family,
     fontSize: 16,
     flexShrink: 1,
-  },
-  heroTitle: {
-    fontFamily: fonts.display.family,
-    fontSize: 22,
   },
   cardMeta: {
     color: colors.textMuted,
@@ -753,12 +742,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceElevated,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
-    paddingVertical: 4,
+    paddingVertical: 6,
   },
   chipLabel: {
     color: colors.text,
     fontFamily: fonts.bodyBold.family,
-    fontSize: 12,
+    fontSize: 16,
   },
   badgePill: {
     flexDirection: 'row',
