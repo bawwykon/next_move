@@ -441,9 +441,10 @@ const styles = StyleSheet.create({
     height: 160,
     width: 200,
     borderRadius: radius.lg,
-    // AT-01E — the exercise PNGs share one uniform art background (#4C6971);
-    // blend the rectangle away so the art reads flush with the screen.
-    backgroundColor: '#4C6971',
+    // AT-01E — the tile sits behind the exercise art; the art's outer
+    // background is recolored to the app background (#1C1515) so the image
+    // reads flush with the screen, no visible rectangle.
+    backgroundColor: '#1C1515',
   },
   badge: {
     borderRadius: radius.pill,
