@@ -30,6 +30,28 @@ import { colors, fonts, radius, spacing } from '@/lib/theme';
  * description + unlock date; locked = dimmed "?" emblem + vague hint. No
  * progress bars, no rule-derived numbers, encouragement copy only.
  */
+
+// Each 512x512 badge PNG carries transparent padding (visible art only
+// ~35-49% of the canvas), so a fixed box renders the badge as a tiny 19-27 dp
+// glyph. BADGE_BOX scales the render box per slug so the visible badge fills
+// ~78% of the 60 dp circular container (65% + 20% bump), centered, no
+// crop/stretch/art change.
+const BADGE_BOX: Record<string, number> = {
+  'early-bird': 113,
+  'first-level': 125,
+  'first-quest': 122,
+  'first-week': 133,
+  'master-adventurer': 101,
+  'night-owl': 120,
+  phoenix: 104,
+  'streak-100': 106,
+  'streak-30': 95,
+  'streak-7': 116,
+  'workouts-100': 122,
+  'workouts-250': 108,
+  'workouts-50': 136,
+};
+
 export default function AchievementsScreen() {
   const router = useRouter();
   const [catalog, setCatalog] = useState<AchievementCatalogRow[] | null>(null);
@@ -135,7 +157,15 @@ function AchievementRowView({ row }: { row: AchievementRow }) {
         <View style={[styles.emblem, styles.emblemLocked]}>
           {badge !== null ? (
             // AT-01D — locked badges render desaturated (code grayscale).
-            <Image source={badge} style={[styles.badge, styles.badgeLocked]} contentFit="contain" />
+            <Image
+              source={badge}
+              style={[
+                styles.badge,
+                { width: BADGE_BOX[row.slug], height: BADGE_BOX[row.slug] },
+                styles.badgeLocked,
+              ]}
+              contentFit="contain"
+            />
           ) : (
             <Text style={styles.questionMark}>{strings[0]}</Text>
           )}
@@ -153,7 +183,11 @@ function AchievementRowView({ row }: { row: AchievementRow }) {
     <View style={styles.row}>
       {badge !== null ? (
         <View style={styles.emblem}>
-          <Image source={badge} style={styles.badge} contentFit="contain" />
+          <Image
+            source={badge}
+            style={[styles.badge, { width: BADGE_BOX[row.slug], height: BADGE_BOX[row.slug] }]}
+            contentFit="contain"
+          />
         </View>
       ) : (
         <View style={[styles.emblem, { backgroundColor: art.blobColor }]}>

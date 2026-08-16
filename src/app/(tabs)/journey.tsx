@@ -18,6 +18,21 @@ import { useCharacterStore } from '@/state/characterStore';
  * character snapshot's server-authoritative journey_quests/current_chapter
  * (M0019) refreshed on focus, exactly like the quest board.
  */
+
+// Each 512x512 emblem PNG carries transparent padding, so the visible art
+// occupies only ~42-68% of the canvas. EMBLEM_BOX scales the render box per
+// chapter so the visible emblem fills ~75% of the 72px node, centered, without
+// cropping or stretching the artwork.
+const EMBLEM_BOX: Record<number, number> = {
+  1: 130,
+  2: 120,
+  3: 117,
+  4: 125,
+  5: 90,
+  6: 88,
+  7: 79,
+};
+
 export default function JourneyScreen() {
   const { profile, status, refresh } = useCharacterStore();
 
@@ -90,7 +105,11 @@ function JourneyNode({ node, index }: { node: ChapterNode; index: number }) {
           <View style={[styles.blob, isLocked && styles.blobLocked]}>
             <Image
               source={emblem}
-              style={[styles.emblem, isLocked && styles.emblemLocked]}
+              style={[
+                styles.emblem,
+                { width: EMBLEM_BOX[node.id], height: EMBLEM_BOX[node.id] },
+                isLocked && styles.emblemLocked,
+              ]}
               contentFit="contain"
             />
           </View>
@@ -199,12 +218,12 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   rail: {
-    width: 56,
+    width: 80,
     alignItems: 'center',
   },
   blob: {
-    width: 48,
-    height: 48,
+    width: 72,
+    height: 72,
     borderRadius: radius.xl,
     alignItems: 'center',
     justifyContent: 'center',
@@ -214,8 +233,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceElevated,
   },
   emblem: {
-    width: 44,
-    height: 44,
     borderRadius: radius.lg,
   },
   emblemLocked: {
@@ -225,7 +242,7 @@ const styles = StyleSheet.create({
   },
   railLine: {
     position: 'absolute',
-    top: 40,
+    top: 64,
     bottom: -spacing.xl,
     width: 2,
     backgroundColor: colors.surfaceElevated,
