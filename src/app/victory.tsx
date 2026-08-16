@@ -103,33 +103,39 @@ export default function VictoryScreen() {
 
   return (
     <Screen>
-      <Pressable style={styles.screen} onPress={skipCelebration}>
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          <View style={styles.header}>
-            <Text style={styles.kicker}>Quest Complete</Text>
-            <Ionicons name="trophy" size={44} color={colors.reward} />
-            <Text style={styles.title}>{headline}</Text>
+      <View style={styles.screen}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
+        >
+          <Pressable onPress={skipCelebration}>
+            <View style={styles.header}>
+              <Text style={styles.kicker}>Quest Complete</Text>
+              <Ionicons name="trophy" size={44} color={colors.reward} />
+              <Text style={styles.title}>{headline}</Text>
 
-            {result ? (
-              <View style={styles.totalBlock}>
-                <Text style={styles.totalValue}>+{result.xp.total}</Text>
-                <Text style={styles.totalLabel}>XP earned</Text>
-                {leveledUp ? (
-                  <View style={styles.levelChip}>
-                    <Ionicons name="arrow-up-circle" size={16} color={colors.background} />
-                    <Text style={styles.levelChipText}>
-                      Level {result.level.before} → {result.level.after} · {result.level.title}
-                    </Text>
-                  </View>
-                ) : null}
-              </View>
-            ) : (
-              <View style={styles.syncing}>
-                <View style={styles.syncingDot} />
-                <Text style={styles.syncingLabel}>Syncing…</Text>
-              </View>
-            )}
-          </View>
+              {result ? (
+                <View style={styles.totalBlock}>
+                  <Text style={styles.totalValue}>+{result.xp.total}</Text>
+                  <Text style={styles.totalLabel}>XP earned</Text>
+                  {leveledUp ? (
+                    <View style={styles.levelChip}>
+                      <Ionicons name="arrow-up-circle" size={16} color={colors.background} />
+                      <Text style={styles.levelChipText}>
+                        Level {result.level.before} → {result.level.after} · {result.level.title}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+              ) : (
+                <View style={styles.syncing}>
+                  <View style={styles.syncingDot} />
+                  <Text style={styles.syncingLabel}>Syncing…</Text>
+                </View>
+              )}
+            </View>
+          </Pressable>
 
           {result ? (
             <View style={styles.results}>
@@ -155,7 +161,7 @@ export default function VictoryScreen() {
             onPress={() => router.replace('/')}
           />
         </View>
-      </Pressable>
+      </View>
 
       <ConfettiBurst runId={celebration.confettiRun} />
       <LevelUpOverlay
@@ -169,6 +175,9 @@ export default function VictoryScreen() {
 
 const styles = StyleSheet.create({
   screen: {
+    flex: 1,
+  },
+  scrollView: {
     flex: 1,
   },
   scroll: {
