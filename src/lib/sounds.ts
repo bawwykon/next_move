@@ -1,16 +1,16 @@
 /**
- * AT-01D / AT-01K / AT-01L — shared sound-cue player (7 cues, final sound
+ * AT-01D / AT-01K / AT-01M — shared sound-cue player (7 cues, final sound
  * set).
  *
  * Cues: countdown, exercise_end, rest_start, rest_end, quest_complete,
- * levelup, victory_fanfare (the click cue was retired in AT-01K). A fresh
- * player is created per cue and released when its WAV finishes — a newly
- * created player reliably starts (observed: the session's first cue always
- * played), and releasing it frees the audio session for the next cue. Every
- * call is wrapped so a missing/corrupt asset or a player error can never
- * crash a screen (same contract as the original victory chimes).
+ * levelup, victory_fanfare (the click cue was retired in AT-01K). Lazy pooled
+ * players with unconditional fire-and-forget `seekTo(0)` + `play()` — the
+ * known-good pattern that produced audible sound on this emulator before the
+ * AT-01J/AT-01L experiments. Every call is wrapped so a missing/corrupt
+ * asset or a player error can never crash a screen (same contract as the
+ * original victory chimes).
  */
-import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
+import { createAudioPlayer, type AudioPlayer } from 'expo-audio';
 
 export type SoundCue =
   | 'countdown'
@@ -31,23 +31,31 @@ const SOURCES: Record<SoundCue, number> = {
   victoryFanfare: require('@/assets/sounds/victory_fanfare.wav') as number,
 };
 
-// Standard session config — plays even in silent mode; set once at load.
-void setAudioModeAsync({ playsInSilentMode: true }).catch(() => undefined);
+const players = new Map<SoundCue, AudioPlayer>();
 
-/** Play a cue from the start on a fresh player; swallow any audio failure. */
-export function playCue(cue: SoundCue): void {
+function playerFor(cue: SoundCue): AudioPlayer | null {
   try {
-    // Fresh player per cue: a newly created player reliably starts (observed:
-    // the session's first cue always played), and releasing it when the WAV
-    // finishes frees the audio session for the next cue.
-    const player = createAudioPlayer(SOURCES[cue]);
-    player.addListener('playbackStatusUpdate', (status) => {
-      if (status.didJustFinish) {
-        player.release();
-      }
-    });
+    let player = players.get(cue);
+    if (!player) {
+      player = createAudioPlayer(SOURCES[cue]);
+      players.set(cue, player);
+    }
+    return player;
+  } catch {
+    return null;
+  }
+}
+
+/** Replay the cue from the start; swallow any audio failure. */
+export function playCue(cue: SoundCue): void {
+  const player = playerFor(cue);
+  if (!player) {
+    return;
+  }
+  try {
+    void player.seekTo(0).catch(() => undefined);
     player.play();
   } catch {
-    // Audio must never block the UI.
+    // audio must never block the UI
   }
 }
