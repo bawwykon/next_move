@@ -168,12 +168,20 @@ export default function WorkoutScreen() {
   // restStart into a rest, restEnd out of a rest, exerciseEnd on any other
   // non-rest → non-rest switch (warmup→work, work→cooldown included).
   useEffect(() => {
-    if (!workout || prevIndexRef.current === null || segmentIndex === null) {
+    if (!workout || segmentIndex === null) {
       return;
     }
-    const prevKind = workout.segments[prevIndexRef.current]?.kind;
+    const prevIndex = prevIndexRef.current;
+    if (prevIndex === null) {
+      prevIndexRef.current = segmentIndex; // prime: the first segment has no transition
+      return;
+    }
+    if (segmentIndex === prevIndex) {
+      return;
+    }
+    const prevKind = workout.segments[prevIndex]?.kind;
     const nextKind = workout.segments[segmentIndex]?.kind;
-    if (prevKind && nextKind && segmentIndex !== prevIndexRef.current) {
+    if (prevKind && nextKind) {
       if (nextKind === 'rest') {
         playCue('restStart');
       } else if (prevKind === 'rest') {
@@ -182,9 +190,7 @@ export default function WorkoutScreen() {
         playCue('exerciseEnd');
       }
     }
-    if (segmentIndex !== prevIndexRef.current) {
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     prevIndexRef.current = segmentIndex;
   }, [segmentIndex, workout]);
 
