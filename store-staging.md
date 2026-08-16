@@ -1,7 +1,9 @@
-# Store submission staging (NOT submitted — gated on ED-27 owner go)
+# Store submission staging (DEFERRED — ED-27 resolved as point release)
 
-Holding area for the App Store / Google Play package materials. Nothing here has
-been uploaded; the DO-NOT-SUBMIT marker stands until ED-27 is explicitly approved.
+Holding area for the App Store / Google Play package materials. **ED-27 is
+closed: this round ships as a point release (in-house / sideload distribution);
+store submission is deferred** — nothing has been uploaded and the
+DO-NOT-SUBMIT marker stands until a future owner decision reopens it.
 
 ## App identity (current app.json)
 
@@ -43,7 +45,7 @@ in the store build (NFR-9 logger is local-only, data never leaves the device).
 
 ## checklist
 
-- [ ] owner approves content (ED-27)
-- [ ] android.package chosen + EAS/production build
-- [ ] privacy policy URL published + wired
-- [ ] screenshots re-shot from production build on a real device
+- [x] owner decides release shape (ED-27) — **point release, store deferred**
+- [ ] android.package chosen + EAS/production build (future store round)
+- [ ] privacy policy URL published + wired (future store round)
+- [ ] screenshots re-shot from production build on a real device (future store round)
