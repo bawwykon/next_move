@@ -1,15 +1,16 @@
 /**
- * AT-01D / AT-01K — shared sound-cue player (7 cues, final sound set).
+ * AT-01D / AT-01K / AT-01L — shared sound-cue player (7 cues, final sound
+ * set).
  *
  * Cues: countdown, exercise_end, rest_start, rest_end, quest_complete,
- * levelup, victory_fanfare (the click cue was retired in AT-01K). Players
- * are created eagerly at module load (each WAV is tiny, 0.6–4 s) so the
- * first cue never races native load; replays seek through the public
- * `seekTo` API. Every call is wrapped so a missing/corrupt asset or a
- * player error can never crash a screen (same contract as the original
- * victory chimes).
+ * levelup, victory_fanfare (the click cue was retired in AT-01K). A fresh
+ * player is created per cue and released when its WAV finishes — a newly
+ * created player reliably starts (observed: the session's first cue always
+ * played), and releasing it frees the audio session for the next cue. Every
+ * call is wrapped so a missing/corrupt asset or a player error can never
+ * crash a screen (same contract as the original victory chimes).
  */
-import { createAudioPlayer, type AudioPlayer } from 'expo-audio';
+import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 
 export type SoundCue =
   | 'countdown'
@@ -30,28 +31,21 @@ const SOURCES: Record<SoundCue, number> = {
   victoryFanfare: require('@/assets/sounds/victory_fanfare.wav') as number,
 };
 
-const players = new Map<SoundCue, AudioPlayer>();
+// Standard session config — plays even in silent mode; set once at load.
+void setAudioModeAsync({ playsInSilentMode: true }).catch(() => undefined);
 
-// Eager creation at module load — each WAV is tiny (0.6–4 s), and a player
-// created on the first cue races the native load (silent first cue).
-for (const cue of Object.keys(SOURCES) as SoundCue[]) {
-  try {
-    players.set(cue, createAudioPlayer(SOURCES[cue]));
-  } catch {
-    // audio must never break a screen
-  }
-}
-
-/** Replay the cue from the start; swallow any audio failure. */
+/** Play a cue from the start on a fresh player; swallow any audio failure. */
 export function playCue(cue: SoundCue): void {
-  const player = players.get(cue);
-  if (!player) {
-    return;
-  }
   try {
-    if (player.isLoaded) {
-      player.seekTo(0).catch(() => undefined);
-    }
+    // Fresh player per cue: a newly created player reliably starts (observed:
+    // the session's first cue always played), and releasing it when the WAV
+    // finishes frees the audio session for the next cue.
+    const player = createAudioPlayer(SOURCES[cue]);
+    player.addListener('playbackStatusUpdate', (status) => {
+      if (status.didJustFinish) {
+        player.release();
+      }
+    });
     player.play();
   } catch {
     // Audio must never block the UI.
