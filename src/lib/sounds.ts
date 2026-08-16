@@ -1,17 +1,17 @@
 /**
- * AT-01D — shared sound-cue player (8 cues, final sound set).
+ * AT-01D / AT-01K — shared sound-cue player (7 cues, final sound set).
  *
- * Cues: click, countdown, exercise_end, rest_start, rest_end, quest_complete,
- * levelup, victory_fanfare. Players are created eagerly at module load (each
- * WAV is tiny, 0.6–4 s) so the first cue never races native load; replays
- * seek through the public `seekTo` API. Every call is wrapped so a
- * missing/corrupt asset or a player error can never crash a screen (same
- * contract as the original victory chimes).
+ * Cues: countdown, exercise_end, rest_start, rest_end, quest_complete,
+ * levelup, victory_fanfare (the click cue was retired in AT-01K). Players
+ * are created eagerly at module load (each WAV is tiny, 0.6–4 s) so the
+ * first cue never races native load; replays seek through the public
+ * `seekTo` API. Every call is wrapped so a missing/corrupt asset or a
+ * player error can never crash a screen (same contract as the original
+ * victory chimes).
  */
 import { createAudioPlayer, type AudioPlayer } from 'expo-audio';
 
 export type SoundCue =
-  | 'click'
   | 'countdown'
   | 'exerciseEnd'
   | 'restStart'
@@ -21,7 +21,6 @@ export type SoundCue =
   | 'victoryFanfare';
 
 const SOURCES: Record<SoundCue, number> = {
-  click: require('@/assets/sounds/click.wav') as number,
   countdown: require('@/assets/sounds/countdown.wav') as number,
   exerciseEnd: require('@/assets/sounds/exercise_end.wav') as number,
   restStart: require('@/assets/sounds/rest_start.wav') as number,

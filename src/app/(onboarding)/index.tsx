@@ -24,7 +24,6 @@ import {
   type WizardState,
 } from '@/features/onboarding/wizardController';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
-import { playCue } from '@/lib/sounds';
 import { useSessionStore } from '@/state/sessionStore';
 
 const STEP_COUNT = ONBOARDING_STEPS.length;
@@ -59,7 +58,6 @@ export default function OnboardingScreen() {
 
   const handleAdvance = () => {
     setError(null);
-    playCue('click');
     setWizard((current) => advance(current));
   };
 
@@ -150,7 +148,6 @@ export default function OnboardingScreen() {
                 accessibilityState={{ selected }}
                 accessibilityLabel={option.label}
                 onPress={() => {
-                  playCue('click');
                   setWizard((current) => selectAnswer(current, option.value));
                 }}
                 style={({ pressed }) => [

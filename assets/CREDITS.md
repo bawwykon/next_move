@@ -67,7 +67,6 @@ All images are **AI-generated originals** produced for Next Move by the Asset De
 
 | File                | Source                    | License        |
 | ------------------- | ------------------------- | -------------- |
-| click.wav           | ElevenLabs SFX generation | ElevenLabs ToS |
 | countdown.wav       | ElevenLabs SFX generation | ElevenLabs ToS |
 | exercise_end.wav    | ElevenLabs SFX generation | ElevenLabs ToS |
 | levelup.wav         | ElevenLabs SFX generation | ElevenLabs ToS |

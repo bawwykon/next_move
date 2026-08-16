@@ -15,7 +15,6 @@ import { formatSegmentDuration } from '@/features/questDetail/segmentDuration';
 import { segmentKindLabel } from '@/features/questDetail/segmentKind';
 import { segmentsTotal } from '@/features/questDetail/segmentsTotal';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
-import { playCue } from '@/lib/sounds';
 import { useCharacterStore } from '@/state/characterStore';
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -65,7 +64,6 @@ export default function QuestDetailScreen() {
     if (!detail) {
       return;
     }
-    playCue('click');
     router.push({
       pathname: '/workout/[id]',
       params: { id: detail.id, title: detail.title },

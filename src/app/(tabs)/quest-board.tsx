@@ -40,7 +40,6 @@ import { formatDuration } from '@/features/questBoard/format';
 import { greetingForHour } from '@/features/questBoard/greeting';
 import { weeklyChallengeProgress } from '@/features/questBoard/weekly';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
-import { playCue } from '@/lib/sounds';
 import { useCharacterStore } from '@/state/characterStore';
 import { useWorkoutStore } from '@/state/workoutStore';
 import { useCompletionStore } from '@/state/completionStore';
@@ -182,7 +181,6 @@ export default function QuestBoardScreen() {
 
   const openQuest = useCallback(
     (quest: ActiveQuest) => {
-      playCue('click');
       router.push({
         pathname: '/quest/[id]',
         params: {

@@ -8,7 +8,6 @@ import { catalogBySlot, DEFAULT_SLOT_SLUGS, type CosmeticSlot } from '@/domain/c
 import { cosmeticArt } from '@/features/assets/assetMap';
 import { pickerRowStrings } from '@/features/profile/format';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
-import { playCue } from '@/lib/sounds';
 
 const SLOT_LABELS: Record<CosmeticSlot, string> = {
   frame: 'Frame',
@@ -147,7 +146,6 @@ export function LoadoutCard({ catalog, owned, equipped, onEquip }: LoadoutCardPr
                     disabled={locked || saving}
                     style={styles.optionRow}
                     onPress={() => {
-                      playCue('click');
                       setSelected(item.id);
                     }}
                   >

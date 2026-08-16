@@ -51,10 +51,10 @@ export function buildWorkout(
   };
 }
 
-/** FR-TIMER-3 / AT-01E — a segment opens with a 3-2-1 pre-phase when it is
- * the first segment or follows a rest (work→rest and work→cooldown never). */
+/** FR-TIMER-3 / AT-01E / AT-01K — every non-rest segment opens with a 3-2-1
+ * pre-phase (warmup, work, and cooldown alike); rest never counts down. */
 function hasCountdown(workout: Workout, index: number): boolean {
-  return index === 0 || workout.segments[index - 1]!.kind === 'rest';
+  return workout.segments[index]!.kind !== 'rest';
 }
 
 /**
@@ -155,12 +155,12 @@ export function nextUp(workout: Workout, nowMs: number): WorkoutSegment | null {
 }
 
 /**
- * FR-TIMER-3 — 3-2-1 roll-in opening the first segment and any segment that
- * follows a rest (work→rest and work→cooldown transitions never count down).
- * The countdown occupies the first COUNTDOWN_DURATION_MS of that segment's
- * own pre-phase (the schedule itself is never shifted and nothing is
- * subtracted from the segment's duration); past the window it is null and the
- * segment's normal remaining time takes over at the FULL configured value.
+ * FR-TIMER-3 / AT-01K — 3-2-1 roll-in opening every non-rest segment (rest
+ * never counts down). The countdown occupies the first
+ * COUNTDOWN_DURATION_MS of that segment's own pre-phase (the schedule itself
+ * is never shifted and nothing is subtracted from the segment's duration);
+ * past the window it is null and the segment's normal remaining time takes
+ * over at the FULL configured value.
  */
 export function countdownMs(workout: Workout, nowMs: number): number | null {
   const index = segmentIndexAt(workout, nowMs);

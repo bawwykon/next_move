@@ -40,11 +40,12 @@ describe('decideOnForeground', () => {
   });
 
   it('returns complete exactly at the end boundary (EC-2, inclusive)', () => {
-    // wall clock = 10 + 3s pre-phase + 20 + 10 = 43s (only the first segment has a countdown)
+    // wall clock = 10 + 3s pre-phase + 20 + 3s pre-phase + 10 + 3s pre-phase = 49s
+    // (every non-rest segment carries a countdown since AT-01K)
     expect(
       decideOnForeground(
         { questId: 'q', startedAtEpochMs: STARTED_AT },
-        STARTED_AT + 43_000,
+        STARTED_AT + 49_000,
         SEGMENTS,
       ),
     ).toBe('complete');

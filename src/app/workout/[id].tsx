@@ -163,30 +163,24 @@ export default function WorkoutScreen() {
     }
   });
 
-  // Segment-change haptic (7.7) + timer cues (AT-01D sound set) — derived
-  // from the engine index, not per-tick. One cue per transition: restStart
-  // into a rest, restEnd out of a rest, exerciseEnd when a work-like segment
-  // ends straight into another work-like segment (no rest in between).
+  // Segment-change haptic (7.7) + timer cues (AT-01D/AT-01K sound set) —
+  // derived from the engine index, not per-tick. One cue per transition:
+  // restStart into a rest, restEnd out of a rest, exerciseEnd on any other
+  // non-rest → non-rest switch (warmup→work, work→cooldown included).
   useEffect(() => {
     if (!workout || prevIndexRef.current === null || segmentIndex === null) {
       return;
     }
     const prevKind = workout.segments[prevIndexRef.current]?.kind;
     const nextKind = workout.segments[segmentIndex]?.kind;
-    if (prevKind && nextKind && segmentIndex !== prevIndexRef.current && prevKind !== nextKind) {
+    if (prevKind && nextKind && segmentIndex !== prevIndexRef.current) {
       if (nextKind === 'rest') {
         playCue('restStart');
       } else if (prevKind === 'rest') {
         playCue('restEnd');
+      } else {
+        playCue('exerciseEnd');
       }
-    } else if (
-      prevKind &&
-      nextKind &&
-      segmentIndex !== prevIndexRef.current &&
-      prevKind === nextKind &&
-      prevKind !== 'rest'
-    ) {
-      playCue('exerciseEnd');
     }
     if (segmentIndex !== prevIndexRef.current) {
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -269,13 +263,15 @@ export default function WorkoutScreen() {
     : null;
   const digits = remaining !== null ? formatCountdown(Math.ceil(remaining / 1000)) : null;
   const countdownDigit = countdown !== null ? String(countdown) : null;
-  // 3-2-1 countdown tick (AT-01D) — one cue per digit change.
-  const prevDigitRef = useRef<string | null>(null);
+  // 3-2-1 countdown cue (AT-01K) — fires once when the roll-in begins, never
+  // per digit change (the WAV itself ticks 3-2-1).
+  const countdownActiveRef = useRef(false);
   useEffect(() => {
-    if (countdownDigit !== null && countdownDigit !== prevDigitRef.current) {
+    const active = countdownDigit !== null;
+    if (active && !countdownActiveRef.current) {
       playCue('countdown');
     }
-    prevDigitRef.current = countdownDigit;
+    countdownActiveRef.current = active;
   }, [countdownDigit]);
 
   if (status === 'loading') {
