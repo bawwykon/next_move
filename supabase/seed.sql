@@ -127,23 +127,28 @@ on conflict (profile_id) do update set
   workout_time = excluded.workout_time,
   completed_at = excluded.completed_at;
 
--- exercise catalog (15)
+-- exercise catalog (20 — v1.1, AT-02B: 13 kept + 7 new; side-steps/chair-squat removed)
 insert into public.exercise_library (slug, name, instruction, safety_note, categories, beginner_variation) values
   ('wall-push-up', 'Wall Push-Up', 'Stand an arm''s length from a wall with hands at shoulder height. Gently bend your elbows to bring your chest toward the wall, then push back to the start with control.', 'Keep your body in one straight line from head to heels and stop if you feel any strain in your shoulders.', '{"strength"}', 'Step closer to the wall for an easier angle.'),
-  ('chair-squat', 'Chair Squat', 'Stand in front of a sturdy chair with feet hip-width apart. Lower yourself until your hips lightly touch the seat, then press through your heels to stand back up.', 'Keep your knees pointing over your toes and hold the chair with one hand for balance if you need it.', '{"strength"}', 'Use a higher chair or a cushion to shorten the movement.'),
   ('glute-bridge', 'Glute Bridge', 'Lie on your back with knees bent and feet flat on the floor. Press through your heels to lift your hips toward the ceiling, squeeze at the top, then lower with control.', 'Keep your shoulders and feet grounded and avoid arching your lower back.', '{"strength"}', 'Rest your hands on the floor at your sides for extra support.'),
   ('bird-dog', 'Bird Dog', 'Start on all fours with hands under your shoulders and knees under your hips. Reach one arm forward and the opposite leg back at the same time, hold briefly, then return and switch sides.', 'Keep your hips level and move slowly so you stay balanced.', '{"strength"}', 'Lift only the arm or only the leg until you feel steady.'),
   ('seated-leg-raise', 'Seated Leg Raise', 'Sit tall at the edge of a sturdy chair with hands at your sides. Lift one leg straight out in front, hold, then lower it slowly. Alternate legs.', 'Tighten your core and keep your back straight, using the chair seat for support.', '{"strength"}', 'Lift just a few inches or keep the knee slightly bent.'),
   ('wall-sit', 'Wall Sit', 'Slide your back down a wall until your knees are bent at a comfortable angle, with feet flat and hips below your knees. Hold the position and breathe steadily.', 'Stop if you feel any sharp pressure in your knees, and place your feet slightly wider than your hips for stability.', '{"strength"}', 'Hold a higher position or for a shorter time at first.'),
   ('march-in-place', 'March in Place', 'Stand tall and lift your knees one at a time as if marching. Swing your arms gently and keep a steady rhythm.', 'Land softly through the whole foot and keep your chest lifted.', '{"endurance"}', 'Touch each foot down without lifting the knee high.'),
   ('step-touch', 'Step Touch', 'Step one foot out to the side and bring the other foot to meet it, then step back the other way. Keep a light, steady rhythm.', 'Keep your steps small and controlled on smooth, level ground.', '{"endurance"}', 'Walk the pattern instead of stepping, or slow the pace.'),
-  ('side-steps', 'Side Steps', 'Take a few steps to the right, then back to the left, staying low with soft knees. Move at a pace that keeps your breathing steady.', 'Keep a clear path around you and turn your whole body to change direction.', '{"endurance"}', 'Take smaller steps or walk side to side without bending as low.'),
   ('gentle-hops', 'Gentle Hops', 'Hop softly from one foot to the other with a light rhythm, landing quietly through the ball of the foot. Keep the hops low and controlled.', 'Skip the hops if your joints feel tender today and march instead.', '{"endurance"}', 'March in place with a little bounce instead of hopping.'),
   ('seated-march', 'Seated March', 'Sit tall with both feet flat. Lift one knee toward your chest, lower it, then lift the other, keeping a steady rhythm.', 'Hold the sides of the chair for balance and keep your back supported.', '{"endurance"}', 'Lift only the heel, or raise the knee a small amount.'),
   ('neck-shoulder-rolls', 'Neck and Shoulder Rolls', 'Slowly roll your shoulders forward and back in a circle, then gently turn your head side to side. Keep the movement small and smooth.', 'Move within a comfortable range and never force your neck.', '{"mobility"}', 'Only roll the shoulders if neck rotation feels like too much.'),
   ('cat-cow', 'Cat Cow', 'On all fours, round your back up toward the ceiling as you exhale, then gently lower and arch as you inhale. Move slowly with your breath.', 'Keep the motion comfortable and move only as far as feels good.', '{"mobility"}', 'Perform it seated with your hands on your knees.'),
   ('seated-hamstring-stretch', 'Seated Hamstring Stretch', 'Sit with one leg extended and the other foot resting near your inner thigh. Hinge gently forward from the hips and hold, then switch sides.', 'Keep a soft bend in the extended knee and stop before it pulls sharply.', '{"mobility"}', 'Rest your hands on your thigh or a towel for support.'),
-  ('standing-quad-stretch', 'Standing Quad Stretch', 'Stand tall and hold a wall or chair for balance. Bend one knee and bring your heel toward your glute, hold gently, then switch legs.', 'Keep both knees close together and stop if your hip feels tight.', '{"mobility"}', 'Hold your ankle with a towel or band for a longer reach.')
+  ('standing-quad-stretch', 'Standing Quad Stretch', 'Stand tall and hold a wall or chair for balance. Bend one knee and bring your heel toward your glute, hold gently, then switch legs.', 'Keep both knees close together and stop if your hip feels tight.', '{"mobility"}', 'Hold your ankle with a towel or band for a longer reach.'),
+  ('squat', 'Squat', 'Lower your hips back and down until your thighs are roughly parallel, then press through your heels to stand.', 'Keep knees tracking over toes and your chest lifted.', '{"strength"}', 'Sit onto a chair or low box.'),
+  ('push-up', 'Push-Up', 'From a straight-arm plank, lower your chest to just above the floor, then push back up.', 'Keep your body in one line; don''t let hips sag.', '{"strength"}', 'Knees-down or wall push-up.'),
+  ('lunges', 'Lunges', 'Step one leg forward and lower both knees to about 90 degrees, then push back to standing.', 'Keep your front knee over your ankle.', '{"strength","mobility"}', 'Hold a wall or chair; take a smaller step.'),
+  ('plank', 'Plank', 'Hold a straight-arm or forearm plank with your body in one line.', 'Breathe steadily; stop if your lower back aches.', '{"strength","discipline"}', 'Knees-down or wall plank.'),
+  ('bicycle-crunch', 'Bicycle Crunch', 'Lie on your back, lift your shoulders, and alternate bringing opposite elbow to knee in a pedaling motion.', 'Move slowly and keep your lower back pressed down.', '{"strength","discipline"}', 'March the legs instead of pedaling.'),
+  ('mountain-climber', 'Mountain Climbers', 'From a straight-arm plank, drive your knees toward your chest one at a time, keeping your hips low.', 'Keep shoulders over wrists; small, steady steps.', '{"endurance","strength"}', 'Slow step-throughs instead of hops.'),
+  ('burpees', 'Burpees', 'From standing, squat down, step or jump back to a plank, return to the squat, then jump up.', 'Land softly with bent knees on the jump.', '{"endurance","strength"}', 'Step back instead of jumping; walk hands in and out.')
 on conflict (slug) do nothing;
 
 -- quest definitions (11 — S11-01 adds the elite tier: interval-peak)
@@ -191,11 +196,11 @@ join (
     ('first-steps', 1, 'warmup', 'march-in-place', 60),
     ('first-steps', 2, 'work', 'step-touch', 30),
     ('first-steps', 3, 'rest', null, 30),
-    ('first-steps', 4, 'work', 'side-steps', 30),
+    ('first-steps', 4, 'work', 'step-touch', 30),
     ('first-steps', 5, 'rest', null, 30),
     ('first-steps', 6, 'work', 'step-touch', 60),
     ('first-steps', 7, 'rest', null, 30),
-    ('first-steps', 8, 'work', 'side-steps', 60),
+    ('first-steps', 8, 'work', 'step-touch', 60),
     ('first-steps', 9, 'rest', null, 30),
     ('first-steps', 10, 'work', 'seated-march', 60),
     ('first-steps', 11, 'cooldown', 'neck-shoulder-rolls', 60),
@@ -212,7 +217,7 @@ join (
     ('home-circuit', 1, 'warmup', 'march-in-place', 60),
     ('home-circuit', 2, 'work', 'wall-push-up', 45),
     ('home-circuit', 3, 'rest', null, 30),
-    ('home-circuit', 4, 'work', 'chair-squat', 45),
+    ('home-circuit', 4, 'work', 'squat', 45),
     ('home-circuit', 5, 'rest', null, 30),
     ('home-circuit', 6, 'work', 'glute-bridge', 45),
     ('home-circuit', 7, 'rest', null, 30),
@@ -220,7 +225,7 @@ join (
     ('home-circuit', 9, 'rest', null, 30),
     ('home-circuit', 10, 'work', 'wall-push-up', 45),
     ('home-circuit', 11, 'rest', null, 30),
-    ('home-circuit', 12, 'work', 'chair-squat', 45),
+    ('home-circuit', 12, 'work', 'squat', 45),
     ('home-circuit', 13, 'rest', null, 30),
     ('home-circuit', 14, 'cooldown', 'neck-shoulder-rolls', 90),
 
@@ -236,7 +241,7 @@ join (
     ('steady-flow', 10, 'cooldown', 'march-in-place', 60),
 
     ('power-walk', 1, 'warmup', 'march-in-place', 90),
-    ('power-walk', 2, 'work', 'side-steps', 120),
+    ('power-walk', 2, 'work', 'step-touch', 120),
     ('power-walk', 3, 'rest', null, 30),
     ('power-walk', 4, 'work', 'step-touch', 120),
     ('power-walk', 5, 'rest', null, 30),
@@ -270,7 +275,7 @@ join (
     ('interval-boost', 1, 'warmup', 'march-in-place', 90),
     ('interval-boost', 2, 'work', 'step-touch', 150),
     ('interval-boost', 3, 'rest', null, 30),
-    ('interval-boost', 4, 'work', 'side-steps', 150),
+    ('interval-boost', 4, 'work', 'step-touch', 150),
     ('interval-boost', 5, 'rest', null, 30),
     ('interval-boost', 6, 'work', 'gentle-hops', 150),
     ('interval-boost', 7, 'rest', null, 30),
@@ -280,7 +285,7 @@ join (
     ('strength-builder', 1, 'warmup', 'march-in-place', 90),
     ('strength-builder', 2, 'work', 'wall-push-up', 150),
     ('strength-builder', 3, 'rest', null, 30),
-    ('strength-builder', 4, 'work', 'chair-squat', 150),
+    ('strength-builder', 4, 'work', 'squat', 150),
     ('strength-builder', 5, 'rest', null, 30),
     ('strength-builder', 6, 'work', 'glute-bridge', 150),
     ('strength-builder', 7, 'rest', null, 60),
@@ -292,13 +297,13 @@ join (
     ('interval-peak', 1, 'warmup', 'march-in-place', 60),
     ('interval-peak', 2, 'work', 'step-touch', 60),
     ('interval-peak', 3, 'rest', null, 20),
-    ('interval-peak', 4, 'work', 'side-steps', 60),
+    ('interval-peak', 4, 'work', 'step-touch', 60),
     ('interval-peak', 5, 'rest', null, 20),
     ('interval-peak', 6, 'work', 'gentle-hops', 60),
     ('interval-peak', 7, 'rest', null, 20),
     ('interval-peak', 8, 'work', 'step-touch', 60),
     ('interval-peak', 9, 'rest', null, 20),
-    ('interval-peak', 10, 'work', 'side-steps', 60),
+    ('interval-peak', 10, 'work', 'step-touch', 60),
     ('interval-peak', 11, 'rest', null, 20),
     ('interval-peak', 12, 'work', 'gentle-hops', 60),
     ('interval-peak', 13, 'rest', null, 20),
@@ -306,7 +311,7 @@ join (
     ('interval-peak', 15, 'rest', null, 20),
     ('interval-peak', 16, 'work', 'step-touch', 90),
     ('interval-peak', 17, 'rest', null, 20),
-    ('interval-peak', 18, 'work', 'side-steps', 90),
+    ('interval-peak', 18, 'work', 'step-touch', 90),
     ('interval-peak', 19, 'rest', null, 20),
     ('interval-peak', 20, 'cooldown', 'seated-march', 60)
 ) as s(slug, position, kind, exercise_slug, duration_sec)

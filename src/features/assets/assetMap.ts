@@ -8,20 +8,25 @@
 // --- Exercise guide illustrations (assets/exercises/, one per exercise slug) ---
 export const EXERCISE_ART: Record<string, number> = {
   'wall-push-up': require('@/assets/exercises/wall_push_up.png'),
-  'chair-squat': require('@/assets/exercises/chair_squat.png'),
   'glute-bridge': require('@/assets/exercises/glute_bridge.png'),
   'bird-dog': require('@/assets/exercises/bird_dog.png'),
   'seated-leg-raise': require('@/assets/exercises/seated_leg_raise.png'),
   'wall-sit': require('@/assets/exercises/wall_sit.png'),
   'march-in-place': require('@/assets/exercises/march_in_place.png'),
   'step-touch': require('@/assets/exercises/step_touch.png'),
-  'side-steps': require('@/assets/exercises/side_steps.png'),
   'gentle-hops': require('@/assets/exercises/gentle_hops.png'),
   'seated-march': require('@/assets/exercises/seated_march.png'),
   'neck-shoulder-rolls': require('@/assets/exercises/neck_shoulder_rolls.png'),
   'cat-cow': require('@/assets/exercises/cat_cow.png'),
   'seated-hamstring-stretch': require('@/assets/exercises/seated_hamstring_stretch.png'),
   'standing-quad-stretch': require('@/assets/exercises/standing_quad_stretch.png'),
+  squat: require('@/assets/exercises/squat.png'),
+  'push-up': require('@/assets/exercises/push_up.png'),
+  lunges: require('@/assets/exercises/lunges.png'),
+  plank: require('@/assets/exercises/plank.png'),
+  'bicycle-crunch': require('@/assets/exercises/bicycle_crunch.png'),
+  'mountain-climber': require('@/assets/exercises/mountain_climber.png'),
+  burpees: require('@/assets/exercises/burpees.png'),
 };
 
 export function exerciseArt(slug: string | null | undefined): number | null {
