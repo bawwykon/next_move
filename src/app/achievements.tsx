@@ -10,6 +10,7 @@ import {
   fetchProfileAchievements,
 } from '@/data/repositories/achievements';
 import { supabase } from '@/data/supabase';
+import { withTapCue } from '@/lib/sounds';
 import {
   mergeCatalogWithUnlocks,
   type AchievementCatalogRow,
@@ -98,7 +99,7 @@ export default function AchievementsScreen() {
         <TouchableOpacity
           accessibilityRole="button"
           style={styles.backRow}
-          onPress={() => router.back()}
+          onPress={withTapCue(() => router.back())}
         >
           <Ionicons name="chevron-back" size={22} color={colors.text} />
           <Text style={styles.backLabel}>Back</Text>
@@ -113,7 +114,7 @@ export default function AchievementsScreen() {
             <TouchableOpacity
               accessibilityRole="button"
               style={styles.retryButton}
-              onPress={() => void load()}
+              onPress={withTapCue(() => void load())}
             >
               <Text style={styles.retryLabel}>Retry</Text>
             </TouchableOpacity>

@@ -8,6 +8,7 @@ import { Screen } from '@/components/ui/Screen';
 import { supabase } from '@/data/supabase';
 import { RESET_REDIRECT_URL } from '@/lib/auth-redirect';
 import { getAuthErrorMessage } from '@/lib/auth-errors';
+import { withTapCue } from '@/lib/sounds';
 import { colors, fonts, spacing } from '@/lib/theme';
 
 export default function ForgotPasswordScreen() {
@@ -62,7 +63,7 @@ export default function ForgotPasswordScreen() {
         )}
         <Pressable
           accessibilityRole="button"
-          onPress={() => router.push('/(auth)/login')}
+          onPress={withTapCue(() => router.push('/(auth)/login'))}
           style={styles.link}
         >
           <Text style={styles.linkText}>Back to sign in</Text>

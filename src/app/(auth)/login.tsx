@@ -6,6 +6,7 @@ import { AppButton } from '@/components/ui/AppButton';
 import { AppTextField } from '@/components/ui/AppTextField';
 import { Screen } from '@/components/ui/Screen';
 import { postLoginRoute } from '@/lib/intended-route';
+import { withTapCue } from '@/lib/sounds';
 import { colors, fonts, spacing } from '@/lib/theme';
 import { useSessionStore } from '@/state/sessionStore';
 
@@ -63,7 +64,7 @@ export default function LoginScreen() {
         <AppButton label="Sign in" onPress={handleSignIn} loading={busy} />
         <Pressable
           accessibilityRole="button"
-          onPress={() => router.push('/(auth)/forgot-password')}
+          onPress={withTapCue(() => router.push('/(auth)/forgot-password'))}
           style={styles.link}
         >
           <Text style={styles.linkText}>Forgot your password?</Text>
@@ -73,7 +74,7 @@ export default function LoginScreen() {
         <Text style={styles.footerText}>New here?</Text>
         <Pressable
           accessibilityRole="button"
-          onPress={() => router.push('/(auth)/register')}
+          onPress={withTapCue(() => router.push('/(auth)/register'))}
           style={styles.link}
         >
           <Text style={styles.linkText}>Create an account</Text>

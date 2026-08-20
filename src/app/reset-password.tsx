@@ -7,6 +7,7 @@ import { AppTextField } from '@/components/ui/AppTextField';
 import { Screen } from '@/components/ui/Screen';
 import { supabase } from '@/data/supabase';
 import { getAuthErrorMessage } from '@/lib/auth-errors';
+import { withTapCue } from '@/lib/sounds';
 import { colors, fonts, spacing } from '@/lib/theme';
 import { useSessionStore } from '@/state/sessionStore';
 
@@ -101,7 +102,7 @@ export default function ResetPasswordScreen() {
             <Text style={styles.error}>{missingCode ? MISSING_CODE_MESSAGE : error}</Text>
             <Pressable
               accessibilityRole="button"
-              onPress={() => router.replace('/(auth)/forgot-password')}
+              onPress={withTapCue(() => router.replace('/(auth)/forgot-password'))}
               style={styles.link}
             >
               <Text style={styles.linkText}>Request a new reset link</Text>
@@ -110,7 +111,7 @@ export default function ResetPasswordScreen() {
         ) : null}
         <Pressable
           accessibilityRole="button"
-          onPress={() => router.replace('/(auth)/login')}
+          onPress={withTapCue(() => router.replace('/(auth)/login'))}
           style={styles.link}
         >
           <Text style={styles.linkText}>Back to sign in</Text>

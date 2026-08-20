@@ -6,6 +6,7 @@ import { AppButton } from '@/components/ui/AppButton';
 import { AppTextField } from '@/components/ui/AppTextField';
 import { Screen } from '@/components/ui/Screen';
 import { colors, fonts, spacing } from '@/lib/theme';
+import { withTapCue } from '@/lib/sounds';
 import { useSessionStore } from '@/state/sessionStore';
 
 export default function RegisterScreen() {
@@ -77,7 +78,7 @@ export default function RegisterScreen() {
         <Text style={styles.footerText}>Already have an account?</Text>
         <Pressable
           accessibilityRole="button"
-          onPress={() => router.push('/(auth)/login')}
+          onPress={withTapCue(() => router.push('/(auth)/login'))}
           style={styles.link}
         >
           <Text style={styles.linkText}>Sign in</Text>

@@ -99,6 +99,11 @@ export default function VictoryScreen() {
     dispatchCelebration('skip');
   }, []);
 
+  const handleSkipPress = () => {
+    playCue('click');
+    skipCelebration();
+  };
+
   const headline = params.title ?? 'Great work!';
 
   return (
@@ -109,7 +114,7 @@ export default function VictoryScreen() {
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
         >
-          <Pressable onPress={skipCelebration}>
+          <Pressable onPress={handleSkipPress}>
             <View style={styles.header}>
               <Text style={styles.kicker}>Quest Complete</Text>
               <Ionicons name="trophy" size={44} color={colors.reward} />

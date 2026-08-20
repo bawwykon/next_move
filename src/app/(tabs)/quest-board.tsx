@@ -16,6 +16,7 @@ import { Screen } from '@/components/ui/Screen';
 import { getOnboarding } from '@/data/repositories/profile';
 import { fetchActiveQuests, type ActiveQuest } from '@/data/repositories/quests';
 import { supabase } from '@/data/supabase';
+import { withTapCue } from '@/lib/sounds';
 import { alternatives, recommendQuest } from '@/domain/recommendation/recommendQuest';
 import type {
   CompletionRecord,
@@ -208,7 +209,7 @@ export default function QuestBoardScreen() {
           <TouchableOpacity
             accessibilityRole="button"
             style={styles.retryButton}
-            onPress={onRefresh}
+            onPress={withTapCue(onRefresh)}
           >
             <Text style={styles.retryLabel}>Retry</Text>
           </TouchableOpacity>
@@ -440,7 +441,7 @@ function QuestCard({
     <TouchableOpacity
       accessibilityRole="button"
       style={styles.card}
-      onPress={onPress}
+      onPress={withTapCue(onPress)}
       activeOpacity={0.85}
     >
       <View style={styles.cardHeader}>
@@ -477,7 +478,7 @@ function QuestRow({
     <TouchableOpacity
       accessibilityRole="button"
       style={styles.row}
-      onPress={onPress}
+      onPress={withTapCue(onPress)}
       activeOpacity={0.85}
     >
       <View style={styles.rowLeft}>
@@ -514,14 +515,18 @@ function ResumeBanner({
       </View>
       <Text style={styles.resumeLine}>Pick up where you left off.</Text>
       <View style={styles.resumeActions}>
-        <TouchableOpacity accessibilityRole="button" style={styles.resumeButton} onPress={onResume}>
+        <TouchableOpacity
+          accessibilityRole="button"
+          style={styles.resumeButton}
+          onPress={withTapCue(onResume)}
+        >
           <Text style={styles.resumeButtonLabel}>Resume</Text>
         </TouchableOpacity>
         <TouchableOpacity
           accessibilityRole="button"
           style={styles.resumeLater}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          onPress={onDismiss}
+          onPress={withTapCue(onDismiss)}
         >
           <Text style={styles.resumeLaterLabel}>Not now</Text>
         </TouchableOpacity>

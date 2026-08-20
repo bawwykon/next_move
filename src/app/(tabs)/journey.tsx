@@ -10,6 +10,7 @@ import { chapterArt } from '@/features/assets/assetMap';
 import { artForChapterId } from '@/features/journey/art';
 import { goalLine, journeyNodes, milestoneLine, type ChapterNode } from '@/features/journey/format';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
+import { withTapCue } from '@/lib/sounds';
 import { useCharacterStore } from '@/state/characterStore';
 
 /**
@@ -56,7 +57,7 @@ export default function JourneyScreen() {
           <TouchableOpacity
             accessibilityRole="button"
             style={styles.retryButton}
-            onPress={() => void refresh()}
+            onPress={withTapCue(() => void refresh())}
           >
             <Text style={styles.retryLabel}>Retry</Text>
           </TouchableOpacity>

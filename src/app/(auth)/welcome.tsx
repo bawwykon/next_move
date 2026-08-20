@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/AppButton';
+import { withTapCue } from '@/lib/sounds';
 import { Screen } from '@/components/ui/Screen';
 import { colors, fonts, spacing } from '@/lib/theme';
 
@@ -21,7 +22,7 @@ export default function WelcomeScreen() {
         <AppButton
           label="I already have an account"
           variant="secondary"
-          onPress={() => router.push('/(auth)/login')}
+          onPress={withTapCue(() => router.push('/(auth)/login'))}
         />
       </View>
     </Screen>

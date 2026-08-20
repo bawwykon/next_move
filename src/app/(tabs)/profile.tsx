@@ -30,6 +30,7 @@ import {
   type CosmeticSlot,
 } from '@/domain/cosmetics/loadout';
 import { cosmeticArt, masteryArt } from '@/features/assets/assetMap';
+import { withTapCue } from '@/lib/sounds';
 import { LoadoutCard } from '@/features/profile/LoadoutCard';
 import {
   historyExhausted,
@@ -231,7 +232,7 @@ export default function ProfileScreen() {
             <TouchableOpacity
               accessibilityRole="button"
               style={styles.retryButton}
-              onPress={() => void loadFirstPage()}
+              onPress={withTapCue(() => void loadFirstPage())}
             >
               <Text style={styles.retryLabel}>Retry</Text>
             </TouchableOpacity>
@@ -345,7 +346,7 @@ export default function ProfileScreen() {
               <TouchableOpacity
                 accessibilityRole="button"
                 style={styles.entryRow}
-                onPress={() => router.push('/achievements')}
+                onPress={withTapCue(() => router.push('/achievements'))}
               >
                 <Ionicons name="trophy-outline" size={22} color={colors.reward} />
                 <Text style={styles.entryLabel}>Achievements</Text>
@@ -388,7 +389,7 @@ export default function ProfileScreen() {
                 <TouchableOpacity
                   accessibilityRole="button"
                   style={styles.loadMore}
-                  onPress={() => void loadMore()}
+                  onPress={withTapCue(() => void loadMore())}
                 >
                   <Text style={styles.loadMoreLabel}>Load more</Text>
                 </TouchableOpacity>

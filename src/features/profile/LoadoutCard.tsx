@@ -7,6 +7,7 @@ import type { CosmeticRow } from '@/data/repositories/cosmetics';
 import { catalogBySlot, DEFAULT_SLOT_SLUGS, type CosmeticSlot } from '@/domain/cosmetics/loadout';
 import { cosmeticArt } from '@/features/assets/assetMap';
 import { pickerRowStrings } from '@/features/profile/format';
+import { withTapCue } from '@/lib/sounds';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 
 const SLOT_LABELS: Record<CosmeticSlot, string> = {
@@ -103,7 +104,7 @@ export function LoadoutCard({ catalog, owned, equipped, onEquip }: LoadoutCardPr
               key={slot}
               accessibilityRole="button"
               style={styles.loadoutRow}
-              onPress={() => open(slot)}
+              onPress={withTapCue(() => open(slot))}
             >
               <Text style={styles.loadoutSlot}>{SLOT_LABELS[slot]}</Text>
               <Text style={styles.loadoutName}>{slotValue(equipped, slot, catalog)}</Text>
@@ -116,7 +117,7 @@ export function LoadoutCard({ catalog, owned, equipped, onEquip }: LoadoutCardPr
       <Modal visible={openSlot !== null} transparent animationType="slide" onRequestClose={close}>
         {openSlot !== null ? (
           <View style={styles.sheetBackdrop}>
-            <Pressable style={styles.sheetDismissArea} onPress={close} />
+            <Pressable style={styles.sheetDismissArea} onPress={withTapCue(close)} />
             <View style={styles.sheet}>
               <Text style={styles.sheetTitle}>{SLOT_LABELS[openSlot]}</Text>
 
@@ -124,7 +125,7 @@ export function LoadoutCard({ catalog, owned, equipped, onEquip }: LoadoutCardPr
                 accessibilityRole="button"
                 style={styles.optionRow}
                 disabled={saving}
-                onPress={() => setSelected(null)}
+                onPress={withTapCue(() => setSelected(null))}
               >
                 <Ionicons
                   name={selected === null ? 'checkmark-circle' : 'ellipse-outline'}
@@ -145,9 +146,9 @@ export function LoadoutCard({ catalog, owned, equipped, onEquip }: LoadoutCardPr
                     accessibilityRole="button"
                     disabled={locked || saving}
                     style={styles.optionRow}
-                    onPress={() => {
+                    onPress={withTapCue(() => {
                       setSelected(item.id);
-                    }}
+                    })}
                   >
                     {locked ? (
                       <Text style={styles.lockEmblem}>{strings[0]}</Text>
@@ -186,7 +187,7 @@ export function LoadoutCard({ catalog, owned, equipped, onEquip }: LoadoutCardPr
                   accessibilityRole="button"
                   style={styles.cancelButton}
                   disabled={saving}
-                  onPress={close}
+                  onPress={withTapCue(close)}
                 >
                   <Text style={styles.cancelLabel}>Cancel</Text>
                 </TouchableOpacity>
@@ -194,7 +195,7 @@ export function LoadoutCard({ catalog, owned, equipped, onEquip }: LoadoutCardPr
                   accessibilityRole="button"
                   style={[styles.saveButton, saving && styles.saveButtonDisabled]}
                   disabled={saving}
-                  onPress={() => void save()}
+                  onPress={withTapCue(() => void save())}
                 >
                   <Text style={styles.saveLabel}>{saving ? 'Saving…' : 'Save'}</Text>
                 </TouchableOpacity>

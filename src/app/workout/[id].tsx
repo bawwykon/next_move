@@ -37,7 +37,7 @@ import { segmentKindLabel } from '@/features/questDetail/segmentKind';
 import { useAppForeground } from '@/hooks/useAppForeground';
 import { useNow } from '@/hooks/useNow';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
-import { playCue } from '@/lib/sounds';
+import { playCue, withTapCue } from '@/lib/sounds';
 import { useWorkoutStore } from '@/state/workoutStore';
 
 // §7.3 — the timer digits are the largest element on screen; the 3-2-1
@@ -301,10 +301,10 @@ export default function WorkoutScreen() {
           <TouchableOpacity
             accessibilityRole="button"
             style={styles.retryButton}
-            onPress={() => {
+            onPress={withTapCue(() => {
               setStatus('loading');
               void load();
-            }}
+            })}
           >
             <Text style={styles.retryLabel}>Retry</Text>
           </TouchableOpacity>
@@ -321,7 +321,7 @@ export default function WorkoutScreen() {
             accessibilityRole="button"
             style={styles.quitButton}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            onPress={leaveQuest}
+            onPress={withTapCue(leaveQuest)}
           >
             <Ionicons name="close" size={16} color={colors.textMuted} />
             <Text style={styles.quitLabel}>Quit</Text>
@@ -393,14 +393,14 @@ export default function WorkoutScreen() {
             <TouchableOpacity
               accessibilityRole="button"
               style={styles.sheetLeave}
-              onPress={leaveQuest}
+              onPress={withTapCue(leaveQuest)}
             >
               <Text style={styles.sheetLeaveLabel}>Leave</Text>
             </TouchableOpacity>
             <TouchableOpacity
               accessibilityRole="button"
               style={styles.sheetCancel}
-              onPress={() => setQuitVisible(false)}
+              onPress={withTapCue(() => setQuitVisible(false))}
             >
               <Text style={styles.sheetCancelLabel}>Cancel</Text>
             </TouchableOpacity>

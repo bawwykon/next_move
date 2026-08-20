@@ -65,14 +65,16 @@ All images are **AI-generated originals** produced for Next Move by the Asset De
 
 ## Sound sources
 
-| File                | Source                    | License        |
-| ------------------- | ------------------------- | -------------- |
-| countdown.wav       | ElevenLabs SFX generation | ElevenLabs ToS |
-| exercise_end.wav    | ElevenLabs SFX generation | ElevenLabs ToS |
-| levelup.wav         | ElevenLabs SFX generation | ElevenLabs ToS |
-| quest_complete.wav  | ElevenLabs SFX generation | ElevenLabs ToS |
-| rest_end.wav        | ElevenLabs SFX generation | ElevenLabs ToS |
-| rest_start.wav      | ElevenLabs SFX generation | ElevenLabs ToS |
-| victory_fanfare.wav | ElevenLabs SFX generation | ElevenLabs ToS |
+| File                 | Source                    | License        |
+| -------------------- | ------------------------- | -------------- |
+| chapter_unlocked.wav | ElevenLabs SFX generation | ElevenLabs ToS |
+| click.wav            | ElevenLabs SFX generation | ElevenLabs ToS |
+| countdown.wav        | ElevenLabs SFX generation | ElevenLabs ToS |
+| exercise_end.wav     | ElevenLabs SFX generation | ElevenLabs ToS |
+| levelup.wav          | ElevenLabs SFX generation | ElevenLabs ToS |
+| quest_complete.wav   | ElevenLabs SFX generation | ElevenLabs ToS |
+| rest_end.wav         | ElevenLabs SFX generation | ElevenLabs ToS |
+| rest_start.wav       | ElevenLabs SFX generation | ElevenLabs ToS |
+| victory_fanfare.wav  | ElevenLabs SFX generation | ElevenLabs ToS |
 
 See `THIRD_PARTY_NOTICES.md` for bundled third-party notices.

@@ -15,6 +15,7 @@ import { formatSegmentDuration } from '@/features/questDetail/segmentDuration';
 import { segmentKindLabel } from '@/features/questDetail/segmentKind';
 import { segmentsTotal } from '@/features/questDetail/segmentsTotal';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
+import { withTapCue } from '@/lib/sounds';
 import { useCharacterStore } from '@/state/characterStore';
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -76,7 +77,7 @@ export default function QuestDetailScreen() {
         <TouchableOpacity
           accessibilityRole="button"
           style={styles.backRow}
-          onPress={() => router.back()}
+          onPress={withTapCue(() => router.back())}
         >
           <Ionicons name="chevron-back" size={22} color={colors.text} />
           <Text style={styles.backLabel}>Back</Text>
@@ -91,10 +92,10 @@ export default function QuestDetailScreen() {
             <TouchableOpacity
               accessibilityRole="button"
               style={styles.retryButton}
-              onPress={() => {
+              onPress={withTapCue(() => {
                 setStatus('loading');
                 void load();
-              }}
+              })}
             >
               <Text style={styles.retryLabel}>Retry</Text>
             </TouchableOpacity>
@@ -149,7 +150,7 @@ export default function QuestDetailScreen() {
               <TouchableOpacity
                 accessibilityRole="button"
                 style={styles.startButton}
-                onPress={start}
+                onPress={withTapCue(start)}
               >
                 <Text style={styles.startLabel}>Start</Text>
                 <Ionicons name="play" size={20} color={colors.background} />

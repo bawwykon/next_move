@@ -7,6 +7,7 @@ import { planSummaryLines } from '@/domain/recommendation/plan';
 import { AppButton } from '@/components/ui/AppButton';
 import { Screen } from '@/components/ui/Screen';
 import { onboardingArt } from '@/features/assets/assetMap';
+import { withTapCue } from '@/lib/sounds';
 import {
   ONBOARDING_STEPS,
   optionLabel,
@@ -147,9 +148,9 @@ export default function OnboardingScreen() {
                 accessibilityRole="button"
                 accessibilityState={{ selected }}
                 accessibilityLabel={option.label}
-                onPress={() => {
+                onPress={withTapCue(() => {
                   setWizard((current) => selectAnswer(current, option.value));
-                }}
+                })}
                 style={({ pressed }) => [
                   styles.option,
                   selected && styles.optionSelected,
@@ -184,7 +185,7 @@ export default function OnboardingScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Not sure yet — skip"
-            onPress={handleSkip}
+            onPress={withTapCue(handleSkip)}
             style={styles.skip}
           >
             <Text style={styles.skipText}>Not sure yet — skip</Text>

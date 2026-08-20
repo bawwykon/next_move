@@ -1,5 +1,6 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 
+import { withTapCue } from '@/lib/sounds';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 
 type Variant = 'primary' | 'secondary';
@@ -27,7 +28,7 @@ export function AppButton({
       accessibilityRole="button"
       accessibilityLabel={label}
       disabled={isDisabled}
-      onPress={onPress}
+      onPress={withTapCue(onPress)}
       style={({ pressed }) => [
         styles.base,
         isPrimary ? styles.primary : styles.secondary,

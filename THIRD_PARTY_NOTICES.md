@@ -23,10 +23,11 @@ asset task lands.
 
 - Source: ElevenLabs (https://elevenlabs.io) — custom sound-effect generation
 - License: per ElevenLabs Terms of Service (account owner retains usage rights)
-- Files: `click.wav`, `countdown.wav`, `exercise_end.wav`, `levelup.wav`,
-  `quest_complete.wav`, `rest_end.wav`, `rest_start.wav`, `victory_fanfare.wav`
+- Files: `chapter_unlocked.wav`, `click.wav`, `countdown.wav`,
+  `exercise_end.wav`, `levelup.wav`, `quest_complete.wav`, `rest_end.wav`,
+  `rest_start.wav`, `victory_fanfare.wav`
 - Used for: onboarding/quest UI clicks, workout countdown tick, segment
-  transitions, quest completion, level-up, victory fanfare
+  transitions, quest completion, level-up, victory fanfare, chapter unlock
 
 ## Icons
 
