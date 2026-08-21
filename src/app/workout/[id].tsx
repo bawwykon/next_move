@@ -11,6 +11,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from 'react-native';
 
@@ -59,6 +60,11 @@ export default function WorkoutScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ id?: string; title?: string }>();
   const questId = params.id;
+
+  // AT-02F — the art band is sized from the real screen so the illustration
+  // always occupies ~35% of the viewport height (aspect-fit, never cropped).
+  const { height: screenHeight } = useWindowDimensions();
+  const heroHeight = Math.round(screenHeight * 0.35);
 
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [names, setNames] = useState<(string | null)[]>([]);
@@ -336,7 +342,7 @@ export default function WorkoutScreen() {
                 // (FR-TIMER-2b); no art → the screen renders exactly as before.
                 <Image
                   source={heroSource}
-                  style={styles.hero}
+                  style={[styles.hero, { height: heroHeight }]}
                   contentFit="contain"
                   accessibilityLabel={segmentName ?? 'Exercise'}
                   transition={150}
@@ -440,12 +446,11 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   hero: {
-    height: 160,
-    width: 200,
-    borderRadius: radius.lg,
-    // AT-01E/AT-01Q — the tile sits behind the exercise art; its color is the
-    // app background (#1A1712) so the transparent art reads flush with the
-    // screen, no visible rectangle.
+    width: '100%',
+    // AT-02F — height is set inline from useWindowDimensions (~35% of the
+    // screen); contentFit="contain" keeps the art aspect-fit and centered,
+    // never cropped. The tile color matches the app background so the
+    // transparent art reads flush with the screen, no visible rectangle.
     backgroundColor: colors.background,
   },
   badge: {
