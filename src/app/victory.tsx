@@ -7,6 +7,7 @@ import { AppButton } from '@/components/ui/AppButton';
 import { Screen } from '@/components/ui/Screen';
 import { track } from '@/data/analytics';
 import { celebrateStep, initialCelebrationState } from '@/features/victory/celebration';
+import { ChapterOverlay } from '@/features/victory/chapter';
 import { ConfettiBurst } from '@/features/victory/confetti';
 import { BreakdownCard } from '@/features/victory/breakdown';
 import { JourneyCard } from '@/features/victory/journey';
@@ -40,11 +41,15 @@ export default function VictoryScreen() {
   const skippedRef = useRef(false);
   const enterChimed = useRef(false);
   const levelUpRung = useRef(false);
+  const chapterRung = useRef(false);
 
   const reconciled = reconcileCompletion(lastCompletion, questId);
   const result = reconciled.result;
   const overview = result ? unlockOverview(result) : null;
   const leveledUp = result ? result.level.after > result.level.before : false;
+  const chapterAdvanced = result
+    ? result.journey.chapter_after > result.journey.chapter_before
+    : false;
 
   // Once the authoritative payload lands: victory chime + the first confetti
   // burst, exactly once per visit.
@@ -64,6 +69,8 @@ export default function VictoryScreen() {
   // FR-XP-4 — level-up celebration, timed after the initial burst: a second
   // confetti run, the level-up chime, and the overlay flash. A tap-to-skip
   // (FR-VIC-4) suppresses the chime; the reducer then ignores the timed events.
+  // AT-02D — when a chapter also advanced, the hide at the end of this beat is
+  // suppressed so the chapter beat takes over the overlay (never both at once).
   useEffect(() => {
     if (!result || !leveledUp || levelUpRung.current) {
       return;
@@ -80,7 +87,7 @@ export default function VictoryScreen() {
       dispatchCelebration('level-up');
     }, 800);
     const hide = setTimeout(() => {
-      if (active) {
+      if (active && !chapterAdvanced) {
         dispatchCelebration('hide');
       }
     }, 800 + 1900);
@@ -89,7 +96,38 @@ export default function VictoryScreen() {
       clearTimeout(show);
       clearTimeout(hide);
     };
-  }, [result, leveledUp]);
+  }, [result, leveledUp, chapterAdvanced]);
+
+  // AT-02D — chapter celebration, the final victory beat: the chapter cue
+  // plays ALONE (overlap rule), after the initial fanfare (and the level-up
+  // beat when both advanced). The overlay auto-hides ~2.6s (cue length).
+  useEffect(() => {
+    if (!result || !chapterAdvanced || chapterRung.current) {
+      return;
+    }
+    chapterRung.current = true;
+    let active = true;
+    const show = setTimeout(() => {
+      if (!active || skippedRef.current) {
+        return;
+      }
+      playCue('chapterUnlocked');
+      dispatchCelebration('chapter');
+    }, 800 + 1900);
+    const hide = setTimeout(
+      () => {
+        if (active) {
+          dispatchCelebration('hide');
+        }
+      },
+      800 + 1900 + 2600,
+    );
+    return () => {
+      active = false;
+      clearTimeout(show);
+      clearTimeout(hide);
+    };
+  }, [result, chapterAdvanced]);
 
   const skipCelebration = useCallback(() => {
     if (skippedRef.current) {
@@ -173,6 +211,10 @@ export default function VictoryScreen() {
         visible={celebration.overlayVisible}
         level={result?.level.after ?? 1}
         title={result?.level.title ?? ''}
+      />
+      <ChapterOverlay
+        visible={celebration.chapterOverlayVisible}
+        chapterId={result?.journey.chapter_after ?? 1}
       />
     </Screen>
   );
