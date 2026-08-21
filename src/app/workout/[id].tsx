@@ -63,8 +63,12 @@ export default function WorkoutScreen() {
 
   // AT-02F — the art band is sized from the real screen so the illustration
   // always occupies ~35% of the viewport height (aspect-fit, never cropped).
-  const { height: screenHeight } = useWindowDimensions();
+  // Width is an explicit point value: expo-image mis-measures '100%' widths
+  // inside a centered flex parent, which shrinks the band to its intrinsic
+  // size instead of the full content width.
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const heroHeight = Math.round(screenHeight * 0.35);
+  const heroWidth = screenWidth - spacing.xl * 2;
 
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [names, setNames] = useState<(string | null)[]>([]);
@@ -342,7 +346,7 @@ export default function WorkoutScreen() {
                 // (FR-TIMER-2b); no art → the screen renders exactly as before.
                 <Image
                   source={heroSource}
-                  style={[styles.hero, { height: heroHeight }]}
+                  style={[styles.hero, { width: heroWidth, height: heroHeight }]}
                   contentFit="contain"
                   accessibilityLabel={segmentName ?? 'Exercise'}
                   transition={150}
@@ -446,11 +450,10 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   hero: {
-    width: '100%',
-    // AT-02F — height is set inline from useWindowDimensions (~35% of the
-    // screen); contentFit="contain" keeps the art aspect-fit and centered,
-    // never cropped. The tile color matches the app background so the
-    // transparent art reads flush with the screen, no visible rectangle.
+    // AT-02F — width/height are set inline from useWindowDimensions (~35% of
+    // the screen tall, full content width); contentFit="contain" keeps the
+    // art aspect-fit and centered, never cropped. The tile color matches the
+    // app background so the transparent art reads flush with the screen.
     backgroundColor: colors.background,
   },
   badge: {
