@@ -100,7 +100,8 @@ export default function VictoryScreen() {
 
   // AT-02D — chapter celebration, the final victory beat: the chapter cue
   // plays ALONE (overlap rule), after the initial fanfare (and the level-up
-  // beat when both advanced). The overlay auto-hides ~2.6s (cue length).
+  // beat when both advanced). The overlay holds ~4s or until a tap skips it
+  // (owner amendment — no hard cut when the 2.6s cue ends).
   useEffect(() => {
     if (!result || !chapterAdvanced || chapterRung.current) {
       return;
@@ -120,7 +121,7 @@ export default function VictoryScreen() {
           dispatchCelebration('hide');
         }
       },
-      800 + 1900 + 2600,
+      800 + 1900 + 4000,
     );
     return () => {
       active = false;

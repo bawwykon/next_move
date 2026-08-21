@@ -90,11 +90,13 @@ const styles = StyleSheet.create({
     fontSize: 13,
     textTransform: 'uppercase',
     letterSpacing: 1,
+    textAlign: 'center',
   },
   chapterName: {
     color: colors.text,
     fontFamily: fonts.display.family,
     fontSize: 26,
+    textAlign: 'center',
   },
   line: {
     color: colors.textMuted,
