@@ -127,12 +127,14 @@ export function flushOutbox(deps: FlushOutboxDeps): Promise<void> {
 }
 
 /**
- * Errors that can never succeed on retry: the target row is gone or the
- * definition invalid (quest deleted, custom workout deleted mid-workout).
- * The event is dropped instead of retrying forever — the workout is over and
- * no server state can ever accept it.
+ * The one error that can never succeed on any future retry: the custom
+ * workout's definition is gone (deleted mid-workout), so no server state can
+ * ever accept the event — it is dropped instead of looping forever.
+ * quest_invalid deliberately RETAINS its row (S5 semantics): quests are
+ * never hard-deleted, and an inactive quest may activate again, at which
+ * point a replayed event lands legitimately.
  */
-const PERMANENT_SUBMIT_ERRORS = new Set(['quest_invalid', 'workout_invalid']);
+const PERMANENT_SUBMIT_ERRORS = new Set(['workout_invalid']);
 
 async function runFlush(deps: FlushOutboxDeps): Promise<void> {
   const rows = await readOutbox();

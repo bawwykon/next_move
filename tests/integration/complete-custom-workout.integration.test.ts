@@ -14,6 +14,9 @@
 import { installNativeFetch } from './setup-native-fetch';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
+import { submitCompletion } from '../../src/data/repositories/completion';
+import type { CompletionEvent } from '../../src/domain/completion/types';
+
 const TEST_EMAIL = 'custom-tester@nextmove.app';
 const TEST_PASSWORD = 'custom-test-pass-123';
 
@@ -409,5 +412,37 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
     expect(fetchError).toBeNull();
     expect((rows!['quest_id'] as unknown as { slug: string }).slug).toBe('custom-workout');
     expect(rows!['duration_sec']).toBe(120);
+  });
+
+  // BYQ-04 — the client's submitCompletion router must send a workout_id-
+  // carrying event through complete_custom_workout (p_workout_id) and return
+  // the authoritative payload; a workout_invalid answer maps to its code so
+  // the outbox can drop the row instead of retrying forever.
+  it('client routing: submitCompletion sends custom events to complete_custom_workout', async () => {
+    await resetProgression();
+    const d = day(6);
+    const wid = await createWorkout('client-router', [seg('wall-sit', 60), seg('plank', 60)]);
+    const ev: CompletionEvent = {
+      workout_id: wid,
+      idempotency_key: idemUuid('client-router-key'),
+      started_at: iso(d, 7),
+      completed_at: iso(d, 7, 2),
+      day_key: d,
+    };
+    const result = await submitCompletion(user, ev);
+    expect(result.error).toBeNull();
+    expect(result.data).not.toBeNull();
+    // wall-sit (beginner, w1) + plank (intermediate, w2), 60s each:
+    // 2 blocks x 1 + 2 blocks x 2 = 6 pts -> 18 XP base.
+    expect(result.data!.xp.quest).toBe(18);
+
+    // Deleted definition -> workout_invalid, not 'unknown' or timer_mismatch.
+    const { error: delErr } = await admin.from('custom_workouts').delete().eq('id', wid);
+    expect(delErr).toBeNull();
+    const gone = await submitCompletion(user, {
+      ...ev,
+      idempotency_key: idemUuid('client-router-gone'),
+    });
+    expect(gone.error).toBe('workout_invalid');
   });
 });

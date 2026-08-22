@@ -211,18 +211,26 @@ describe('flushOutbox', () => {
     expect(rows[0]!.event).toEqual(event('a'));
   });
 
-  // BYQ-04 — permanent submit errors can never succeed on any future retry,
-  // so the row is dropped instead of looping forever.
-  it.each(['quest_invalid', 'workout_invalid'] as const)(
-    'permanent error %s: drops the row (retry is pointless)',
-    async (code) => {
-      await enqueueCompletion(event('gone'));
-      await flushOutbox({
-        submit: jest.fn().mockResolvedValueOnce(fail<CompletionResult>(code)),
-      });
-      expect(await readOutbox()).toEqual([]);
-    },
-  );
+  // BYQ-04 — a deleted custom definition can never be accepted by any future
+  // retry, so the row is dropped instead of looping forever. quest_invalid
+  // intentionally KEEPS its row (an inactive quest may activate again).
+  it('permanent error workout_invalid: drops the row (retry is pointless)', async () => {
+    await enqueueCompletion(event('gone'));
+    await flushOutbox({
+      submit: jest.fn().mockResolvedValueOnce(fail<CompletionResult>('workout_invalid')),
+    });
+    expect(await readOutbox()).toEqual([]);
+  });
+
+  it('quest_invalid still retains its row (inactive quest may activate later)', async () => {
+    await enqueueCompletion(event('later'));
+    await flushOutbox({
+      submit: jest.fn().mockResolvedValueOnce(fail<CompletionResult>('quest_invalid')),
+    });
+    const rows = await readOutbox();
+    expect(rows.map((row) => row.id)).toEqual(['later']);
+    expect(rows[0]!.attempts).toBe(1);
+  });
 
   it('retry replays the SAME event (same idempotency key) — no re-generated key', async () => {
     await enqueueCompletion(event('a'));
