@@ -7,6 +7,7 @@ import { Animated, ScrollView, StyleSheet, Text, TouchableOpacity, View } from '
 import { Screen } from '@/components/ui/Screen';
 import { fetchQuestDetail, type QuestDetail, type QuestSegment } from '@/data/repositories/quests';
 import { dayKey } from '@/domain/streak/dayKey';
+import { difficultyLabel, exerciseDifficulty } from '@/domain/exercises/difficulty';
 import { difficultyArt, exerciseArt } from '@/features/assets/assetMap';
 import { difficultyBadge } from '@/features/questBoard/badges';
 import { isCompletedToday } from '@/features/questBoard/completedToday';
@@ -179,6 +180,9 @@ function SegmentRow({ segment }: { segment: QuestSegment }) {
   const isEdge = segment.kind === 'warmup' || segment.kind === 'cooldown';
   const labelColor = isRest ? colors.textMuted : isEdge ? colors.calm : colors.text;
   const thumb = isRest ? null : exerciseArt(segment.exerciseSlug);
+  // AT-02E — subtle difficulty tag beside the exercise name; rest rows and
+  // unknown slugs render none.
+  const difficulty = isRest ? null : exerciseDifficulty(segment.exerciseSlug);
   return (
     <View style={styles.segmentRow}>
       {thumb !== null ? (
@@ -191,7 +195,12 @@ function SegmentRow({ segment }: { segment: QuestSegment }) {
         {isRest ? (
           <Text style={styles.segmentRest}>Take a breather</Text>
         ) : (
-          <Text style={styles.segmentName}>{segment.exerciseName ?? 'Move'}</Text>
+          <View style={styles.nameRow}>
+            <Text style={styles.segmentName}>{segment.exerciseName ?? 'Move'}</Text>
+            {difficulty !== null ? (
+              <Text style={styles.segmentDifficulty}>{difficultyLabel(difficulty)}</Text>
+            ) : null}
+          </View>
         )}
       </View>
       <Text style={styles.segmentDuration}>{formatSegmentDuration(segment.durationSec)}</Text>
@@ -350,10 +359,20 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodyBold.family,
     fontSize: 13,
   },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: spacing.sm,
+  },
   segmentName: {
     color: colors.text,
     fontFamily: fonts.body.family,
     fontSize: 15,
+  },
+  segmentDifficulty: {
+    color: colors.textMuted,
+    fontFamily: fonts.body.family,
+    fontSize: 11,
   },
   segmentRest: {
     color: colors.textMuted,
