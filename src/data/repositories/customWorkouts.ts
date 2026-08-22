@@ -73,8 +73,18 @@ function parseSegments(raw: unknown): CustomSegment[] {
     const record = entry as Record<string, unknown>;
     const slug = record['exercise_slug'];
     const duration = record['duration_sec'];
-    if (typeof slug === 'string' && typeof duration === 'number' && Number.isFinite(duration)) {
-      segments.push({ exerciseSlug: slug, durationSec: duration });
+    if (typeof duration !== 'number' || !Number.isFinite(duration)) {
+      continue;
+    }
+    // Rest blocks carry kind:'rest' with no slug; rows saved before rest
+    // support have no kind at all and read as exercises.
+    if (record['kind'] === 'rest') {
+      if (slug !== null && slug !== undefined) {
+        continue;
+      }
+      segments.push({ kind: 'rest', durationSec: duration });
+    } else if (typeof slug === 'string') {
+      segments.push({ kind: 'exercise', exerciseSlug: slug, durationSec: duration });
     }
   }
   return segments;
@@ -143,10 +153,15 @@ export async function saveCustomWorkout(draft: {
   }
   const base = {
     name: (draft.name.trim() || DEFAULT_WORKOUT_NAME).slice(0, NAME_MAX_CHARS),
-    segments: draft.segments.map((segment) => ({
-      exercise_slug: segment.exerciseSlug,
-      duration_sec: segment.durationSec,
-    })),
+    segments: draft.segments.map((segment) =>
+      segment.kind === 'rest'
+        ? { kind: 'rest', exercise_slug: null, duration_sec: segment.durationSec }
+        : {
+            kind: 'exercise',
+            exercise_slug: segment.exerciseSlug,
+            duration_sec: segment.durationSec,
+          },
+    ),
   };
 
   if (draft.id) {

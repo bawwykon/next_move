@@ -20,6 +20,7 @@ import {
   MIN_TOTAL_SEC,
   METER_SCALE_XP,
   NAME_MAX_CHARS,
+  REST_DURATION_PRESETS,
   SEGMENT_DURATION_PRESETS,
   ZONE_MARKS,
   isOverflow,
@@ -123,8 +124,20 @@ export default function BuilderScreen() {
     if (segments.length >= MAX_SEGMENTS) {
       return;
     }
-    setSegments((current) => [...current, { exerciseSlug: slug, durationSec: 30 }]);
+    setSegments((current) => [
+      ...current,
+      { kind: 'exercise' as const, exerciseSlug: slug, durationSec: 30 },
+    ]);
     void track('custom_segment_added', {});
+  };
+
+  // WK ruling — rest blocks: 0 points, but they fill time and the block cap.
+  const addRest = () => {
+    if (segments.length >= MAX_SEGMENTS) {
+      return;
+    }
+    setSegments((current) => [...current, { kind: 'rest' as const, durationSec: 30 }]);
+    void track('custom_segment_added', { kind: 'rest' });
   };
 
   const removeAt = (index: number) => {
@@ -253,12 +266,16 @@ export default function BuilderScreen() {
                 ) : (
                   segments.map((segment, index) => (
                     <BuildRow
-                      key={`${segment.exerciseSlug}-${index}`}
+                      key={`${segment.kind}-${segment.kind === 'rest' ? 'rest' : segment.exerciseSlug}-${index}`}
                       index={index}
                       count={segments.length}
                       segment={segment}
-                      name={nameOf(segment.exerciseSlug)}
-                      difficulty={difficultyOf(segment.exerciseSlug)}
+                      name={
+                        segment.kind === 'rest' ? 'Take a breather' : nameOf(segment.exerciseSlug)
+                      }
+                      difficulty={
+                        segment.kind === 'exercise' ? difficultyOf(segment.exerciseSlug) : null
+                      }
                       onDuration={(durationSec) => setDuration(index, durationSec)}
                       onMove={(delta) => move(index, delta)}
                       onRemove={() => removeAt(index)}
@@ -266,7 +283,7 @@ export default function BuilderScreen() {
                   ))
                 )}
                 <Text style={styles.totalsLine}>
-                  {mmss(totalSec)} · {segments.length} exercise{segments.length === 1 ? '' : 's'}
+                  {mmss(totalSec)} · {segments.length} block{segments.length === 1 ? '' : 's'}
                   {hint && !violations.includes('empty') ? `  ·  ${hint}` : ''}
                 </Text>
               </View>
@@ -311,6 +328,21 @@ export default function BuilderScreen() {
                     );
                   })}
                 </View>
+                {/* Rest blocks — 0 XP on the meter, but they fill time and
+                count toward the 12-block cap (WK ruling). */}
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  style={[
+                    styles.restChip,
+                    segments.length >= MAX_SEGMENTS ? styles.pickChipDisabled : null,
+                  ]}
+                  disabled={segments.length >= MAX_SEGMENTS}
+                  onPress={withTapCue(addRest)}
+                >
+                  <Ionicons name="moon-outline" size={18} color={colors.calmStrong} />
+                  <Text style={styles.pickName}>Take a breather</Text>
+                  <Text style={styles.restChipHint}>15/30/45/60s · no XP</Text>
+                </TouchableOpacity>
               </View>
             </ScrollView>
 
@@ -383,12 +415,19 @@ function BuildRow({
   onMove: (delta: -1 | 1) => void;
   onRemove: () => void;
 }) {
-  const thumb = exerciseArt(segment.exerciseSlug);
-  const diffIcon = difficulty !== null ? difficultyArt(DIFFICULTY_ART_KEY[difficulty]) : null;
+  const isRest = segment.kind === 'rest';
+  const thumb = isRest ? null : exerciseArt(segment.exerciseSlug);
+  const diffIcon =
+    !isRest && difficulty !== null ? difficultyArt(DIFFICULTY_ART_KEY[difficulty]) : null;
+  const presets = isRest ? REST_DURATION_PRESETS : SEGMENT_DURATION_PRESETS;
   return (
-    <View style={styles.rowCard}>
+    <View style={[styles.rowCard, isRest ? styles.rowCardRest : null]}>
       <View style={styles.rowMain}>
-        {thumb !== null ? (
+        {isRest ? (
+          <View style={styles.restIconBox}>
+            <Ionicons name="moon-outline" size={22} color={colors.calmStrong} />
+          </View>
+        ) : thumb !== null ? (
           <Image source={thumb} style={styles.rowThumb} contentFit="contain" />
         ) : null}
         <View style={styles.rowLeft}>
@@ -396,7 +435,7 @@ function BuildRow({
             {name}
           </Text>
           <View style={styles.chipRow}>
-            {SEGMENT_DURATION_PRESETS.map((preset) => (
+            {presets.map((preset) => (
               <TouchableOpacity
                 key={preset}
                 accessibilityRole="button"
@@ -577,6 +616,34 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: spacing.md,
     gap: spacing.sm,
+  },
+  rowCardRest: {
+    backgroundColor: colors.surfaceElevated,
+  },
+  restIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.background,
+  },
+  restChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: colors.calm,
+    borderStyle: 'dashed',
+  },
+  restChipHint: {
+    color: colors.textMuted,
+    fontFamily: fonts.body.family,
+    fontSize: 12,
+    marginLeft: 'auto',
   },
   rowMain: {
     flexDirection: 'row',

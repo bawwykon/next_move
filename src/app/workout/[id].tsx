@@ -97,9 +97,10 @@ export default function WorkoutScreen() {
     }
     let segments: QuestSegment[];
     if (isCustom) {
-      // BYQ-04 — the saved definition IS the workout: work-only segments in
-      // the built order. A definition deleted mid-run reads as an error and
-      // the run cannot start (the completion RPC would reject it anyway).
+      // BYQ-04 — the saved definition IS the workout, in the built order.
+      // Rest blocks run as native rest segments (no cues about exercises).
+      // A definition deleted mid-run reads as an error and the run cannot
+      // start (the completion RPC would reject it anyway).
       const [customResult, catalogResult] = await Promise.all([
         fetchCustomWorkout(questId),
         fetchExerciseCatalog(),
@@ -113,12 +114,19 @@ export default function WorkoutScreen() {
       );
       segments = customResult.data.segments.map((segment, index) => ({
         position: index,
-        kind: 'work' as const,
+        kind: segment.kind === 'rest' ? ('rest' as const) : ('work' as const),
         durationSec: segment.durationSec,
-        exerciseName: bySlug.get(segment.exerciseSlug)?.name ?? null,
-        exerciseSlug: segment.exerciseSlug,
-        instruction: bySlug.get(segment.exerciseSlug)?.instruction ?? null,
-        safetyNote: bySlug.get(segment.exerciseSlug)?.safetyNote ?? null,
+        exerciseName:
+          segment.kind === 'exercise' ? (bySlug.get(segment.exerciseSlug)?.name ?? null) : null,
+        exerciseSlug: segment.kind === 'exercise' ? segment.exerciseSlug : null,
+        instruction:
+          segment.kind === 'exercise'
+            ? (bySlug.get(segment.exerciseSlug)?.instruction ?? null)
+            : null,
+        safetyNote:
+          segment.kind === 'exercise'
+            ? (bySlug.get(segment.exerciseSlug)?.safetyNote ?? null)
+            : null,
       }));
     } else {
       const result = await fetchQuestDetail(questId);

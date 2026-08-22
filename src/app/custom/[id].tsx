@@ -162,7 +162,7 @@ export default function CustomQuestScreen() {
               (projected)
             </Text>
             <Text style={styles.description}>
-              Your own mix — {workout.segments.length} exercise
+              Your own mix — {workout.segments.length} block
               {workout.segments.length === 1 ? '' : 's'} in your order.
             </Text>
           </View>
@@ -170,6 +170,19 @@ export default function CustomQuestScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Your Quest</Text>
             {workout.segments.map((segment, index) => {
+              if (segment.kind === 'rest') {
+                return (
+                  <View key={`rest-${index}`} style={[styles.segmentRow, styles.restRow]}>
+                    <View style={styles.restIconBox}>
+                      <Ionicons name="moon-outline" size={18} color={colors.calmStrong} />
+                    </View>
+                    <Text style={[styles.segmentName, styles.restName]} numberOfLines={1}>
+                      Take a breather
+                    </Text>
+                    <Text style={styles.segmentDuration}>{segment.durationSec}s</Text>
+                  </View>
+                );
+              }
               const thumb = exerciseArt(segment.exerciseSlug);
               const diff = difficultyOf(segment.exerciseSlug);
               const icon = diff !== null ? difficultyArt(DIFFICULTY_ART_KEY[diff]) : null;
@@ -376,6 +389,20 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: radius.sm,
     backgroundColor: colors.surfaceElevated,
+  },
+  restRow: {
+    backgroundColor: colors.surfaceElevated,
+  },
+  restIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.background,
+  },
+  restName: {
+    color: colors.textMuted,
   },
   segmentName: {
     flex: 1,

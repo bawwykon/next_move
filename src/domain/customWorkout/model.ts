@@ -11,17 +11,19 @@
  */
 import type { ExerciseDifficulty } from '@/domain/exercises/difficulty';
 
-export interface CustomSegment {
-  exerciseSlug: string;
-  durationSec: number;
-}
+/**
+ * A builder block. Exercises carry their catalog slug; rest blocks (WK ruling
+ * 2026-08-22) contribute ZERO points but count toward the total time and the
+ * segment cap, exactly like exercises.
+ */
+export type CustomSegment =
+  | { kind: 'exercise'; exerciseSlug: string; durationSec: number }
+  | { kind: 'rest'; durationSec: number };
 
-export interface CustomWorkoutDraft {
-  name: string;
-  segments: CustomSegment[];
-}
-
+/** Duration chips for exercise rows. */
 export const SEGMENT_DURATION_PRESETS = [30, 45, 60, 90] as const;
+/** Duration chips for rest rows (ruling: 15/30/45/60s). */
+export const REST_DURATION_PRESETS = [15, 30, 45, 60] as const;
 
 export const MIN_SEGMENTS = 1;
 export const MAX_SEGMENTS = 12;
@@ -50,6 +52,10 @@ const WEIGHTS: Record<ExerciseDifficulty, number> = {
 export type DifficultyResolver = (slug: string) => ExerciseDifficulty | null;
 
 export function segmentPoints(segment: CustomSegment, difficultyOf: DifficultyResolver): number {
+  // Rest blocks are worth nothing — the meter freezes while they run.
+  if (segment.kind === 'rest') {
+    return 0;
+  }
   const difficulty = difficultyOf(segment.exerciseSlug);
   if (difficulty === null) {
     return 0;

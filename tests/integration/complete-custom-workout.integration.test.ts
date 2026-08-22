@@ -48,10 +48,21 @@ type Payload = {
   streak: { current: number; longest: number };
 };
 
-type Segment = { exercise_slug: string; duration_sec: number };
+type Segment = {
+  kind?: 'rest';
+  exercise_slug: string | null;
+  duration_sec: number;
+};
 
 const seg = (slug: string, durationSec: number): Segment => ({
   exercise_slug: slug,
+  duration_sec: durationSec,
+});
+
+// WK ruling — rest blocks: zero points, but they fill time and the cap.
+const restSeg = (durationSec: number): Segment => ({
+  kind: 'rest',
+  exercise_slug: null,
   duration_sec: durationSec,
 });
 
@@ -220,6 +231,58 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
     // Categories union from exercises feeds mastery tracks.
     const tracks = payload.mastery.map((m) => m.track).sort();
     expect(tracks).toContain('discipline');
+  });
+
+  it('rest blocks add zero XP while filling the clock (0029)', async () => {
+    await resetProgression();
+    const d = day(3);
+    // Same work as the mix pin plus a 30s rest: still 8 pts -> 24 XP,
+    // but the timer window now covers 150s of wall-clock.
+    const wid = await createWorkout('rest-mix', [
+      seg('wall-push-up', 60),
+      restSeg(30),
+      seg('burpees', 60),
+    ]);
+    // Exact wall clock: 150s run (the minute-granularity event() helper would
+    // round 150s up to 180s and trip the +15% timer gate).
+    const payload = (
+      await call(wid, {
+        idempotency_key: idemUuid('rest-mix-w'),
+        started_at: iso(d, 7),
+        completed_at: `${d}T07:02:30.000Z`,
+        day_key: d,
+      })
+    ).payload!;
+    expect(payload.xp.quest).toBe(24);
+    expect(payload.xp.total).toBe(payload.xp.quest + payload.xp.daily);
+    const row = await admin
+      .from('quest_completions')
+      .select('duration_sec')
+      .eq('profile_id', profileId)
+      .eq('idempotency_key', idemUuid('rest-mix-w'))
+      .single();
+    expect(row.data!.duration_sec).toBe(150); // rests count toward duration
+  });
+
+  it('farm guard: rest block carrying an exercise slug rejected (segment_invalid)', async () => {
+    await resetProgression();
+    const d = day(5);
+    const wid = await createWorkout('rest-slug', [
+      { kind: 'rest', exercise_slug: 'wall-push-up', duration_sec: 30 },
+      seg('wall-push-up', 90),
+    ]);
+    const { payload, error } = await call(wid, event(d, 'g-rest-slug', 120));
+    expect(payload).toBeNull();
+    expect(error!.message).toContain('complete_custom_workout.segment_invalid');
+  });
+
+  it('farm guard: rest block outside 15/30/45/60 rejected (bad_duration)', async () => {
+    await resetProgression();
+    const d = day(5);
+    const wid = await createWorkout('rest-duration', [seg('wall-push-up', 120), restSeg(75)]);
+    const { payload, error } = await call(wid, event(d, 'g-rest-dur', 195));
+    expect(payload).toBeNull();
+    expect(error!.message).toContain('complete_custom_workout.bad_duration');
   });
 
   it('journey stays frozen: quests/chapter unchanged, discipline +15 per AT-02H rates', async () => {
