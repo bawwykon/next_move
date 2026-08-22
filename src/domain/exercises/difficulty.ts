@@ -46,6 +46,17 @@ export function exerciseDifficulty(slug: string | null): ExerciseDifficulty | nu
   return EXERCISE_DIFFICULTY[slug] ?? null;
 }
 
+/**
+ * AT-02E amendment — rows show the compact difficulty ICONS instead of the
+ * word (long names were squeezing the duration out). These keys feed the
+ * existing DIFFICULTY_ART map in assetMap.
+ */
+export const DIFFICULTY_ART_KEY: Record<ExerciseDifficulty, string> = {
+  beginner: 'easy',
+  intermediate: 'normal',
+  advanced: 'hard',
+};
+
 export function difficultyLabel(difficulty: ExerciseDifficulty): string {
   return DIFFICULTY_LABELS[difficulty];
 }

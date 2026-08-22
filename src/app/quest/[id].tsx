@@ -7,7 +7,11 @@ import { Animated, ScrollView, StyleSheet, Text, TouchableOpacity, View } from '
 import { Screen } from '@/components/ui/Screen';
 import { fetchQuestDetail, type QuestDetail, type QuestSegment } from '@/data/repositories/quests';
 import { dayKey } from '@/domain/streak/dayKey';
-import { difficultyLabel, exerciseDifficulty } from '@/domain/exercises/difficulty';
+import {
+  DIFFICULTY_ART_KEY,
+  difficultyLabel,
+  exerciseDifficulty,
+} from '@/domain/exercises/difficulty';
 import { difficultyArt, exerciseArt } from '@/features/assets/assetMap';
 import { difficultyBadge } from '@/features/questBoard/badges';
 import { isCompletedToday } from '@/features/questBoard/completedToday';
@@ -198,7 +202,12 @@ function SegmentRow({ segment }: { segment: QuestSegment }) {
           <View style={styles.nameRow}>
             <Text style={styles.segmentName}>{segment.exerciseName ?? 'Move'}</Text>
             {difficulty !== null ? (
-              <Text style={styles.segmentDifficulty}>{difficultyLabel(difficulty)}</Text>
+              <Image
+                source={difficultyArt(DIFFICULTY_ART_KEY[difficulty])}
+                style={styles.segmentDifficultyIcon}
+                contentFit="contain"
+                accessibilityLabel={`${difficultyLabel(difficulty)} difficulty`}
+              />
             ) : null}
           </View>
         )}
@@ -353,6 +362,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceElevated,
   },
   segmentLeft: {
+    flex: 1,
     gap: 2,
   },
   segmentKind: {
@@ -361,18 +371,18 @@ const styles = StyleSheet.create({
   },
   nameRow: {
     flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: spacing.sm,
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   segmentName: {
+    flexShrink: 1,
     color: colors.text,
     fontFamily: fonts.body.family,
     fontSize: 15,
   },
-  segmentDifficulty: {
-    color: colors.textMuted,
-    fontFamily: fonts.body.family,
-    fontSize: 11,
+  segmentDifficultyIcon: {
+    width: 16,
+    height: 16,
   },
   segmentRest: {
     color: colors.textMuted,

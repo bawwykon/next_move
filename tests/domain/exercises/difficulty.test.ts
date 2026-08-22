@@ -1,4 +1,5 @@
 import {
+  DIFFICULTY_ART_KEY,
   difficultyLabel,
   exerciseDifficulty,
   EXERCISE_DIFFICULTY,
@@ -53,5 +54,11 @@ describe('exercise difficulty map', () => {
     expect(difficultyLabel('beginner')).toBe('Beginner');
     expect(difficultyLabel('intermediate')).toBe('Intermediate');
     expect(difficultyLabel('advanced')).toBe('Advanced');
+  });
+
+  it('maps every tier to an existing difficulty art key', () => {
+    expect(DIFFICULTY_ART_KEY.beginner).toBe('easy');
+    expect(DIFFICULTY_ART_KEY.intermediate).toBe('normal');
+    expect(DIFFICULTY_ART_KEY.advanced).toBe('hard');
   });
 });
