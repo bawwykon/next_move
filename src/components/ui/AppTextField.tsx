@@ -11,6 +11,7 @@ interface AppTextFieldProps {
   autoComplete?: 'email' | 'current-password' | 'new-password' | 'off';
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   inputMode?: 'email' | 'text';
+  maxLength?: number;
 }
 
 export function AppTextField({
@@ -22,6 +23,7 @@ export function AppTextField({
   autoComplete = 'off',
   autoCapitalize = 'sentences',
   inputMode = 'text',
+  maxLength,
 }: AppTextFieldProps) {
   return (
     <View style={styles.container}>
@@ -36,6 +38,7 @@ export function AppTextField({
         autoCapitalize={autoCapitalize}
         autoCorrect={false}
         inputMode={inputMode}
+        maxLength={maxLength}
         style={styles.input}
       />
     </View>

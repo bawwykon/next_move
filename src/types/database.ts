@@ -74,6 +74,7 @@ export type Database = {
           beginner_variation: string | null;
           categories: string[];
           created_at: string;
+          difficulty: string;
           id: string;
           instruction: string | null;
           name: string;
@@ -85,6 +86,7 @@ export type Database = {
           beginner_variation?: string | null;
           categories?: string[];
           created_at?: string;
+          difficulty?: string;
           id?: string;
           instruction?: string | null;
           name: string;
@@ -96,6 +98,7 @@ export type Database = {
           beginner_variation?: string | null;
           categories?: string[];
           created_at?: string;
+          difficulty?: string;
           id?: string;
           instruction?: string | null;
           name?: string;
@@ -104,6 +107,41 @@ export type Database = {
           updated_at?: string;
         };
         Relationships: [];
+      };
+      custom_workouts: {
+        Row: {
+          created_at: string;
+          id: string;
+          name: string;
+          profile_id: string;
+          segments: Json;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          name: string;
+          profile_id: string;
+          segments: Json;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          name?: string;
+          profile_id?: string;
+          segments?: Json;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'custom_workouts_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       mastery: {
         Row: {
@@ -483,6 +521,7 @@ export type Database = {
     };
     Functions: {
       chapter_for_quests: { Args: { quests: number }; Returns: number };
+      complete_custom_workout: { Args: { ev: Json; p_workout_id: string }; Returns: Json };
       complete_quest: { Args: { ev: Json }; Returns: Json };
       level_for_xp: { Args: { xp: number }; Returns: number };
       level_title: { Args: { level: number }; Returns: string };

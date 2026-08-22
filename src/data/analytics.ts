@@ -19,7 +19,13 @@ export type AnalyticsEvent =
   | 'quest_started'
   | 'quest_completed'
   | 'achievement_unlocked'
-  | 'level_up';
+  | 'level_up'
+  // Phase 2 / BYQ-03 — builder surface (planner UI spec 2026-08-22:
+  // "analytics tracks add/remove/save/start").
+  | 'custom_segment_added'
+  | 'custom_segment_removed'
+  | 'custom_workout_saved'
+  | 'custom_quest_started';
 
 export type AnalyticsProps = Record<string, string | number>;
 
