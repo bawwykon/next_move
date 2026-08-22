@@ -166,6 +166,12 @@ insert into public.quests (slug, title, description, difficulty, xp_reward, dura
   ('interval-peak', 'Interval Peak', 'Three rounds of intervals, each a little harder than the last — the toughest endurance climb.', 'hard', 200, 900, '{"endurance"}')
 on conflict (slug) do nothing;
 
+-- BYQ-02: inactive sentinel quest anchoring custom-workout completions
+-- (never listed on the board; complete_custom_workout resolves it by slug).
+insert into public.quests (slug, title, description, difficulty, xp_reward, duration_sec, categories, active)
+values ('custom-workout', 'Custom Workout', 'Player-built workout completion record.', 'easy', 50, 480, '{}'::text[], false)
+on conflict (slug) do nothing;
+
 -- quest segments (position 1-based, first warmup, last cooldown, sum = quest duration)
 -- S11-01 rebalance: beginner-safe pacing (short first work blocks, generous rests,
 -- static holds under 45s on easy, stretches 60-90s), density carries difficulty,
