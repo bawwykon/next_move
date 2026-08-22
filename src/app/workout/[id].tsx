@@ -8,6 +8,7 @@ import {
   AccessibilityInfo,
   BackHandler,
   Modal,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -35,6 +36,7 @@ import { exerciseArt } from '@/features/assets/assetMap';
 import { formatCountdown, formatTotalRemaining } from '@/features/timer/format';
 import { finishQuest } from '@/features/workout/finishQuest';
 import { decideOnForeground } from '@/features/workout/decideOnForeground';
+import { pausedNow, shiftStartForResume } from '@/features/workout/pause';
 import { segmentKindLabel } from '@/features/questDetail/segmentKind';
 import { useAppForeground } from '@/hooks/useAppForeground';
 import { useNow } from '@/hooks/useNow';
@@ -77,8 +79,14 @@ export default function WorkoutScreen() {
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [names, setNames] = useState<(string | null)[]>([]);
   const [slugs, setSlugs] = useState<(string | null)[]>([]);
+  // WK-01 — how-to + safety copy per segment index, shown on the pause overlay.
+  const [instructions, setInstructions] = useState<(string | null)[]>([]);
+  const [safetyNotes, setSafetyNotes] = useState<(string | null)[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [quitVisible, setQuitVisible] = useState(false);
+  // WK-01 — the pause instant (null = running). Freezing is screen-level:
+  // every engine read clamps to this instant until resume shifts the start.
+  const [pausedAtMs, setPausedAtMs] = useState<number | null>(null);
   const handledRef = useRef(false);
   const prevIndexRef = useRef<number | null>(null);
 
@@ -100,15 +108,17 @@ export default function WorkoutScreen() {
         setStatus('error');
         return;
       }
-      const nameBySlug = new Map(
-        (catalogResult.data ?? []).map((exercise) => [exercise.slug, exercise.name]),
+      const bySlug = new Map(
+        (catalogResult.data ?? []).map((exercise) => [exercise.slug, exercise]),
       );
       segments = customResult.data.segments.map((segment, index) => ({
         position: index,
         kind: 'work' as const,
         durationSec: segment.durationSec,
-        exerciseName: nameBySlug.get(segment.exerciseSlug) ?? null,
+        exerciseName: bySlug.get(segment.exerciseSlug)?.name ?? null,
         exerciseSlug: segment.exerciseSlug,
+        instruction: bySlug.get(segment.exerciseSlug)?.instruction ?? null,
+        safetyNote: bySlug.get(segment.exerciseSlug)?.safetyNote ?? null,
       }));
     } else {
       const result = await fetchQuestDetail(questId);
@@ -119,11 +129,13 @@ export default function WorkoutScreen() {
       segments = result.data.segments;
     }
     // S4-03 — a resumed run keeps its stored start instant (correct remaining
-    // time, FR-TIMER-5); a fresh start begins now.
+    // time, FR-TIMER-5); a fresh start begins now. A kill during a pause
+    // relaunches frozen at the stored pause instant (WK-01).
     const checkpoint = useWorkoutStore.getState().checkpoint;
-    const startedAt =
-      checkpoint && checkpoint.questId === questId ? checkpoint.startedAtEpochMs : Date.now();
-    if (!(checkpoint && checkpoint.questId === questId)) {
+    const resumeSame = checkpoint !== null && checkpoint.questId === questId;
+    const resumedPausedAt = resumeSame && checkpoint ? (checkpoint.pausedAtEpochMs ?? null) : null;
+    const startedAt = resumeSame && checkpoint ? checkpoint.startedAtEpochMs : Date.now();
+    if (!resumeSame) {
       // NFR-9 — a fresh (not resumed) run.
       void track('quest_started', { questId });
     }
@@ -131,10 +143,18 @@ export default function WorkoutScreen() {
     // so an app kill at any point leaves a resumable run behind (FR-TIMER-7).
     setNames(segments.map((s) => (s.kind === 'rest' ? null : s.exerciseName)));
     setSlugs(segments.map((s) => s.exerciseSlug));
+    setInstructions(segments.map((s) => s.instruction));
+    setSafetyNotes(segments.map((s) => s.safetyNote));
     setWorkout(buildWorkout(segments, startedAt));
+    setPausedAtMs(resumedPausedAt);
     void useWorkoutStore
       .getState()
       .startWorkout(questId, startedAt, isCustom ? 'custom' : undefined);
+    // startWorkout writes a bare checkpoint — re-pin the pause instant so a
+    // kill during this relaunched pause still resumes frozen (WK-01).
+    if (resumedPausedAt !== null) {
+      void useWorkoutStore.getState().pauseWorkout(resumedPausedAt);
+    }
     setStatus('ready');
   }, [questId, isCustom]);
 
@@ -145,7 +165,10 @@ export default function WorkoutScreen() {
   );
 
   // Ref 03 rule 6 — the single shared render clock drives every engine read.
-  const nowMs = useNow();
+  // WK-01 — while paused every read clamps to the pause instant: digits,
+  // cues, progress bar and auto-complete all freeze together.
+  const rawNowMs = useNow();
+  const nowMs = pausedNow(rawNowMs, pausedAtMs);
   const complete = workout ? isComplete(workout, nowMs) : false;
   const segmentIndex = workout ? segmentIndexAt(workout, nowMs) : null;
   const segment = segmentIndex !== null && workout ? workout.segments[segmentIndex] : null;
@@ -187,6 +210,28 @@ export default function WorkoutScreen() {
     [params.title, router, workout, isCustom],
   );
 
+  // WK-01 — pause freezes in place; resume shifts the start forward by the
+  // pause length (both in memory and the persisted checkpoint) so remaining
+  // time continues exactly where it stopped.
+  const handlePause = useCallback(() => {
+    if (!workout) {
+      return;
+    }
+    const at = Date.now();
+    setPausedAtMs(at);
+    void useWorkoutStore.getState().pauseWorkout(at);
+  }, [workout]);
+
+  const handleResume = useCallback(() => {
+    if (!workout || pausedAtMs === null) {
+      return;
+    }
+    const shiftedStart = shiftStartForResume(workout.startedAtEpochMs, pausedAtMs, Date.now());
+    setWorkout(buildWorkout(workout.segments, shiftedStart));
+    setPausedAtMs(null);
+    void useWorkoutStore.getState().resumeWorkout(shiftedStart);
+  }, [workout, pausedAtMs]);
+
   // FR-TIMER-4 — auto-complete: replace, so back never re-enters a finished
   // workout (Ref 04 rule 3). The completion event is persisted to the outbox
   // first (S5-05); the network flush is fire-and-forget and victory consumes
@@ -201,9 +246,14 @@ export default function WorkoutScreen() {
   // S4-03 — foreground after a background pause (FR-TIMER-5/7, EC-2): the
   // engine already keeps rendering from the stored start instant ('resume' is
   // a no-op); an end that passed while backgrounded completes immediately.
+  // WK-01 — a paused run is not running: a foreground return never completes
+  // it; the screen stays frozen at the pause instant until Resume.
   useAppForeground(() => {
     const checkpoint = useWorkoutStore.getState().checkpoint;
     if (!checkpoint || !workout || handledRef.current) {
+      return;
+    }
+    if (pausedAtMs !== null || checkpoint.pausedAtEpochMs != null) {
       return;
     }
     const decision = decideOnForeground(checkpoint, Date.now(), workout.segments);
@@ -284,14 +334,19 @@ export default function WorkoutScreen() {
 
   // Android back during a workout = Quit Quest with the one allowed
   // confirmation sheet (Ref 04 rule 5, FR-TIMER-6). The explicit Quit button
-  // has no confirmation and never passes through here.
+  // has no confirmation and never passes through here. WK-01 — while paused,
+  // back dismisses the pause overlay (resume) instead of quitting.
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (pausedAtMs !== null) {
+        handleResume();
+        return true;
+      }
       setQuitVisible((visible) => !visible);
       return true;
     });
     return () => sub.remove();
-  }, []);
+  }, [pausedAtMs, handleResume]);
 
   const leaveQuest = useCallback(() => {
     setQuitVisible(false);
@@ -324,6 +379,11 @@ export default function WorkoutScreen() {
     : null;
   const digits = remaining !== null ? formatCountdown(Math.ceil(remaining / 1000)) : null;
   const countdownDigit = countdown !== null ? String(countdown) : null;
+  // WK-01 — the pause overlay shows the frozen segment's how-to + safety copy.
+  const currentInstruction =
+    segment && segment.kind !== 'rest' ? (instructions[segmentIndex ?? -1] ?? null) : null;
+  const currentSafetyNote =
+    segment && segment.kind !== 'rest' ? (safetyNotes[segmentIndex ?? -1] ?? null) : null;
   // 3-2-1 countdown cue (AT-01K) — fires once when the roll-in begins, never
   // per digit change (the WAV itself ticks 3-2-1).
   const countdownActiveRef = useRef(false);
@@ -430,10 +490,69 @@ export default function WorkoutScreen() {
             />
           </View>
           <View style={styles.footerRow}>
+            <TouchableOpacity
+              accessibilityRole="button"
+              style={styles.pauseButton}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              onPress={withTapCue(pausedAtMs === null ? handlePause : handleResume)}
+            >
+              <Ionicons
+                name={pausedAtMs === null ? 'pause' : 'play'}
+                size={15}
+                color={colors.textMuted}
+              />
+              <Text style={styles.pauseLabel}>{pausedAtMs === null ? 'Pause' : 'Resume'}</Text>
+            </TouchableOpacity>
             <Text style={styles.footerLabel}>{formatTotalRemaining(totalLeft)} left</Text>
           </View>
         </View>
       </View>
+
+      {/* WK-01 — paused overlay: frozen exercise art + name, its how-to copy
+      and safety note, and the single way back into the run. */}
+      <Modal
+        visible={pausedAtMs !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={handleResume}
+      >
+        <View style={styles.pauseBackdrop}>
+          <ScrollView
+            style={styles.pauseScroll}
+            contentContainerStyle={styles.pauseContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {heroSource !== null ? (
+              <Image
+                source={heroSource}
+                style={[styles.hero, { width: heroWidth, height: Math.round(heroHeight * 0.7) }]}
+                contentFit="contain"
+                accessibilityLabel={segmentName ?? 'Exercise'}
+                transition={150}
+              />
+            ) : null}
+            <Text style={styles.pausedTitle}>Paused</Text>
+            <Text style={styles.pausedName}>{segmentName ?? 'Move'}</Text>
+            {currentInstruction !== null ? (
+              <Text style={styles.pausedInstruction}>{currentInstruction}</Text>
+            ) : null}
+            {currentSafetyNote !== null ? (
+              <View style={styles.safetyBox}>
+                <Ionicons name="shield-checkmark-outline" size={14} color={colors.calmStrong} />
+                <Text style={styles.safetyText}>{currentSafetyNote}</Text>
+              </View>
+            ) : null}
+          </ScrollView>
+          <TouchableOpacity
+            accessibilityRole="button"
+            style={styles.resumeButton}
+            onPress={withTapCue(handleResume)}
+          >
+            <Ionicons name="play" size={20} color={colors.background} />
+            <Text style={styles.resumeLabel}>Resume</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
 
       <Modal
         visible={quitVisible}
@@ -569,7 +688,87 @@ const styles = StyleSheet.create({
   },
   footerRow: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  pauseButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surfaceElevated,
+  },
+  pauseLabel: {
+    color: colors.textMuted,
+    fontFamily: fonts.bodyBold.family,
+    fontSize: 13,
+    textTransform: 'uppercase',
+  },
+  pauseBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.82)',
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xxxl,
+    paddingBottom: spacing.xl,
+  },
+  pauseScroll: {
+    flex: 1,
+  },
+  pauseContent: {
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  pausedTitle: {
+    color: colors.textMuted,
+    fontFamily: fonts.display.family,
+    fontSize: 18,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+  },
+  pausedName: {
+    color: colors.text,
+    fontFamily: fonts.display.family,
+    fontSize: 26,
+    textAlign: 'center',
+  },
+  pausedInstruction: {
+    color: colors.text,
+    fontFamily: fonts.body.family,
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: 'center',
+  },
+  safetyBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    width: '100%',
+    padding: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+  },
+  safetyText: {
+    color: colors.textMuted,
+    fontFamily: fonts.body.family,
+    fontSize: 13,
+    lineHeight: 19,
+    flexShrink: 1,
+  },
+  resumeButton: {
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    borderRadius: radius.md,
+    backgroundColor: colors.reward,
+  },
+  resumeLabel: {
+    color: colors.background,
+    fontFamily: fonts.bodyBold.family,
+    fontSize: 17,
   },
   footerLabel: {
     color: colors.textMuted,

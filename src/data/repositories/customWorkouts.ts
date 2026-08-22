@@ -12,6 +12,10 @@ export interface CatalogExercise {
   slug: string;
   name: string;
   difficulty: ExerciseDifficulty;
+  /** WK-01 — how-to copy shown on the paused overlay. */
+  instruction: string | null;
+  /** WK-01 — safety note shown on the paused overlay. */
+  safetyNote: string | null;
 }
 
 /** A saved custom workout as rendered by board/detail/builder edit mode. */
@@ -34,7 +38,7 @@ function isExerciseDifficulty(value: string): value is ExerciseDifficulty {
 export async function fetchExerciseCatalog(): Promise<RepoResult<CatalogExercise[]>> {
   const { data, error } = await supabase
     .from('exercise_library')
-    .select('slug, name, difficulty')
+    .select('slug, name, difficulty, instruction, safety_note')
     .order('name', { ascending: true });
 
   if (error) {
@@ -46,7 +50,13 @@ export async function fetchExerciseCatalog(): Promise<RepoResult<CatalogExercise
     if (!isExerciseDifficulty(row.difficulty)) {
       continue;
     }
-    catalog.push({ slug: row.slug, name: row.name, difficulty: row.difficulty });
+    catalog.push({
+      slug: row.slug,
+      name: row.name,
+      difficulty: row.difficulty,
+      instruction: row.instruction ?? null,
+      safetyNote: row.safety_note ?? null,
+    });
   }
   return ok(catalog);
 }

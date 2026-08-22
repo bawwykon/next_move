@@ -30,6 +30,10 @@ export interface QuestSegment {
   exerciseName: string | null;
   /** Exercise slug (kebab-case) — key into the exercise guide illustrations. */
   exerciseSlug: string | null;
+  /** WK-01 — how-to copy shown on the paused overlay. */
+  instruction: string | null;
+  /** WK-01 — safety note shown on the paused overlay. */
+  safetyNote: string | null;
 }
 
 export interface QuestDetail {
@@ -94,7 +98,7 @@ export async function fetchQuestDetail(questId: string): Promise<RepoResult<Ques
   const { data, error } = await supabase
     .from('quests')
     .select(
-      'id, slug, title, description, difficulty, xp_reward, duration_sec, categories, quest_segments(position, kind, duration_sec, exercise_library(name, slug))',
+      'id, slug, title, description, difficulty, xp_reward, duration_sec, categories, quest_segments(position, kind, duration_sec, exercise_library(name, slug, instruction, safety_note))',
     )
     .eq('id', questId)
     .maybeSingle();
@@ -113,6 +117,8 @@ export async function fetchQuestDetail(questId: string): Promise<RepoResult<Ques
       durationSec: row.duration_sec,
       exerciseName: row.exercise_library?.name ?? null,
       exerciseSlug: row.exercise_library?.slug ?? null,
+      instruction: row.exercise_library?.instruction ?? null,
+      safetyNote: row.exercise_library?.safety_note ?? null,
     }))
     .sort((a, b) => a.position - b.position);
 

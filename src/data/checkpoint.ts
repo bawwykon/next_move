@@ -8,6 +8,12 @@ export interface WorkoutCheckpoint {
   startedAtEpochMs: number;
   /** BYQ-04 — 'custom' when the run is a saved custom workout. */
   source?: 'custom';
+  /**
+   * WK-01 — set while the run is paused (the instant pause was pressed).
+   * A kill during a pause relaunches frozen at this instant; resuming shifts
+   * startedAtEpochMs forward and drops the field again.
+   */
+  pausedAtEpochMs?: number;
 }
 
 function isCheckpoint(value: unknown): value is WorkoutCheckpoint {

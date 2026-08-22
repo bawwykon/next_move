@@ -14,11 +14,15 @@ interface WorkoutState {
   hydrate: () => Promise<WorkoutCheckpoint | null>;
   /** Persist + hold a fresh checkpoint (start / resume). */
   startWorkout: (questId: string, startedAtEpochMs: number, source?: 'custom') => Promise<void>;
+  /** WK-01 — freeze the run at the pause instant (persisted for kills). */
+  pauseWorkout: (pausedAtEpochMs: number) => Promise<void>;
+  /** WK-01 — shift the start past the pause and clear the frozen instant. */
+  resumeWorkout: (startedAtEpochMs: number) => Promise<void>;
   /** Delete the checkpoint file + drop it from memory (finish / quit / dismiss). */
   clearWorkout: () => Promise<void>;
 }
 
-export const useWorkoutStore = create<WorkoutState>((set) => ({
+export const useWorkoutStore = create<WorkoutState>((set, get) => ({
   checkpoint: null,
   hydrate: async () => {
     const checkpoint = await readCheckpoint();
@@ -31,6 +35,25 @@ export const useWorkoutStore = create<WorkoutState>((set) => ({
       : { questId, startedAtEpochMs };
     await writeCheckpoint(checkpoint);
     set({ checkpoint });
+  },
+  pauseWorkout: async (pausedAtEpochMs) => {
+    const current = get().checkpoint;
+    if (!current) {
+      return;
+    }
+    const next: WorkoutCheckpoint = { ...current, pausedAtEpochMs };
+    await writeCheckpoint(next);
+    set({ checkpoint: next });
+  },
+  resumeWorkout: async (startedAtEpochMs) => {
+    const current = get().checkpoint;
+    if (!current) {
+      return;
+    }
+    const next: WorkoutCheckpoint = { ...current, startedAtEpochMs };
+    delete next.pausedAtEpochMs;
+    await writeCheckpoint(next);
+    set({ checkpoint: next });
   },
   clearWorkout: async () => {
     await clearCheckpoint();
