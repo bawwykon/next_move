@@ -123,6 +123,27 @@ describe('xpBreakdownRows', () => {
       expect(breakdownRowSum(xpBreakdownRows(xp))).toBe(xpBreakdownTotal(xp));
     }
   });
+
+  // BYQ-04 — custom quests label the base row with their own name.
+  it('baseLabel renames only the Quest row (BYQ-04 custom quests)', () => {
+    const rows = xpBreakdownRows(fullResult.xp, 'Leg Day Supreme');
+    expect(rows.map((row) => row.label)).toEqual([
+      'Leg Day Supreme',
+      'Daily bonus',
+      'Weekly bonus',
+      'Streak bonus',
+    ]);
+    expect(rows.map((row) => row.xp)).toEqual([50, 25, 75, 10]);
+  });
+
+  it('baseLabel is ignored for zero-value quest rows and absent labels', () => {
+    expect(
+      xpBreakdownRows({ quest: 0, daily: 75, weekly: 0, streak: 0, total: 75 }, 'Custom'),
+    ).toEqual([{ label: 'Daily bonus', xp: 75 }]);
+    expect(xpBreakdownRows({ quest: 48, daily: 0, weekly: 0, streak: 0, total: 48 })).toEqual([
+      { label: 'Quest', xp: 48 },
+    ]);
+  });
 });
 
 describe('masteryLevelTitle', () => {

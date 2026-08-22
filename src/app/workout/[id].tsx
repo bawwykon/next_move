@@ -17,7 +17,8 @@ import {
 
 import { Screen } from '@/components/ui/Screen';
 import { track } from '@/data/analytics';
-import { fetchQuestDetail } from '@/data/repositories/quests';
+import { fetchCustomWorkout, fetchExerciseCatalog } from '@/data/repositories/customWorkouts';
+import { fetchQuestDetail, type QuestSegment } from '@/data/repositories/quests';
 import {
   buildWorkout,
   countdownMs,
@@ -58,8 +59,11 @@ export default function WorkoutScreen() {
   useKeepAwake();
 
   const router = useRouter();
-  const params = useLocalSearchParams<{ id?: string; title?: string }>();
+  const params = useLocalSearchParams<{ id?: string; title?: string; source?: string }>();
   const questId = params.id;
+  // BYQ-04 — source=custom loads the SAVED custom definition (work-only
+  // segments, exactly as built) instead of a catalog quest.
+  const isCustom = params.source === 'custom';
 
   // AT-02F — the art band is sized from the real screen so the illustration
   // always occupies ~35% of the viewport height (aspect-fit, never cropped).
@@ -83,10 +87,36 @@ export default function WorkoutScreen() {
       setStatus('error');
       return;
     }
-    const result = await fetchQuestDetail(questId);
-    if (result.error || !result.data) {
-      setStatus('error');
-      return;
+    let segments: QuestSegment[];
+    if (isCustom) {
+      // BYQ-04 — the saved definition IS the workout: work-only segments in
+      // the built order. A definition deleted mid-run reads as an error and
+      // the run cannot start (the completion RPC would reject it anyway).
+      const [customResult, catalogResult] = await Promise.all([
+        fetchCustomWorkout(questId),
+        fetchExerciseCatalog(),
+      ]);
+      if (customResult.error || !customResult.data) {
+        setStatus('error');
+        return;
+      }
+      const nameBySlug = new Map(
+        (catalogResult.data ?? []).map((exercise) => [exercise.slug, exercise.name]),
+      );
+      segments = customResult.data.segments.map((segment, index) => ({
+        position: index,
+        kind: 'work' as const,
+        durationSec: segment.durationSec,
+        exerciseName: nameBySlug.get(segment.exerciseSlug) ?? null,
+        exerciseSlug: segment.exerciseSlug,
+      }));
+    } else {
+      const result = await fetchQuestDetail(questId);
+      if (result.error || !result.data) {
+        setStatus('error');
+        return;
+      }
+      segments = result.data.segments;
     }
     // S4-03 — a resumed run keeps its stored start instant (correct remaining
     // time, FR-TIMER-5); a fresh start begins now.
@@ -99,12 +129,14 @@ export default function WorkoutScreen() {
     }
     // The checkpoint is persisted before the first frame of exercise display,
     // so an app kill at any point leaves a resumable run behind (FR-TIMER-7).
-    setNames(result.data.segments.map((s) => (s.kind === 'rest' ? null : s.exerciseName)));
-    setSlugs(result.data.segments.map((s) => s.exerciseSlug));
-    setWorkout(buildWorkout(result.data.segments, startedAt));
-    void useWorkoutStore.getState().startWorkout(questId, startedAt);
+    setNames(segments.map((s) => (s.kind === 'rest' ? null : s.exerciseName)));
+    setSlugs(segments.map((s) => s.exerciseSlug));
+    setWorkout(buildWorkout(segments, startedAt));
+    void useWorkoutStore
+      .getState()
+      .startWorkout(questId, startedAt, isCustom ? 'custom' : undefined);
     setStatus('ready');
-  }, [questId]);
+  }, [questId, isCustom]);
 
   useFocusEffect(
     useCallback(() => {
@@ -136,15 +168,23 @@ export default function WorkoutScreen() {
         checkpoint && checkpoint.questId === completedQuestId
           ? checkpoint.startedAtEpochMs
           : (workout?.startedAtEpochMs ?? Date.now());
-      await finishQuest({ questId: completedQuestId, startedAtEpochMs });
+      await finishQuest({
+        questId: completedQuestId,
+        startedAtEpochMs,
+        workoutId: isCustom ? completedQuestId : undefined,
+      });
       // NFR-9 — completion event persisted (outbox wrote), navigation happens.
       void track('quest_completed', { questId: completedQuestId });
       router.replace({
         pathname: '/victory',
-        params: { questId: completedQuestId, title: params.title },
+        params: {
+          questId: completedQuestId,
+          title: params.title,
+          ...(isCustom ? { source: 'custom' } : {}),
+        },
       });
     },
-    [params.title, router, workout],
+    [params.title, router, workout, isCustom],
   );
 
   // FR-TIMER-4 — auto-complete: replace, so back never re-enters a finished
@@ -259,10 +299,15 @@ export default function WorkoutScreen() {
     // quit paths (button + sheet Leave) route through here, so the
     // checkpoint is always cleared exactly once.
     void useWorkoutStore.getState().clearWorkout();
-    // Dismiss straight back to the quest detail (the workout was presented as
-    // a full-screen modal, so this pops it without stacking a duplicate).
-    router.dismissTo({ pathname: '/quest/[id]', params: { id: questId ?? '' } });
-  }, [questId, router]);
+    // Dismiss straight back to the detail screen the run came from (the
+    // workout was presented as a full-screen modal, so this pops it without
+    // stacking a duplicate). Customs return to their own detail page.
+    router.dismissTo(
+      isCustom
+        ? { pathname: '/custom/[id]', params: { id: questId ?? '' } }
+        : { pathname: '/quest/[id]', params: { id: questId ?? '' } },
+    );
+  }, [questId, router, isCustom]);
 
   const segmentName = segment
     ? segment.kind === 'rest'

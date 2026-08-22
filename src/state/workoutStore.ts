@@ -13,7 +13,7 @@ interface WorkoutState {
   /** Load the persisted checkpoint into memory (board banner, resume entry). */
   hydrate: () => Promise<WorkoutCheckpoint | null>;
   /** Persist + hold a fresh checkpoint (start / resume). */
-  startWorkout: (questId: string, startedAtEpochMs: number) => Promise<void>;
+  startWorkout: (questId: string, startedAtEpochMs: number, source?: 'custom') => Promise<void>;
   /** Delete the checkpoint file + drop it from memory (finish / quit / dismiss). */
   clearWorkout: () => Promise<void>;
 }
@@ -25,8 +25,10 @@ export const useWorkoutStore = create<WorkoutState>((set) => ({
     set({ checkpoint });
     return checkpoint;
   },
-  startWorkout: async (questId, startedAtEpochMs) => {
-    const checkpoint: WorkoutCheckpoint = { questId, startedAtEpochMs };
+  startWorkout: async (questId, startedAtEpochMs, source) => {
+    const checkpoint: WorkoutCheckpoint = source
+      ? { questId, startedAtEpochMs, source }
+      : { questId, startedAtEpochMs };
     await writeCheckpoint(checkpoint);
     set({ checkpoint });
   },

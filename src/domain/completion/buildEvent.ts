@@ -18,7 +18,10 @@ import type { CompletionEvent } from '@/domain/completion/types';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export interface BuildCompletionInput {
-  questId: string;
+  /** Catalog quest id — required unless workoutId is given. */
+  questId?: string;
+  /** Custom-workout id (BYQ-04) — present instead of questId. */
+  workoutId?: string;
   startedAtEpochMs: number;
   completedAtEpochMs: number;
   /** Stable per event; generated once and replayed unchanged on retry. */
@@ -28,8 +31,13 @@ export interface BuildCompletionInput {
 }
 
 export function buildCompletionEvent(input: BuildCompletionInput): CompletionEvent {
-  if (input.questId.trim().length === 0) {
-    throw new Error('A completion event needs a quest id.');
+  const questId = input.questId?.trim() ?? '';
+  const workoutId = input.workoutId?.trim() ?? '';
+  if (questId.length === 0 && workoutId.length === 0) {
+    throw new Error('A completion event needs a quest id or a workout id.');
+  }
+  if (questId.length > 0 && workoutId.length > 0) {
+    throw new Error('A completion event carries either a quest id or a workout id, never both.');
   }
   if (
     !Number.isFinite(input.startedAtEpochMs) ||
@@ -53,13 +61,21 @@ export function buildCompletionEvent(input: BuildCompletionInput): CompletionEve
     throw new Error(`Invalid calendar day: ${key}.`);
   }
 
-  return {
-    quest_id: input.questId.trim(),
-    idempotency_key: input.idempotencyKey,
-    started_at: new Date(input.startedAtEpochMs).toISOString(),
-    completed_at: new Date(input.completedAtEpochMs).toISOString(),
-    day_key: key,
-  };
+  return questId.length > 0
+    ? {
+        quest_id: questId,
+        idempotency_key: input.idempotencyKey,
+        started_at: new Date(input.startedAtEpochMs).toISOString(),
+        completed_at: new Date(input.completedAtEpochMs).toISOString(),
+        day_key: key,
+      }
+    : {
+        workout_id: workoutId,
+        idempotency_key: input.idempotencyKey,
+        started_at: new Date(input.startedAtEpochMs).toISOString(),
+        completed_at: new Date(input.completedAtEpochMs).toISOString(),
+        day_key: key,
+      };
 }
 
 /**

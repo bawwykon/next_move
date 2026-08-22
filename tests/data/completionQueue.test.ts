@@ -111,6 +111,39 @@ describe('completion outbox (AsyncStorage)', () => {
     expect((await readOutbox()).map((row) => row.id)).toEqual(['a', 'd']);
   });
 
+  // BYQ-04 — a custom event carries workout_id instead of quest_id; exactly
+  // one of the two identifiers is accepted.
+  const customEvent = (idem: string): CompletionEvent => ({
+    workout_id: 'custom-workout-9',
+    idempotency_key: idem,
+    started_at: '2026-07-06T07:00:00.000Z',
+    completed_at: '2026-07-06T07:08:00.000Z',
+    day_key: '2026-07-06',
+  });
+
+  it('accepts a custom event carrying workout_id instead of quest_id', async () => {
+    await enqueueCompletion(customEvent('x'));
+    const rows = await readOutbox();
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.event.workout_id).toBe('custom-workout-9');
+    expect(rows[0]!.event.quest_id).toBeUndefined();
+  });
+
+  it('rejects an event carrying both quest_id and workout_id', async () => {
+    await AsyncStorage.setItem(
+      OUTBOX_KEY,
+      JSON.stringify([
+        {
+          id: 'both',
+          event: { ...customEvent('both'), quest_id: 'quest-1' },
+          createdAtMs: 1,
+          attempts: 0,
+        },
+      ]),
+    );
+    expect(await readOutbox()).toEqual([]);
+  });
+
   it('removeOutboxRow deletes only that row', async () => {
     await enqueueCompletion(event('a'));
     await enqueueCompletion(event('b'));
@@ -168,7 +201,7 @@ describe('flushOutbox', () => {
 
     const submit = jest
       .fn()
-      .mockResolvedValueOnce(fail<CompletionResult>('quest_invalid'))
+      .mockResolvedValueOnce(fail<CompletionResult>('timer_mismatch'))
       .mockResolvedValueOnce(ok(resultForPayload()));
     await flushOutbox({ submit });
 
@@ -177,6 +210,19 @@ describe('flushOutbox', () => {
     expect(rows[0]!.attempts).toBe(1);
     expect(rows[0]!.event).toEqual(event('a'));
   });
+
+  // BYQ-04 — permanent submit errors can never succeed on any future retry,
+  // so the row is dropped instead of looping forever.
+  it.each(['quest_invalid', 'workout_invalid'] as const)(
+    'permanent error %s: drops the row (retry is pointless)',
+    async (code) => {
+      await enqueueCompletion(event('gone'));
+      await flushOutbox({
+        submit: jest.fn().mockResolvedValueOnce(fail<CompletionResult>(code)),
+      });
+      expect(await readOutbox()).toEqual([]);
+    },
+  );
 
   it('retry replays the SAME event (same idempotency key) — no re-generated key', async () => {
     await enqueueCompletion(event('a'));

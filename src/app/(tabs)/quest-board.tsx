@@ -14,6 +14,12 @@ import {
 
 import { Screen } from '@/components/ui/Screen';
 import { getOnboarding } from '@/data/repositories/profile';
+import {
+  fetchCustomWorkouts,
+  fetchExerciseCatalog,
+  type CatalogExercise,
+  type SavedCustomWorkout,
+} from '@/data/repositories/customWorkouts';
 import { fetchActiveQuests, type ActiveQuest } from '@/data/repositories/quests';
 import { supabase } from '@/data/supabase';
 import { withTapCue } from '@/lib/sounds';
@@ -25,6 +31,13 @@ import type {
   QuestCategory,
   QuestDifficulty,
 } from '@/domain/recommendation/types';
+import {
+  DEFAULT_WORKOUT_NAME,
+  projectedXp,
+  totalDurationSec,
+  zoneForXp,
+  type MeterZone,
+} from '@/domain/customWorkout/model';
 import { WEEKLY_TARGET, dayWindow, weeklyWindow } from '@/domain/board/window';
 import { DAILY_QUEST_ART, WEEKLY_CHALLENGE_ART, difficultyArt } from '@/features/assets/assetMap';
 import { difficultyBadge } from '@/features/questBoard/badges';
@@ -52,6 +65,13 @@ const CATEGORY_LABELS: Record<QuestCategory, string> = {
   discipline: 'Focus',
 };
 
+// BYQ-04 — friendly zone labels for the custom-quest rows.
+const ZONE_LABELS: Record<MeterZone, string> = {
+  easy: 'Easy',
+  normal: 'Normal',
+  hard: 'Hard',
+};
+
 // recommendQuest accepts onboarding for parity with Ref 06; its rules do not
 // consume it, so a fresh (unskipped) session can still get a recommendation.
 const DEFAULT_ONBOARDING: OnboardingAnswers = {
@@ -74,6 +94,10 @@ export default function QuestBoardScreen() {
     'idle',
   );
   const [onboarding, setOnboarding] = useState<OnboardingAnswers | null>(null);
+  // BYQ-04 — saved custom quests + the exercise catalog their XP projections
+  // read from (server-authoritative difficulty, same column the RPC weights).
+  const [customs, setCustoms] = useState<SavedCustomWorkout[]>([]);
+  const [exerciseCatalog, setExerciseCatalog] = useState<CatalogExercise[]>([]);
 
   const loadContent = useCallback(async () => {
     setCatalogStatus((current) => (current === 'ready' ? current : 'loading'));
@@ -84,9 +108,10 @@ export default function QuestBoardScreen() {
       setCatalogStatus('error');
       return;
     }
-    const [questsResult, onboardingAnswers] = await Promise.all([
+    const [questsResult, onboardingAnswers, customsResult] = await Promise.all([
       fetchActiveQuests(),
       getOnboarding(user.id),
+      fetchCustomWorkouts(),
     ]);
     if (questsResult.error) {
       setCatalogStatus('error');
@@ -94,8 +119,19 @@ export default function QuestBoardScreen() {
     }
     setCatalog(questsResult.data ?? []);
     setOnboarding(onboardingAnswers);
+    if (!customsResult.error && customsResult.data) {
+      setCustoms(customsResult.data);
+      if (customsResult.data.length > 0 && exerciseCatalog.length === 0) {
+        const catalogResult = await fetchExerciseCatalog();
+        if (!catalogResult.error && catalogResult.data) {
+          setExerciseCatalog(catalogResult.data);
+        }
+      }
+    } else {
+      setCustoms([]);
+    }
     setCatalogStatus('ready');
-  }, []);
+  }, [exerciseCatalog.length]);
 
   // Catalog is static content; refresh it alongside the snapshot on focus.
   useFocusEffect(
@@ -262,11 +298,24 @@ export default function QuestBoardScreen() {
                   survived, so the quest can be picked up where it stopped. */}
               {checkpoint ? (
                 <ResumeBanner
-                  title={catalog?.find((quest) => quest.id === checkpoint.questId)?.title ?? null}
+                  title={
+                    catalog?.find((quest) => quest.id === checkpoint.questId)?.title ??
+                    customs.find((custom) => custom.id === checkpoint.questId)?.name ??
+                    null
+                  }
                   onResume={() => {
                     router.push({
                       pathname: '/workout/[id]',
-                      params: { id: checkpoint.questId },
+                      params:
+                        checkpoint.source === 'custom'
+                          ? {
+                              id: checkpoint.questId,
+                              title:
+                                customs.find((custom) => custom.id === checkpoint.questId)?.name ??
+                                DEFAULT_WORKOUT_NAME,
+                              source: 'custom',
+                            }
+                          : { id: checkpoint.questId },
                     });
                   }}
                   onDismiss={() => {
@@ -275,6 +324,22 @@ export default function QuestBoardScreen() {
                   }}
                 />
               ) : null}
+
+              {/* BYQ-04 — the builder entry point sits near the top so mixing
+                  your own quest is a first-class move, not a footer link. */}
+              <TouchableOpacity
+                accessibilityRole="button"
+                style={styles.buildCard}
+                activeOpacity={0.85}
+                onPress={withTapCue(() => router.push('/build'))}
+              >
+                <Ionicons name="hammer-outline" size={22} color={colors.rewardStrong} />
+                <View style={styles.buildCopy}>
+                  <Text style={styles.buildTitle}>Build Your Quest</Text>
+                  <Text style={styles.buildLine}>Mix your own workout — your rules, your XP.</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+              </TouchableOpacity>
 
               {recommendation?.recommended ? (
                 <View style={styles.section}>
@@ -397,6 +462,48 @@ export default function QuestBoardScreen() {
                   ))
                 )}
               </View>
+
+              {/* BYQ-04 — saved customs, hidden entirely until the first one
+                  exists (no empty-state noise). */}
+              {customs.length > 0 ? (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>Your Quests</Text>
+                  {customs.map((custom) => {
+                    const difficultyOf = (slug: string) =>
+                      exerciseCatalog.find((exercise) => exercise.slug === slug)?.difficulty ??
+                      null;
+                    const xp = projectedXp(custom.segments, difficultyOf);
+                    const zone = zoneForXp(xp);
+                    const badge = difficultyBadge(zone as QuestDifficulty);
+                    return (
+                      <TouchableOpacity
+                        key={custom.id}
+                        accessibilityRole="button"
+                        style={styles.row}
+                        activeOpacity={0.85}
+                        onPress={withTapCue(() =>
+                          router.push({
+                            pathname: '/custom/[id]',
+                            params: { id: custom.id },
+                          }),
+                        )}
+                      >
+                        <View style={styles.rowLeft}>
+                          <Text style={styles.rowTitle} numberOfLines={1}>
+                            {custom.name || DEFAULT_WORKOUT_NAME}
+                          </Text>
+                          <Text style={styles.rowMeta}>
+                            {Math.round(totalDurationSec(custom.segments) / 60)} min · +{xp} XP
+                          </Text>
+                        </View>
+                        <View style={[styles.zonePill, { backgroundColor: badge.color }]}>
+                          <Text style={styles.zonePillLabel}>{ZONE_LABELS[zone]}</Text>
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              ) : null}
             </>
           )}
         </ScrollView>
@@ -874,6 +981,41 @@ const styles = StyleSheet.create({
   rowMeta: {
     color: colors.textMuted,
     fontFamily: fonts.body.family,
+    fontSize: 12,
+  },
+  buildCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    borderRadius: radius.lg,
+    borderStyle: 'dashed',
+    borderWidth: 2,
+    borderColor: colors.rewardStrong,
+    backgroundColor: colors.surface,
+    padding: spacing.lg,
+  },
+  buildCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  buildTitle: {
+    color: colors.text,
+    fontFamily: fonts.bodyBold.family,
+    fontSize: 16,
+  },
+  buildLine: {
+    color: colors.textMuted,
+    fontFamily: fonts.body.family,
+    fontSize: 13,
+  },
+  zonePill: {
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  zonePillLabel: {
+    color: colors.background,
+    fontFamily: fonts.bodyBold.family,
     fontSize: 12,
   },
   skeletonWrap: {

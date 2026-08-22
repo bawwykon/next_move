@@ -77,6 +77,44 @@ describe('buildCompletionEvent', () => {
   });
 });
 
+/**
+ * BYQ-04 — custom quests carry workout_id instead of quest_id; exactly one of
+ * the two identifiers may be present.
+ */
+describe('buildCompletionEvent (custom workout events)', () => {
+  it('emits workout_id in place of quest_id', () => {
+    const event = buildCompletionEvent(base({ questId: undefined, workoutId: 'custom-workout-1' }));
+    expect(event.workout_id).toBe('custom-workout-1');
+    expect(event.quest_id).toBeUndefined();
+    expect(Object.keys(event)).not.toContain('quest_id');
+  });
+
+  it('rejects an event with neither identifier', () => {
+    expect(() => buildCompletionEvent(base({ questId: undefined, workoutId: undefined }))).toThrow(
+      /quest id or a workout id/,
+    );
+  });
+
+  it('rejects an event carrying both identifiers', () => {
+    expect(() => buildCompletionEvent(base({ workoutId: 'custom-workout-1' }))).toThrow(
+      /never both/,
+    );
+  });
+
+  it('keeps the shared timestamp/idempotency/day_key contract for customs', () => {
+    const event = buildCompletionEvent(
+      base({
+        questId: undefined,
+        workoutId: 'custom-workout-1',
+        idempotencyKey: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+      }),
+    );
+    expect(event.day_key).toBe('2026-07-06');
+    expect(event.started_at).toBe(new Date(1_750_000_000_000).toISOString());
+    expect(event.idempotency_key).toBe('aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee');
+  });
+});
+
 describe('newIdempotencyKey', () => {
   it('produces UUID v4 keys accepted by buildCompletionEvent', () => {
     for (let i = 0; i < 25; i += 1) {

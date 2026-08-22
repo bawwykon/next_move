@@ -39,8 +39,12 @@ function isRow(value: unknown): value is OutboxRow {
     return false;
   }
   const event = record.event as Record<string, unknown>;
+  // BYQ-04 — a custom completion carries workout_id instead of quest_id;
+  // exactly one of the two identifies the event.
+  const hasQuestId = typeof event.quest_id === 'string';
+  const hasWorkoutId = typeof event.workout_id === 'string';
   return (
-    typeof event.quest_id === 'string' &&
+    hasQuestId !== hasWorkoutId &&
     typeof event.idempotency_key === 'string' &&
     typeof event.started_at === 'string' &&
     typeof event.completed_at === 'string' &&
@@ -122,12 +126,24 @@ export function flushOutbox(deps: FlushOutboxDeps): Promise<void> {
   return inFlightFlush;
 }
 
+/**
+ * Errors that can never succeed on retry: the target row is gone or the
+ * definition invalid (quest deleted, custom workout deleted mid-workout).
+ * The event is dropped instead of retrying forever — the workout is over and
+ * no server state can ever accept it.
+ */
+const PERMANENT_SUBMIT_ERRORS = new Set(['quest_invalid', 'workout_invalid']);
+
 async function runFlush(deps: FlushOutboxDeps): Promise<void> {
   const rows = await readOutbox();
   for (const row of rows) {
     const result = await deps.submit(row.event);
     if (result.error || result.data === null) {
-      await bumpOutboxAttempts(row.id);
+      if (result.error !== null && PERMANENT_SUBMIT_ERRORS.has(result.error)) {
+        await removeOutboxRow(row.id);
+      } else {
+        await bumpOutboxAttempts(row.id);
+      }
       continue;
     }
     if (deps.onSuccess) {

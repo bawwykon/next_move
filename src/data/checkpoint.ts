@@ -6,6 +6,8 @@ export const CHECKPOINT_KEY = 'workout.checkpoint.v1';
 export interface WorkoutCheckpoint {
   questId: string;
   startedAtEpochMs: number;
+  /** BYQ-04 — 'custom' when the run is a saved custom workout. */
+  source?: 'custom';
 }
 
 function isCheckpoint(value: unknown): value is WorkoutCheckpoint {

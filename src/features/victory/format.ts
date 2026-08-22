@@ -29,12 +29,16 @@ const BREAKDOWN_LABELS: Record<'quest' | 'daily' | 'weekly' | 'streak', string> 
 /**
  * FR-XP-6 — one row per stage that actually paid out, in a fixed order.
  * Zero-value stages are dropped; the total row is separate (below), so the
- * rows + total never hide a grant.
+ * rows + total never hide a grant. BYQ-04 — baseLabel renames the base stage
+ * row to the custom quest's own name.
  */
-export function xpBreakdownRows(xp: XpBreakdown): XpBreakdownRow[] {
+export function xpBreakdownRows(xp: XpBreakdown, baseLabel?: string): XpBreakdownRow[] {
   const order: ('quest' | 'daily' | 'weekly' | 'streak')[] = ['quest', 'daily', 'weekly', 'streak'];
   return order
-    .map((stage) => ({ label: BREAKDOWN_LABELS[stage], xp: xp[stage] }))
+    .map((stage) => ({
+      label: stage === 'quest' && baseLabel ? baseLabel : BREAKDOWN_LABELS[stage],
+      xp: xp[stage],
+    }))
     .filter((row) => row.xp > 0);
 }
 

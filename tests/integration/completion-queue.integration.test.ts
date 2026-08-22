@@ -126,7 +126,7 @@ describe('outbox → complete_quest sync (live local supabase)', () => {
     await flushOutbox({
       submit: (ev) => submitCompletion(user, ev),
       onSuccess: (row, result) => {
-        synced.push({ questId: row.event.quest_id, result });
+        synced.push({ questId: row.event.quest_id ?? row.event.workout_id ?? '', result });
       },
     });
     return synced;

@@ -50,7 +50,13 @@ export const useCompletionStore = create<CompletionStore>()((set) => ({
       submit: (event) => submitCompletion(supabase, event),
       onSuccess: async (row: OutboxRow, result: CompletionResult) => {
         set({
-          lastCompletion: { questId: row.event.quest_id, result, completedAtMs: row.createdAtMs },
+          // BYQ-04 — customs carry workout_id in place of quest_id; the
+          // victory screen reconciles against whichever id routed the event.
+          lastCompletion: {
+            questId: row.event.workout_id ?? row.event.quest_id ?? '',
+            result,
+            completedAtMs: row.createdAtMs,
+          },
         });
       },
     });

@@ -15,9 +15,12 @@ import { useWorkoutStore } from '@/state/workoutStore';
 export async function finishQuest(options: {
   questId: string;
   startedAtEpochMs: number;
+  /** BYQ-04 — set for custom workouts; routes delivery to complete_custom_workout. */
+  workoutId?: string;
 }): Promise<void> {
   const event = buildCompletionEvent({
-    questId: options.questId,
+    questId: options.workoutId ? undefined : options.questId,
+    workoutId: options.workoutId,
     startedAtEpochMs: options.startedAtEpochMs,
     completedAtEpochMs: Date.now(),
     idempotencyKey: newIdempotencyKey(),

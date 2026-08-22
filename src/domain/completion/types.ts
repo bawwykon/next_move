@@ -5,11 +5,17 @@
  * figure is recomputed server-side. The result is the RPC payload shape as
  * returned by complete_quest (S5-01) — field names stay snake_case so the
  * stored authoritative payload is byte-faithful to the server.
+ *
+ * BYQ-04 — custom quests: exactly one of quest_id (catalog) / workout_id
+ * (custom, Ref 12) is present. workout_id routes the delivery through
+ * complete_custom_workout, which derives everything from the SAVED definition.
  */
 import type { QuestCategory } from '@/domain/recommendation/types';
 
 export interface CompletionEvent {
-  quest_id: string;
+  quest_id?: string;
+  /** Custom-workout id (custom_workouts.id) — present instead of quest_id. */
+  workout_id?: string;
   idempotency_key: string;
   started_at: string;
   completed_at: string;

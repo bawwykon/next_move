@@ -110,7 +110,7 @@ describe('completion store (outbox sync)', () => {
 
   it('partial flush: a failed row stays pending, a later success still stores', async () => {
     mockedSubmit
-      .mockResolvedValueOnce(fail('quest_invalid'))
+      .mockResolvedValueOnce(fail('timer_mismatch'))
       .mockResolvedValueOnce(ok(resultFor(50)));
     await useCompletionStore.getState().enqueue(event('quest-bad', 'a'));
     await useCompletionStore.getState().enqueue(event('quest-good', 'b'));

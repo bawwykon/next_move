@@ -8,6 +8,8 @@ import { colors, fonts, radius, spacing } from '@/lib/theme';
 
 interface BreakdownCardProps {
   xp: XpBreakdown;
+  /** BYQ-04 — custom quests show their own name on the base XP row. */
+  baseLabel?: string;
 }
 
 /**
@@ -16,8 +18,8 @@ interface BreakdownCardProps {
  * payload has landed, and the total is always a separate row from the source
  * stages so the grants stay legible.
  */
-export function BreakdownCard({ xp }: BreakdownCardProps) {
-  const rows = useMemo(() => xpBreakdownRows(xp), [xp]);
+export function BreakdownCard({ xp, baseLabel }: BreakdownCardProps) {
+  const rows = useMemo(() => xpBreakdownRows(xp, baseLabel), [xp, baseLabel]);
   const total = useMemo(() => xpBreakdownTotal(xp), [xp]);
   // Mounted only after the payload landed, so rows are stable from first paint.
   const [reveals] = useState(() => rows.map(() => new Animated.Value(0)));

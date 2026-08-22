@@ -29,8 +29,13 @@ import { useCompletionStore } from '@/state/completionStore';
  */
 export default function VictoryScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ questId?: string; title?: string }>();
+  const params = useLocalSearchParams<{ questId?: string; title?: string; source?: string }>();
   const questId = params.questId;
+  // BYQ-04 — custom quests label the breakdown's base row with their own name.
+  const baseLabel =
+    params.source === 'custom' && typeof params.title === 'string' && params.title.length > 0
+      ? params.title
+      : undefined;
 
   const lastCompletion = useCompletionStore((state) => state.lastCompletion);
 
@@ -183,7 +188,7 @@ export default function VictoryScreen() {
 
           {result ? (
             <View style={styles.results}>
-              <BreakdownCard xp={result.xp} />
+              <BreakdownCard xp={result.xp} baseLabel={baseLabel} />
               {result.mastery.length > 0 ? <MasteryCard rows={result.mastery} /> : null}
               <JourneyCard journey={result.journey} streak={result.streak.current} />
               {overview?.hasUnlocks ? <UnlocksCard overview={overview} /> : null}
