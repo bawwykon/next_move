@@ -16,3 +16,13 @@ const BADGES: Record<QuestDifficulty, DifficultyBadge> = {
 export function difficultyBadge(difficulty: QuestDifficulty): DifficultyBadge {
   return BADGES[difficulty];
 }
+
+/**
+ * BYQ-04b — verbatim zone descriptors (Planner ruling 2026-08-22), shown with
+ * the zone label on the builder meter legend and the custom-detail pill.
+ */
+export const DIFFICULTY_DESCRIPTORS: Record<QuestDifficulty, string> = {
+  easy: 'A gentle start is easy',
+  normal: 'A steady step is normal',
+  hard: 'A real challenge is hard',
+};

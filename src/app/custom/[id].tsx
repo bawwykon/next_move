@@ -2,7 +2,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Animated, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Animated,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 import { Screen } from '@/components/ui/Screen';
 import {
@@ -21,7 +29,7 @@ import {
 import { DIFFICULTY_ART_KEY, difficultyLabel } from '@/domain/exercises/difficulty';
 import type { QuestDifficulty } from '@/domain/recommendation/types';
 import { difficultyArt, exerciseArt } from '@/features/assets/assetMap';
-import { difficultyBadge } from '@/features/questBoard/badges';
+import { DIFFICULTY_DESCRIPTORS, difficultyBadge } from '@/features/questBoard/badges';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 import { withTapCue } from '@/lib/sounds';
 
@@ -121,9 +129,11 @@ export default function CustomQuestScreen() {
 
   const title = workout.name || DEFAULT_WORKOUT_NAME;
   // The zone badge reuses the catalog tiers' friendly labels/colors — the
-  // projection is display-only, exactly like the builder's meter.
+  // projection is display-only, exactly like the builder's meter. The pill
+  // shows BYQ-04b's verbatim descriptor with the zone word.
   const zone: MeterZone = zoneForXp(projectedXp(workout.segments, difficultyOf));
   const badge = difficultyBadge(zone as QuestDifficulty);
+  const descriptor = DIFFICULTY_DESCRIPTORS[zone as QuestDifficulty];
   const totalSec = totalDurationSec(workout.segments);
 
   return (
@@ -138,11 +148,16 @@ export default function CustomQuestScreen() {
           <Text style={styles.backLabel}>Back</Text>
         </TouchableOpacity>
 
-        <>
+        {/* BYQ-04b — the content scrolls; only the CTA footer stays fixed. */}
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.header}>
             <Text style={styles.title}>{title}</Text>
             <View style={[styles.badge, { backgroundColor: badge.color }]}>
-              <Text style={styles.badgeLabel}>{badge.label}</Text>
+              <Text style={styles.badgeLabel}>{descriptor}</Text>
             </View>
             <Text style={styles.meta}>
               {Math.round(totalSec / 60)} min · +{projectedXp(workout.segments, difficultyOf)} XP{' '}
@@ -189,7 +204,7 @@ export default function CustomQuestScreen() {
               </Text>
             </View>
           </View>
-        </>
+        </ScrollView>
 
         <View style={styles.footer}>
           <TouchableOpacity
@@ -303,9 +318,15 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodyBold.family,
     fontSize: 15,
   },
+  scroll: {
+    flex: 1,
+  },
+  content: {
+    gap: spacing.xl,
+    paddingBottom: spacing.lg,
+  },
   header: {
     gap: spacing.sm,
-    marginBottom: spacing.xl,
   },
   title: {
     color: colors.text,
@@ -336,7 +357,6 @@ const styles = StyleSheet.create({
   },
   section: {
     gap: spacing.md,
-    flexShrink: 1,
   },
   sectionTitle: {
     color: colors.text,

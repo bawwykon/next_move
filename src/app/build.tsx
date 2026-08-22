@@ -38,6 +38,8 @@ import {
   type ExerciseDifficulty,
 } from '@/domain/exercises/difficulty';
 import { difficultyArt, exerciseArt } from '@/features/assets/assetMap';
+import { DIFFICULTY_DESCRIPTORS } from '@/features/questBoard/badges';
+import type { QuestDifficulty } from '@/domain/recommendation/types';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 import { withTapCue } from '@/lib/sounds';
 
@@ -507,6 +509,12 @@ export function XpMeter({ xp, overflow }: { xp: number; overflow: boolean }) {
           </Text>
         ))}
       </View>
+      {/* BYQ-04b — verbatim zone descriptors under the legend. */}
+      <Text style={styles.meterLegend}>
+        {(['easy', 'normal', 'hard'] as const)
+          .map((z) => DIFFICULTY_DESCRIPTORS[z as QuestDifficulty])
+          .join('  ·  ')}
+      </Text>
     </View>
   );
 }
@@ -728,6 +736,12 @@ const styles = StyleSheet.create({
   zoneLabels: {
     height: 14,
     position: 'relative',
+  },
+  meterLegend: {
+    color: colors.textMuted,
+    fontFamily: fonts.body.family,
+    fontSize: 11,
+    lineHeight: 16,
   },
   zoneLabelText: {
     position: 'absolute',
