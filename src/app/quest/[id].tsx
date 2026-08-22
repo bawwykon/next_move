@@ -184,8 +184,9 @@ function SegmentRow({ segment }: { segment: QuestSegment }) {
   const isEdge = segment.kind === 'warmup' || segment.kind === 'cooldown';
   const labelColor = isRest ? colors.textMuted : isEdge ? colors.calm : colors.text;
   const thumb = isRest ? null : exerciseArt(segment.exerciseSlug);
-  // AT-02E — subtle difficulty tag beside the exercise name; rest rows and
-  // unknown slugs render none.
+  // AT-02E amendment — the difficulty badge owns a FIXED slot at the row's
+  // end (before the duration): it can no longer shift with title length or
+  // drop below wrapped text.
   const difficulty = isRest ? null : exerciseDifficulty(segment.exerciseSlug);
   return (
     <View style={styles.segmentRow}>
@@ -196,22 +197,20 @@ function SegmentRow({ segment }: { segment: QuestSegment }) {
         <Text style={[styles.segmentKind, { color: labelColor }]}>
           {segmentKindLabel(segment.kind)}
         </Text>
-        {isRest ? (
-          <Text style={styles.segmentRest}>Take a breather</Text>
-        ) : (
-          <View style={styles.nameRow}>
-            <Text style={styles.segmentName}>{segment.exerciseName ?? 'Move'}</Text>
-            {difficulty !== null ? (
-              <Image
-                source={difficultyArt(DIFFICULTY_ART_KEY[difficulty])}
-                style={styles.segmentDifficultyIcon}
-                contentFit="contain"
-                accessibilityLabel={`${difficultyLabel(difficulty)} difficulty`}
-              />
-            ) : null}
-          </View>
-        )}
+        <Text style={isRest ? styles.segmentRest : styles.segmentName}>
+          {isRest ? 'Take a breather' : (segment.exerciseName ?? 'Move')}
+        </Text>
       </View>
+      {!isRest && difficulty !== null ? (
+        <View style={[styles.difficultyBadge, { backgroundColor: colors.surfaceElevated }]}>
+          <Image
+            source={difficultyArt(DIFFICULTY_ART_KEY[difficulty])}
+            style={styles.difficultyBadgeIcon}
+            contentFit="contain"
+            accessibilityLabel={`${difficultyLabel(difficulty)} difficulty`}
+          />
+        </View>
+      ) : null}
       <Text style={styles.segmentDuration}>{formatSegmentDuration(segment.durationSec)}</Text>
     </View>
   );
@@ -369,20 +368,23 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodyBold.family,
     fontSize: 13,
   },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
   segmentName: {
-    flexShrink: 1,
     color: colors.text,
     fontFamily: fonts.body.family,
     fontSize: 15,
   },
-  segmentDifficultyIcon: {
-    width: 16,
-    height: 16,
+  difficultyBadge: {
+    width: 30,
+    height: 30,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  difficultyBadgeIcon: {
+    width: 20,
+    height: 20,
   },
   segmentRest: {
     color: colors.textMuted,
