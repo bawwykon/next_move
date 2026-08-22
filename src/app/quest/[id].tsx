@@ -202,14 +202,12 @@ function SegmentRow({ segment }: { segment: QuestSegment }) {
         </Text>
       </View>
       {!isRest && difficulty !== null ? (
-        <View style={[styles.difficultyBadge, { backgroundColor: colors.surfaceElevated }]}>
-          <Image
-            source={difficultyArt(DIFFICULTY_ART_KEY[difficulty])}
-            style={styles.difficultyBadgeIcon}
-            contentFit="contain"
-            accessibilityLabel={`${difficultyLabel(difficulty)} difficulty`}
-          />
-        </View>
+        <Image
+          source={difficultyArt(DIFFICULTY_ART_KEY[difficulty])}
+          style={styles.segmentDifficultyIcon}
+          contentFit="contain"
+          accessibilityLabel={`${difficultyLabel(difficulty)} difficulty`}
+        />
       ) : null}
       <Text style={styles.segmentDuration}>{formatSegmentDuration(segment.durationSec)}</Text>
     </View>
@@ -373,16 +371,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body.family,
     fontSize: 15,
   },
-  difficultyBadge: {
-    width: 30,
-    height: 30,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  difficultyBadgeIcon: {
+  segmentDifficultyIcon: {
     width: 20,
     height: 20,
   },
