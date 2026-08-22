@@ -224,7 +224,7 @@ describe('complete_quest RPC (live local supabase)', () => {
     expect(strength.xp_reward).toBe(200);
   });
 
-  it('golden: fresh progression, first-of-day excluded -> 50/50 xp, mastery +10/+5', async () => {
+  it('golden: fresh progression, first-of-day excluded -> 50/50 xp, mastery +30/+15 (AT-02H)', async () => {
     await resetProgression();
     const d = day(0); // Monday 2026-07-06
     await seedSameDayCompletion(d); // makes this not the first completion of that day
@@ -263,13 +263,13 @@ describe('complete_quest RPC (live local supabase)', () => {
     const discipline = payload.mastery.find((m) => m.track === 'discipline');
     expect(mobility).toMatchObject({
       points_before: 0,
-      points_after: 10,
+      points_after: 30,
       level_before: 1,
       level_after: 1,
     });
     expect(discipline).toMatchObject({
       points_before: 0,
-      points_after: 5,
+      points_after: 15,
       level_before: 1,
       level_after: 1,
     });
@@ -293,7 +293,7 @@ describe('complete_quest RPC (live local supabase)', () => {
     const byTrack = Object.fromEntries(
       (mastery ?? []).map((m: { track: string; points: number }) => [m.track, m.points]),
     );
-    expect(byTrack).toEqual({ mobility: 10, discipline: 5 });
+    expect(byTrack).toEqual({ mobility: 30, discipline: 15 });
 
     const profile = await profileRow();
     expect(profile.total_xp).toBe(50);
@@ -569,15 +569,15 @@ describe('complete_quest RPC (live local supabase)', () => {
     }
 
     await resetProgression();
-    // End-to-end: 240 seeded mobility points +10 from a completed quest -> 250 -> level 2.
+    // End-to-end: 220 seeded mobility points +30 from a completed quest -> 250 -> level 2 (AT-02H).
     const seedPts = await admin
       .from('mastery')
-      .insert({ profile_id: profileId, track: 'mobility', points: 240 });
+      .insert({ profile_id: profileId, track: 'mobility', points: 220 });
     expect(seedPts.error).toBeNull();
     const d = day(47);
-    const r = await callOk(easyEvent(d, 'mas-240', 8));
+    const r = await callOk(easyEvent(d, 'mas-220', 8));
     const mobility = r.mastery.find((m) => m.track === 'mobility')!;
-    expect(mobility.points_before).toBe(240);
+    expect(mobility.points_before).toBe(220);
     expect(mobility.points_after).toBe(250);
     expect(mobility.level_before).toBe(1);
     expect(mobility.level_after).toBe(2);

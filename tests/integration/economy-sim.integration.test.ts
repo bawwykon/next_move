@@ -1,11 +1,11 @@
 /**
- * S10-01 — economy validation sim (QA gate). Live-DB proof that the server
+ * S10-01 â€” economy validation sim (QA gate). Live-DB proof that the server
  * engine (0020_complete_quest) pays out exactly the FR/economy contract:
  *  - daily bonus (+75) on the first completion of each local day only
- *  - weekly bonus (+500) exactly on the 3rd completion of a Mon–Sun week
+ *  - weekly bonus (+500) exactly on the 3rd completion of a Monâ€“Sun week
  *  - streak-milestone payouts on a fresh 3/7/30/100-day streak (50/150/500/1500)
- *  - level curve boundaries, incl. the 100 → 101 transition (10,000 XP span)
- *  - mastery +10/+5 per touched track (250-point levels)
+ *  - level curve boundaries, incl. the 100 â†’ 101 transition (10,000 XP span)
+ *  - mastery +30/+15 per touched track (250-point levels; AT-02H)
  *  - achievement triggers at their exact boundaries: quests 50/100, streak 7,
  *    phoenix (gap >= 8 days: rule days=7 -> days+1), early-bird (UTC hour < 10)
  *  - INVARIANT: a simulated long session (101 consecutive days) is recomputed
@@ -211,10 +211,10 @@ describe('economy simulation sweep (live supabase)', () => {
   };
 
   /**
-   * INVARIANT MIRROR — recompute the server snapshot from the raw event
+   * INVARIANT MIRROR â€” recompute the server snapshot from the raw event
    * stream (quest reward + day keys only), replicating 0020 exactly:
    * quest XP per completion, daily +75 only on the first per-day completion,
-   * weekly +500 only on the 3rd completion per Mon–Sun window (offset
+   * weekly +500 only on the 3rd completion per Monâ€“Sun window (offset
    * week = floor(day/7)), ladder payouts only when the streak lands exactly
    * on a rung day, and level via the closed form 50*L*(L-1).
    */
@@ -324,12 +324,12 @@ describe('economy simulation sweep (live supabase)', () => {
     expect(rungs.map((r) => r.day)).toEqual([3, 7, 30, 100]);
     expect(rungs.map((r) => r.streak)).toEqual([50, 150, 500, 1500]);
     expect(await rewardsRow()).toEqual([3, 7, 30, 100]);
-    expect(payouts[3]!.xp.streak).toBe(0); // day 4 — no re-grant
-    expect(payouts[100]!.xp.streak).toBe(0); // day 101 — past the ladder
+    expect(payouts[3]!.xp.streak).toBe(0); // day 4 â€” no re-grant
+    expect(payouts[100]!.xp.streak).toBe(0); // day 101 â€” past the ladder
 
     // Daily: +75 on every first-of-day (one event per day here).
     expect(payouts.reduce((sum, p) => sum + p.xp.daily, 0)).toBe(DAILY_XP * DAYS);
-    // Weekly: +500 exactly on the 3rd of each Mon–Sun window; 15 windows.
+    // Weekly: +500 exactly on the 3rd of each Monâ€“Sun window; 15 windows.
     const weeklyEvents = payouts.filter((p) => p.xp.weekly > 0);
     expect(weeklyEvents.length).toBe(15);
     expect(weeklyEvents.every((p) => p.xp.weekly === WEEKLY_XP)).toBe(true);
@@ -370,7 +370,7 @@ describe('economy simulation sweep (live supabase)', () => {
     expect(prof.longest_streak).toBe(DAYS);
     expect(prof.last_completed_day).toBe(dayKey(DAYS - 1));
     expect(prof.journey_quests).toBe(DAYS);
-    expect(await masteryRow()).toEqual({ mobility: 1010, discipline: 505 });
+    expect(await masteryRow()).toEqual({ mobility: 3030, discipline: 1515 }); // AT-02H 3x
 
     // Replay: same idempotency keys return stored payloads, nothing drifts.
     const replay5 = await completeViaRpc(morning(5, 9, 'sim-5-9'));
