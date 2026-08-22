@@ -12,13 +12,12 @@ export const GENTLE_RETURN_MAX_DURATION_SEC = 600;
 export const ROTATION_WINDOW_DAYS = 3;
 export const EASY_LADDER_MAX_COMPLETIONS = 7;
 export const NORMAL_LADDER_MAX_COMPLETIONS = 20;
-export const ELITE_MIN_COMPLETIONS = 30;
 
 const DAY_MS = 86_400_000;
 
 const CATEGORY_ORDER: QuestCategory[] = ['strength', 'endurance', 'mobility', 'discipline'];
 
-const DIFFICULTY_ORDER: QuestDifficulty[] = ['easy', 'normal', 'hard', 'elite'];
+const DIFFICULTY_ORDER: QuestDifficulty[] = ['easy', 'normal', 'hard'];
 
 function pickBySlug(pool: QuestCatalogEntry[]): QuestCatalogEntry | undefined {
   return [...pool].sort((a, b) => a.slug.localeCompare(b.slug))[0];
@@ -113,16 +112,11 @@ export function rotationRecommendation(
 }
 
 /**
- * Ref 08 §8.3 — difficulty ladder. First 7 lifetime completions → easy,
- * 8–20 → normal, 21+ → normal/hard alternating by day parity (even days the
- * harder tier). Elite is only ever recommended from ≥ 30 completions AND at
- * least one hard quest completed.
+ * Ref 08 §8.3 — difficulty ladder (AT-02I: the elite tier is removed; hard is
+ * the ceiling). First 7 lifetime completions → easy, 8–20 → normal, 21+ →
+ * normal/hard alternating by day parity (even days the harder tier).
  */
-export function recommendedDifficulty(
-  lifetimeCompletions: number,
-  hasCompletedHard: boolean,
-  now: Date,
-): QuestDifficulty {
+export function recommendedDifficulty(lifetimeCompletions: number, now: Date): QuestDifficulty {
   if (lifetimeCompletions < 8) {
     return 'easy';
   }
@@ -132,20 +126,7 @@ export function recommendedDifficulty(
   if (now.getDate() % 2 !== 0) {
     return 'normal';
   }
-  if (hasCompletedHard && lifetimeCompletions >= ELITE_MIN_COMPLETIONS) {
-    return 'elite';
-  }
   return 'hard';
-}
-
-export function hasCompletedHardQuest(
-  recentCompletions: CompletionRecord[],
-  catalog: QuestCatalogEntry[],
-): boolean {
-  const hardQuestIds = new Set(
-    catalog.filter((quest) => quest.difficulty === 'hard').map((quest) => quest.id),
-  );
-  return recentCompletions.some((record) => hardQuestIds.has(record.questId));
 }
 
 function questForDifficulty(
@@ -210,11 +191,7 @@ export function recommendQuest(
     return rotationQuestId;
   }
 
-  const difficulty = recommendedDifficulty(
-    recentCompletions.length,
-    hasCompletedHardQuest(recentCompletions, catalog),
-    now,
-  );
+  const difficulty = recommendedDifficulty(recentCompletions.length, now);
   return questForDifficulty(category, difficulty, catalog)?.id ?? rotationQuestId;
 }
 

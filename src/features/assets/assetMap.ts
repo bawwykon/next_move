@@ -1,5 +1,5 @@
 /**
- * AT-01D — centralized slug → asset mapping (single source of truth for the
+ * AT-01D â€” centralized slug â†’ asset mapping (single source of truth for the
  * normalized delivery). Every map is keyed by the database slug (kebab-case);
  * callers fall back to their previous code-drawn rendering when a key is
  * absent (null), so a missing file can never crash a screen.
@@ -100,7 +100,6 @@ export const DIFFICULTY_ART: Record<string, number> = {
   easy: require('@/assets/icons/difficulty_easy.png'),
   normal: require('@/assets/icons/difficulty_normal.png'),
   hard: require('@/assets/icons/difficulty_hard.png'),
-  elite: require('@/assets/icons/difficulty_elite.png'),
 };
 
 export function difficultyArt(difficulty: string): number | null {

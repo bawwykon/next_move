@@ -1,4 +1,4 @@
-export type QuestDifficulty = 'easy' | 'normal' | 'hard' | 'elite';
+export type QuestDifficulty = 'easy' | 'normal' | 'hard';
 
 export type QuestCategory = 'strength' | 'endurance' | 'mobility' | 'discipline';
 

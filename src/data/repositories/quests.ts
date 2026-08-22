@@ -6,7 +6,6 @@ const DIFFICULTY_RANK: Record<QuestDifficulty, number> = {
   easy: 0,
   normal: 1,
   hard: 2,
-  elite: 3,
 };
 
 export interface ActiveQuest {

@@ -51,18 +51,16 @@ describe('difficultyBadge', () => {
     expect(difficultyBadge('easy').label).toBe('A gentle start');
     expect(difficultyBadge('normal').label).toBe('A steady step');
     expect(difficultyBadge('hard').label).toBe('A real challenge');
-    expect(difficultyBadge('elite').label).toBe('The big one');
   });
 
-  it('maps theme colors: easy calm, normal rewardStrong, hard/elite danger', () => {
+  it('maps theme colors: easy calm, normal rewardStrong, hard danger', () => {
     expect(difficultyBadge('easy').color).toBe(colors.calm);
     expect(difficultyBadge('normal').color).toBe(colors.rewardStrong);
     expect(difficultyBadge('hard').color).toBe(colors.danger);
-    expect(difficultyBadge('elite').color).toBe(colors.danger);
   });
 
   it('never returns a raw hex through the payload source of truth', () => {
-    for (const d of ['easy', 'normal', 'hard', 'elite'] as const) {
+    for (const d of ['easy', 'normal', 'hard'] as const) {
       const badge = difficultyBadge(d);
       expect(Object.values(colors)).toContain(badge.color);
       expect(badge.label.toLowerCase()).not.toMatch(/\b(danger|intense)\b/);

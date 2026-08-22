@@ -1,7 +1,6 @@
 import {
   alternatives,
   gentleReturnRecommendation,
-  hasCompletedHardQuest,
   recommendQuest,
   recommendedDifficulty,
   rotationRecommendation,
@@ -165,41 +164,29 @@ describe('recommendedDifficulty ladder', () => {
   const evenDay = new Date(2026, 0, 6);
 
   it('is easy for the first 7 lifetime completions', () => {
-    expect(recommendedDifficulty(7, false, evenDay)).toBe('easy');
-    expect(recommendedDifficulty(0, false, evenDay)).toBe('easy');
+    expect(recommendedDifficulty(7, evenDay)).toBe('easy');
+    expect(recommendedDifficulty(0, evenDay)).toBe('easy');
   });
 
   it('is normal for 8–20 completions regardless of day', () => {
-    expect(recommendedDifficulty(8, false, evenDay)).toBe('normal');
-    expect(recommendedDifficulty(20, true, evenDay)).toBe('normal');
+    expect(recommendedDifficulty(8, evenDay)).toBe('normal');
+    expect(recommendedDifficulty(20, evenDay)).toBe('normal');
   });
 
   it('is normal on odd days from 21+ completions', () => {
-    expect(recommendedDifficulty(21, false, oddDay)).toBe('normal');
-    expect(recommendedDifficulty(100, true, oddDay)).toBe('normal');
+    expect(recommendedDifficulty(21, oddDay)).toBe('normal');
+    expect(recommendedDifficulty(100, oddDay)).toBe('normal');
   });
 
-  it('is hard on even days from 21+ before elite thresholds', () => {
-    expect(recommendedDifficulty(21, false, evenDay)).toBe('hard');
-    expect(recommendedDifficulty(29, true, evenDay)).toBe('hard');
+  it('is hard on even days from 21+ completions', () => {
+    expect(recommendedDifficulty(21, evenDay)).toBe('hard');
+    expect(recommendedDifficulty(29, evenDay)).toBe('hard');
   });
 
-  it('never recommends elite without a completed hard quest', () => {
-    expect(recommendedDifficulty(30, false, evenDay)).toBe('hard');
-    expect(recommendedDifficulty(40, false, evenDay)).toBe('hard');
-  });
-
-  it('is elite only at 30+ completions with a completed hard quest on an even day', () => {
-    expect(recommendedDifficulty(30, true, evenDay)).toBe('elite');
-    expect(recommendedDifficulty(30, true, oddDay)).toBe('normal');
-    expect(recommendedDifficulty(29, true, evenDay)).toBe('hard');
-  });
-});
-
-describe('hasCompletedHardQuest', () => {
-  it('detects a hard quest completion', () => {
-    expect(hasCompletedHardQuest([completion('q-s-h', 1)], catalog)).toBe(true);
-    expect(hasCompletedHardQuest([completion('q-s-e-1', 1)], catalog)).toBe(false);
+  it('caps at hard — the elite tier is removed (AT-02I)', () => {
+    expect(recommendedDifficulty(30, evenDay)).toBe('hard');
+    expect(recommendedDifficulty(40, evenDay)).toBe('hard');
+    expect(recommendedDifficulty(365, evenDay)).toBe('hard');
   });
 });
 

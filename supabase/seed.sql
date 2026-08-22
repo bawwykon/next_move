@@ -151,7 +151,7 @@ insert into public.exercise_library (slug, name, instruction, safety_note, categ
   ('burpees', 'Burpees', 'From standing, squat down, step or jump back to a plank, return to the squat, then jump up.', 'Land softly with bent knees on the jump.', '{"endurance","strength"}', 'Step back instead of jumping; walk hands in and out.')
 on conflict (slug) do nothing;
 
--- quest definitions (11 — S11-01 adds the elite tier: interval-peak)
+-- quest definitions (AT-02I — three difficulty tiers; interval-peak is hard @200)
 insert into public.quests (slug, title, description, difficulty, xp_reward, duration_sec, categories) values
   ('morning-stretch', 'Morning Stretch', 'Wake up your whole body with a gentle stretch routine that eases you into the day.', 'easy', 50, 480, '{"mobility"}'),
   ('first-steps', 'First Steps', 'A friendly introduction to daily movement with easy marching and walking steps.', 'easy', 50, 480, '{"endurance"}'),
@@ -163,7 +163,7 @@ insert into public.quests (slug, title, description, difficulty, xp_reward, dura
   ('full-body-flow', 'Full Body Flow', 'A flowing sequence that gently moves every major joint.', 'normal', 100, 720, '{"mobility"}'),
   ('interval-boost', 'Interval Boost', 'Structured work and rest intervals that lift your conditioning.', 'hard', 200, 900, '{"endurance"}'),
   ('strength-builder', 'Strength Builder', 'A structured circuit that builds whole-body strength safely.', 'hard', 200, 900, '{"strength"}'),
-  ('interval-peak', 'Interval Peak', 'Three rounds of intervals, each a little harder than the last — the elite endurance climb.', 'elite', 400, 900, '{"endurance"}')
+  ('interval-peak', 'Interval Peak', 'Three rounds of intervals, each a little harder than the last — the toughest endurance climb.', 'hard', 200, 900, '{"endurance"}')
 on conflict (slug) do nothing;
 
 -- quest segments (position 1-based, first warmup, last cooldown, sum = quest duration)

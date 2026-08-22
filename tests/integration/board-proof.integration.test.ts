@@ -74,19 +74,19 @@ describe('board data path (local supabase)', () => {
       'normal',
       'hard',
       'hard',
-      'elite',
+      'hard',
     ]);
     const slugs = quests.map((quest) => quest.slug);
     expect(slugs.slice(0, 5)).toEqual(slugs.slice(0, 5).sort());
     expect(slugs.slice(5, 8)).toEqual(slugs.slice(5, 8).sort());
-    expect(slugs.slice(8, 10)).toEqual(slugs.slice(8, 10).sort());
+    expect(slugs.slice(8, 11)).toEqual(slugs.slice(8, 11).sort());
     expect(slugs[10]).toBe('interval-peak');
 
     const morningStretch = quests.find((quest) => quest.slug === 'morning-stretch')!;
     expect(morningStretch.segmentCount).toBe(8);
     expect(morningStretch.totalDurationSec).toBe(480);
     expect(
-      quests.some((quest) => quest.slug === 'interval-peak' && quest.difficulty === 'elite'),
+      quests.some((quest) => quest.slug === 'interval-peak' && quest.difficulty === 'hard'),
     ).toBe(true);
     for (const quest of quests) {
       expect(quest.segmentCount).toBeGreaterThan(0);
