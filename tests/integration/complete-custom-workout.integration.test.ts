@@ -432,9 +432,9 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
     const result = await submitCompletion(user, ev);
     expect(result.error).toBeNull();
     expect(result.data).not.toBeNull();
-    // wall-sit (beginner, w1) + plank (intermediate, w2), 60s each:
-    // 2 blocks x 1 + 2 blocks x 2 = 6 pts -> 18 XP base.
-    expect(result.data!.xp.quest).toBe(18);
+    // wall-sit + plank are both intermediate (TUNE-01) at w2, 60s each:
+    // 2 blocks x 2 + 2 blocks x 2 = 8 pts -> 24 XP base.
+    expect(result.data!.xp.quest).toBe(24);
 
     // Deleted definition -> workout_invalid, not 'unknown' or timer_mismatch.
     const { error: delErr } = await admin.from('custom_workouts').delete().eq('id', wid);

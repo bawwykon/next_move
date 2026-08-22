@@ -19,13 +19,15 @@ export const EXERCISE_DIFFICULTY: Readonly<Record<string, ExerciseDifficulty>> =
   'glute-bridge': 'beginner',
   'seated-leg-raise': 'beginner',
   'bird-dog': 'beginner',
-  'wall-sit': 'beginner',
 
   // Loaded or balance-demanding staples.
   squat: 'intermediate',
   'push-up': 'intermediate',
   lunges: 'intermediate',
   plank: 'intermediate',
+  // TUNE-01 — the isometric burn is real; matches exercise_library.difficulty
+  // (migration 0028) so builder projections weight it like the RPC does.
+  'wall-sit': 'intermediate',
 
   // High-output power moves.
   'mountain-climber': 'advanced',

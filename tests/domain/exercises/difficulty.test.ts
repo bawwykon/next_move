@@ -24,7 +24,6 @@ describe('exercise difficulty map', () => {
       'glute-bridge',
       'seated-leg-raise',
       'bird-dog',
-      'wall-sit',
     ];
     for (const slug of beginners) {
       expect(exerciseDifficulty(slug)).toBe('beginner');
@@ -36,6 +35,8 @@ describe('exercise difficulty map', () => {
     expect(exerciseDifficulty('push-up')).toBe('intermediate');
     expect(exerciseDifficulty('lunges')).toBe('intermediate');
     expect(exerciseDifficulty('plank')).toBe('intermediate');
+    // TUNE-01 — isometric hold reclassified (mirrors migration 0028).
+    expect(exerciseDifficulty('wall-sit')).toBe('intermediate');
   });
 
   it('marks the power moves as advanced', () => {
