@@ -15,11 +15,7 @@ import {
   type MasteryRow,
 } from '@/data/repositories/board';
 import { fetchCosmeticCatalog, type CosmeticRow } from '@/data/repositories/cosmetics';
-import {
-  fetchCompletionHistory,
-  HISTORY_PAGE_SIZE,
-  type CompletionHistoryRow,
-} from '@/data/repositories/history';
+import { fetchCompletionHistory, type CompletionHistoryRow } from '@/data/repositories/history';
 import { fetchProfileCosmetics } from '@/data/repositories/profileCosmetics';
 import { supabase } from '@/data/supabase';
 import { dayKey } from '@/domain/streak/dayKey';
@@ -33,7 +29,6 @@ import { cosmeticArt, masteryArt } from '@/features/assets/assetMap';
 import { withTapCue } from '@/lib/sounds';
 import { LoadoutCard } from '@/features/profile/LoadoutCard';
 import {
-  historyExhausted,
   historyLines,
   levelLine,
   masteryRows,
@@ -64,6 +59,10 @@ const FRAME_HOLE_CENTER: Record<string, { x: number; y: number; size: number }> 
   'frame-level-100': { x: 277.6, y: 254.5, size: 176 },
 };
 const DEFAULT_HOLE_CENTER = { x: 256, y: 256, size: 280 };
+
+// AT-02G — the profile card previews only the latest completions; the
+// dedicated history screen owns paging through the full 30-day window.
+const HISTORY_PREVIEW_COUNT = 4;
 
 function frameAvatarStyle(slug: string | null): {
   left: number;
@@ -115,7 +114,7 @@ export default function ProfileScreen() {
         fetchCosmeticCatalog(),
         fetchProfileCosmetics(user.id),
         fetchProfileAchievements(user.id),
-        fetchCompletionHistory(user.id, { limit: HISTORY_PAGE_SIZE, offset: 0 }),
+        fetchCompletionHistory(user.id, { limit: HISTORY_PREVIEW_COUNT, offset: 0 }),
       ]);
     const firstError = [
       profileResult,
@@ -143,19 +142,6 @@ export default function ProfileScreen() {
       void loadFirstPage();
     }, [loadFirstPage]),
   );
-
-  const loadMore = useCallback(async () => {
-    if (!profile) {
-      return;
-    }
-    const result = await fetchCompletionHistory(profile.id, {
-      limit: HISTORY_PAGE_SIZE,
-      offset: history.length,
-    });
-    if (!result.error) {
-      setHistory((current) => [...current, ...(result.data ?? [])]);
-    }
-  }, [profile, history.length]);
 
   /**
    * S8-02 — optimistic equip with revert-on-error. The domain verdict gates
@@ -218,7 +204,6 @@ export default function ProfileScreen() {
   const milestoneLine = streakMilestoneLine(profile?.currentStreak ?? 0);
   const masteryRowsView = useMemo(() => masteryRows(mastery), [mastery]);
   const historyView = useMemo(() => historyLines(history, todayKey), [history, todayKey]);
-  const exhausted = historyExhausted(history.length, HISTORY_PAGE_SIZE);
 
   return (
     <Screen>
@@ -363,7 +348,8 @@ export default function ProfileScreen() {
               onEquip={handleEquip}
             />
 
-            {/* Quest history — 30-day window, paged (FR-PROF-1). */}
+            {/* Quest history — last-4 preview; the full paged list lives on
+                the dedicated history screen (AT-02G, FR-PROF-1). */}
             <View style={styles.card}>
               <Text style={styles.cardTitle}>Quest history</Text>
               {historyView.length === 0 ? (
@@ -385,17 +371,15 @@ export default function ProfileScreen() {
                   ))}
                 </View>
               )}
-              {historyView.length > 0 && !exhausted ? (
+              {historyView.length > 0 ? (
                 <TouchableOpacity
                   accessibilityRole="button"
-                  style={styles.loadMore}
-                  onPress={withTapCue(() => void loadMore())}
+                  style={styles.viewAllRow}
+                  onPress={withTapCue(() => router.push('/history'))}
                 >
-                  <Text style={styles.loadMoreLabel}>Load more</Text>
+                  <Text style={styles.viewAllLabel}>View all history</Text>
+                  <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
                 </TouchableOpacity>
-              ) : null}
-              {historyView.length > 0 && exhausted ? (
-                <Text style={styles.historyEnd}>{`That's all from the last 30 days.`}</Text>
               ) : null}
             </View>
 
@@ -642,21 +626,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontStyle: 'italic',
   },
-  historyEnd: {
-    color: colors.textMuted,
-    fontFamily: fonts.body.family,
-    fontSize: 13,
-    textAlign: 'center',
-  },
-  loadMore: {
-    minHeight: 44,
+  viewAllRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.surfaceElevated,
+    gap: spacing.sm,
+    minHeight: 44,
   },
-  loadMoreLabel: {
+  viewAllLabel: {
+    flex: 1,
     color: colors.text,
     fontFamily: fonts.bodyBold.family,
     fontSize: 14,
