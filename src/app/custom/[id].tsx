@@ -29,7 +29,7 @@ import {
 import { DIFFICULTY_ART_KEY, difficultyLabel } from '@/domain/exercises/difficulty';
 import type { QuestDifficulty } from '@/domain/recommendation/types';
 import { difficultyArt, exerciseArt } from '@/features/assets/assetMap';
-import { DIFFICULTY_DESCRIPTORS, difficultyBadge } from '@/features/questBoard/badges';
+import { difficultyBadge } from '@/features/questBoard/badges';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 import { withTapCue } from '@/lib/sounds';
 
@@ -129,11 +129,9 @@ export default function CustomQuestScreen() {
 
   const title = workout.name || DEFAULT_WORKOUT_NAME;
   // The zone badge reuses the catalog tiers' friendly labels/colors — the
-  // projection is display-only, exactly like the builder's meter. The pill
-  // shows BYQ-04b's verbatim descriptor with the zone word.
+  // projection is display-only, exactly like the builder's meter.
   const zone: MeterZone = zoneForXp(projectedXp(workout.segments, difficultyOf));
   const badge = difficultyBadge(zone as QuestDifficulty);
-  const descriptor = DIFFICULTY_DESCRIPTORS[zone as QuestDifficulty];
   const totalSec = totalDurationSec(workout.segments);
 
   return (
@@ -157,7 +155,7 @@ export default function CustomQuestScreen() {
           <View style={styles.header}>
             <Text style={styles.title}>{title}</Text>
             <View style={[styles.badge, { backgroundColor: badge.color }]}>
-              <Text style={styles.badgeLabel}>{descriptor}</Text>
+              <Text style={styles.badgeLabel}>{badge.label}</Text>
             </View>
             <Text style={styles.meta}>
               {Math.round(totalSec / 60)} min · +{projectedXp(workout.segments, difficultyOf)} XP{' '}

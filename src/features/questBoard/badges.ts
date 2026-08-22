@@ -18,11 +18,12 @@ export function difficultyBadge(difficulty: QuestDifficulty): DifficultyBadge {
 }
 
 /**
- * BYQ-04b — verbatim zone descriptors (Planner ruling 2026-08-22), shown with
- * the zone label on the builder meter legend and the custom-detail pill.
+ * BYQ-04b — zone phrases shown on the board's "Your Quests" pills (instead
+ * of the bare Easy/Normal/Hard words). Verbatim per player feedback:
+ * "A gentle start · A steady step · A real challenge".
  */
 export const DIFFICULTY_DESCRIPTORS: Record<QuestDifficulty, string> = {
-  easy: 'A gentle start is easy',
-  normal: 'A steady step is normal',
-  hard: 'A real challenge is hard',
+  easy: 'A gentle start',
+  normal: 'A steady step',
+  hard: 'A real challenge',
 };

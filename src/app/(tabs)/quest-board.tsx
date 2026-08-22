@@ -36,11 +36,10 @@ import {
   projectedXp,
   totalDurationSec,
   zoneForXp,
-  type MeterZone,
 } from '@/domain/customWorkout/model';
 import { WEEKLY_TARGET, dayWindow, weeklyWindow } from '@/domain/board/window';
 import { DAILY_QUEST_ART, WEEKLY_CHALLENGE_ART, difficultyArt } from '@/features/assets/assetMap';
-import { difficultyBadge } from '@/features/questBoard/badges';
+import { DIFFICULTY_DESCRIPTORS, difficultyBadge } from '@/features/questBoard/badges';
 import { isCompletedToday } from '@/features/questBoard/completedToday';
 import {
   WEEKLY_BONUS_XP,
@@ -63,13 +62,6 @@ const CATEGORY_LABELS: Record<QuestCategory, string> = {
   endurance: 'Endurance',
   mobility: 'Mobility',
   discipline: 'Focus',
-};
-
-// BYQ-04 — friendly zone labels for the custom-quest rows.
-const ZONE_LABELS: Record<MeterZone, string> = {
-  easy: 'Easy',
-  normal: 'Normal',
-  hard: 'Hard',
 };
 
 // recommendQuest accepts onboarding for parity with Ref 06; its rules do not
@@ -497,7 +489,9 @@ export default function QuestBoardScreen() {
                           </Text>
                         </View>
                         <View style={[styles.zonePill, { backgroundColor: badge.color }]}>
-                          <Text style={styles.zonePillLabel}>{ZONE_LABELS[zone]}</Text>
+                          <Text style={styles.zonePillLabel}>
+                            {DIFFICULTY_DESCRIPTORS[zone as QuestDifficulty]}
+                          </Text>
                         </View>
                       </TouchableOpacity>
                     );
