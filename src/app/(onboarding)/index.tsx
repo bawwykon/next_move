@@ -1,7 +1,15 @@
 import { router } from 'expo-router';
 import { Image } from 'expo-image';
-import { useEffect, useState } from 'react';
-import { BackHandler, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import {
+  BackHandler,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 import { planSummaryLines } from '@/domain/recommendation/plan';
 import { AppButton } from '@/components/ui/AppButton';
@@ -28,12 +36,16 @@ import { colors, fonts, radius, spacing } from '@/lib/theme';
 import { useSessionStore } from '@/state/sessionStore';
 
 const STEP_COUNT = ONBOARDING_STEPS.length;
+const NAME_MAX = 30;
 
 export default function OnboardingScreen() {
   const completeOnboarding = useSessionStore((state) => state.completeOnboarding);
   const [wizard, setWizard] = useState<WizardState>(initialWizardState);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // PH3-01 — text input for the display_name step (optional, default 'Adventurer').
+  const [nameDraft, setNameDraft] = useState('');
+  const nameInputRef = useRef<TextInput>(null);
 
   const step = ONBOARDING_STEPS[wizard.stepIndex]!;
   // AT-01D — one hero illustration per onboarding step (assets/onboarding/).
@@ -59,6 +71,14 @@ export default function OnboardingScreen() {
 
   const handleAdvance = () => {
     setError(null);
+    // PH3-01 — capture the text input value before advancing.
+    if (step.key === 'display_name') {
+      const trimmed = nameDraft.trim();
+      setWizard((current) => ({
+        ...current,
+        answers: { ...current.answers, display_name: trimmed || null },
+      }));
+    }
     setWizard((current) => advance(current));
   };
 
@@ -110,6 +130,11 @@ export default function OnboardingScreen() {
               <Text style={styles.echoKey}>Preferred time:</Text>{' '}
               {optionLabel('workout_time', payload.workout_time)}
             </Text>
+            {payload.display_name ? (
+              <Text style={styles.echoLine}>
+                <Text style={styles.echoKey}>Name:</Text> {payload.display_name}
+              </Text>
+            ) : null}
           </View>
           {error ? <Text style={styles.error}>{error}</Text> : null}
           <AppButton label="Go to my quest board" onPress={handleComplete} loading={saving} />
@@ -140,34 +165,58 @@ export default function OnboardingScreen() {
           {step.subtitle ? <Text style={styles.subtitle}>{step.subtitle}</Text> : null}
         </View>
         <View style={styles.options}>
-          {step.options.map((option) => {
-            const selected = isSelected(option);
-            return (
-              <Pressable
-                key={String(option.value)}
-                accessibilityRole="button"
-                accessibilityState={{ selected }}
-                accessibilityLabel={option.label}
-                onPress={withTapCue(() => {
-                  setWizard((current) => selectAnswer(current, option.value));
-                })}
-                style={({ pressed }) => [
-                  styles.option,
-                  selected && styles.optionSelected,
-                  pressed && styles.optionPressed,
-                ]}
-              >
-                <Text style={[styles.optionLabel, selected && styles.optionLabelSelected]}>
-                  {option.label}
-                </Text>
-                {option.hint ? (
-                  <Text style={[styles.optionHint, selected && styles.optionHintSelected]}>
-                    {option.hint}
+          {step.options.length === 0 ? (
+            // PH3-01 — text input variant for the display_name step.
+            <View style={styles.nameInputWrap}>
+              <TextInput
+                ref={nameInputRef}
+                value={nameDraft}
+                onChangeText={(text) => setNameDraft(text.slice(0, NAME_MAX))}
+                placeholder="Adventurer"
+                placeholderTextColor={colors.textMuted}
+                returnKeyType="done"
+                maxLength={NAME_MAX}
+                style={styles.nameInput}
+                onFocus={() => {
+                  if (!nameDraft) {
+                    setNameDraft(wizard.answers.display_name ?? '');
+                  }
+                }}
+              />
+              <Text style={styles.nameHint}>
+                Leave blank for &quot;Adventurer&quot; — you can change this anytime.
+              </Text>
+            </View>
+          ) : (
+            step.options.map((option) => {
+              const selected = isSelected(option);
+              return (
+                <Pressable
+                  key={String(option.value)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={option.label}
+                  onPress={withTapCue(() => {
+                    setWizard((current) => selectAnswer(current, option.value));
+                  })}
+                  style={({ pressed }) => [
+                    styles.option,
+                    selected && styles.optionSelected,
+                    pressed && styles.optionPressed,
+                  ]}
+                >
+                  <Text style={[styles.optionLabel, selected && styles.optionLabelSelected]}>
+                    {option.label}
                   </Text>
-                ) : null}
-              </Pressable>
-            );
-          })}
+                  {option.hint ? (
+                    <Text style={[styles.optionHint, selected && styles.optionHintSelected]}>
+                      {option.hint}
+                    </Text>
+                  ) : null}
+                </Pressable>
+              );
+            })
+          )}
         </View>
         <View style={styles.actions}>
           <AppButton
@@ -279,6 +328,26 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     marginTop: spacing.xxl,
     paddingBottom: spacing.lg,
+  },
+  nameInputWrap: {
+    gap: spacing.sm,
+  },
+  nameInput: {
+    minHeight: 48,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.surfaceElevated,
+    color: colors.text,
+    fontFamily: fonts.body.family,
+    fontSize: 16,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+  },
+  nameHint: {
+    color: colors.textMuted,
+    fontFamily: fonts.body.family,
+    fontSize: 13,
   },
   skip: {
     minHeight: 44,

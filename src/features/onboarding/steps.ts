@@ -1,4 +1,4 @@
-export type StepKey = 'activity_level' | 'experience' | 'goals' | 'workout_time';
+export type StepKey = 'activity_level' | 'experience' | 'goals' | 'workout_time' | 'display_name';
 
 export type Goal = 'build_a_habit' | 'get_stronger' | 'more_energy' | 'feel_better' | 'move_easier';
 
@@ -71,6 +71,12 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     subtitle: 'We\u2019ll use this to time your quests.',
     options: WORKOUT_TIME_OPTIONS,
   },
+  {
+    key: 'display_name',
+    title: 'What should we call you?',
+    subtitle: 'This is how you\u2019ll appear on the board. You can change it anytime.',
+    options: [],
+  },
 ];
 
 // FR-ONB-4: skipping a step falls back to these safe defaults.
@@ -79,6 +85,7 @@ export const SKIP_DEFAULTS = {
   experience: 2,
   goals: [] as Goal[],
   workout_time: 'any' as WorkoutTime,
+  display_name: null as string | null,
 };
 
 export function optionLabel(key: StepKey, value: number | string): string {

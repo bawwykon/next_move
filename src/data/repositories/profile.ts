@@ -25,9 +25,15 @@ export async function saveOnboarding(payload: OnboardingPayload): Promise<string
     return onboardingError.message;
   }
 
+  // PH3-01 — persist the display name if the user typed one.
+  const profileUpdate: { onboarded: true; display_name?: string } = { onboarded: true };
+  if (payload.display_name) {
+    profileUpdate.display_name = payload.display_name;
+  }
+
   const { error: profileError } = await supabase
     .from('profiles')
-    .update({ onboarded: true })
+    .update(profileUpdate)
     .eq('id', user.id);
   if (profileError) {
     return profileError.message;

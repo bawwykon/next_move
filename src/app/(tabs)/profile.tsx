@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image, ImageBackground } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/AppButton';
 import { Screen } from '@/components/ui/Screen';
@@ -97,6 +97,8 @@ export default function ProfileScreen() {
   const [unlockedCount, setUnlockedCount] = useState(0);
   const [history, setHistory] = useState<CompletionHistoryRow[]>([]);
   const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState('');
 
   const loadFirstPage = useCallback(async () => {
     setStatus((current) => (current === 'ready' ? current : 'loading'));
@@ -173,6 +175,38 @@ export default function ProfileScreen() {
     },
     [profile, owned, catalog],
   );
+
+  // PH3-01 — resolve the equipped title cosmetic to its display name.
+  const titleName = useMemo(() => {
+    if (!profile?.equipped?.title) {
+      return null;
+    }
+    return catalog.find((item) => item.id === profile.equipped.title)?.name ?? null;
+  }, [catalog, profile]);
+
+  // PH3-01 — inline display name editor.
+  const startEditName = useCallback(() => {
+    setNameDraft(profile?.displayName ?? '');
+    setEditingName(true);
+  }, [profile]);
+
+  const saveDisplayName = useCallback(async () => {
+    const trimmed = nameDraft.trim().slice(0, 30);
+    setEditingName(false);
+    if (!profile || trimmed === (profile.displayName ?? '')) {
+      return;
+    }
+    setProfile((current) => (current ? { ...current, displayName: trimmed || null } : current));
+    const { error } = await supabase
+      .from('profiles')
+      .update({ display_name: trimmed || 'Adventurer' })
+      .eq('id', profile.id);
+    if (error) {
+      setProfile((current) =>
+        current ? { ...current, displayName: profile.displayName } : current,
+      );
+    }
+  }, [nameDraft, profile]);
 
   const initials = email ? (email.split('@')[0] ?? '').slice(0, 2).toUpperCase() : 'A';
   const todayKey = dayKey(new Date());
@@ -263,9 +297,33 @@ export default function ProfileScreen() {
                   )}
                 </View>
               </View>
-              <Text style={styles.name}>
-                {profile?.displayName ?? (email ? `Signed in as ${email}` : 'Your journey')}
-              </Text>
+              {editingName ? (
+                <TextInput
+                  autoFocus
+                  value={nameDraft}
+                  onChangeText={(text) => setNameDraft(text.slice(0, 30))}
+                  onBlur={saveDisplayName}
+                  onSubmitEditing={saveDisplayName}
+                  returnKeyType="done"
+                  maxLength={30}
+                  style={styles.nameInput}
+                  placeholder="Adventurer"
+                  placeholderTextColor={colors.textMuted}
+                />
+              ) : (
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  onPress={withTapCue(startEditName)}
+                  hitSlop={{ top: 8, bottom: 8 }}
+                >
+                  <Text style={styles.name}>
+                    {titleName
+                      ? `${titleName} · ${profile?.displayName ?? 'Adventurer'}`
+                      : (profile?.displayName ??
+                        (email ? `Signed in as ${email}` : 'Your journey'))}
+                  </Text>
+                </TouchableOpacity>
+              )}
               <Text style={styles.levelLine}>
                 {profile ? levelLine(profile.level) : 'Level 1 · Beginner'}
               </Text>
@@ -484,6 +542,16 @@ const styles = StyleSheet.create({
     fontFamily: fonts.display.family,
     fontSize: 20,
     textAlign: 'center',
+  },
+  nameInput: {
+    color: colors.text,
+    fontFamily: fonts.display.family,
+    fontSize: 20,
+    textAlign: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.reward,
+    paddingVertical: spacing.xs,
+    minWidth: 120,
   },
   levelLine: {
     color: colors.textMuted,

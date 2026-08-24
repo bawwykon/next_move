@@ -11,6 +11,7 @@ export interface WizardAnswers {
   experience: number | null;
   goals: Goal[];
   workout_time: WorkoutTime | null;
+  display_name: string | null;
 }
 
 export interface WizardState {
@@ -24,6 +25,7 @@ export interface OnboardingPayload {
   experience: number;
   goals: Goal[];
   workout_time: WorkoutTime;
+  display_name: string | null;
 }
 
 export function initialWizardState(): WizardState {
@@ -34,6 +36,7 @@ export function initialWizardState(): WizardState {
       experience: null,
       goals: [],
       workout_time: null,
+      display_name: null,
     },
     done: false,
   };
@@ -53,6 +56,8 @@ export function isStepAnswered(state: WizardState): boolean {
       return state.answers.goals.length > 0;
     case 'workout_time':
       return state.answers.workout_time !== null;
+    case 'display_name':
+      return true; // optional — always advanceable
   }
 }
 
@@ -80,6 +85,9 @@ export function selectAnswer(state: WizardState, value: number | string): Wizard
   }
   if (key === 'experience') {
     return { ...state, answers: { ...state.answers, experience: Number(value) } };
+  }
+  if (key === 'display_name') {
+    return { ...state, answers: { ...state.answers, display_name: String(value) || null } };
   }
   return { ...state, answers: { ...state.answers, workout_time: value as WorkoutTime } };
 }
@@ -114,6 +122,8 @@ export function skipCurrent(state: WizardState): WizardState {
     answers.goals = [...SKIP_DEFAULTS.goals];
   } else if (key === 'workout_time' && answers.workout_time === null) {
     answers.workout_time = SKIP_DEFAULTS.workout_time;
+  } else if (key === 'display_name' && answers.display_name === null) {
+    answers.display_name = SKIP_DEFAULTS.display_name;
   }
   return advanceIndex({ ...state, answers });
 }
@@ -124,5 +134,6 @@ export function completedAnswers(state: WizardState): OnboardingPayload {
     experience: state.answers.experience ?? SKIP_DEFAULTS.experience,
     goals: state.answers.goals.length > 0 ? state.answers.goals : [...SKIP_DEFAULTS.goals],
     workout_time: state.answers.workout_time ?? SKIP_DEFAULTS.workout_time,
+    display_name: state.answers.display_name,
   };
 }

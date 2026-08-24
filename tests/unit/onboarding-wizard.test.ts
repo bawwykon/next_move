@@ -29,21 +29,24 @@ describe('onboarding wizard controller', () => {
       experience: null,
       goals: [],
       workout_time: null,
+      display_name: null,
     });
   });
 
-  it('defines the 4 PRD steps with 3/4/5/4 options and curated goals', () => {
+  it('defines the 5 PRD steps with 3/4/5/4/0 options and curated goals', () => {
     expect(ONBOARDING_STEPS.map((step) => step.key)).toEqual([
       'activity_level',
       'experience',
       'goals',
       'workout_time',
+      'display_name',
     ]);
     expect(ONBOARDING_STEPS[0]!.options).toHaveLength(3);
     expect(ONBOARDING_STEPS[1]!.options).toHaveLength(4);
     expect(ONBOARDING_STEPS[2]!.options).toHaveLength(5);
     expect(ONBOARDING_STEPS[2]!.multi).toBe(true);
     expect(ONBOARDING_STEPS[3]!.options).toHaveLength(4);
+    expect(ONBOARDING_STEPS[4]!.options).toHaveLength(0);
     expect(ONBOARDING_STEPS[2]!.options.map((option) => option.value)).toEqual([
       'build_a_habit',
       'get_stronger',
@@ -56,6 +59,7 @@ describe('onboarding wizard controller', () => {
       experience: 2,
       goals: [],
       workout_time: 'any',
+      display_name: null,
     });
   });
 
@@ -111,6 +115,9 @@ describe('onboarding wizard controller', () => {
     expect(state.stepIndex).toBe(3);
     state = skipCurrent(state);
     expect(state.answers.workout_time).toBe('any');
+    expect(state.stepIndex).toBe(4);
+    state = skipCurrent(state);
+    expect(state.answers.display_name).toBeNull();
     expect(state.done).toBe(true);
   });
 
@@ -131,11 +138,14 @@ describe('onboarding wizard controller', () => {
     state = selectAnswer(state, 'feel_better');
     state = advance(state);
     state = selectAnswer(state, 'evening');
+    state = advance(state);
+    state = selectAnswer(state, 'Alex');
     expect(completedAnswers(state)).toEqual({
       activity_level: 3,
       experience: 4,
       goals: ['get_stronger', 'feel_better'],
       workout_time: 'evening',
+      display_name: 'Alex',
     });
   });
 
@@ -146,6 +156,7 @@ describe('onboarding wizard controller', () => {
       experience: 2,
       goals: [],
       workout_time: 'any',
+      display_name: null,
     });
   });
 
@@ -157,6 +168,7 @@ describe('onboarding wizard controller', () => {
       experience: 2,
       goals: ['move_easier'],
       workout_time: 'any',
+      display_name: null,
     });
   });
 
