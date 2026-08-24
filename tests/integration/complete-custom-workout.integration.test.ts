@@ -285,6 +285,20 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
     expect(error!.message).toContain('complete_custom_workout.bad_duration');
   });
 
+  it('farm guard: all-rest workout rejected (no_exercise — BYQ-06a)', async () => {
+    await resetProgression();
+    const d = day(5);
+    const wid = await createWorkout('all-rest', [
+      restSeg(60),
+      restSeg(60),
+      restSeg(60),
+      restSeg(60),
+    ]); // 240s passes the length window but has zero exercises
+    const { payload, error } = await call(wid, event(d, 'g-all-rest', 240));
+    expect(payload).toBeNull();
+    expect(error!.message).toContain('complete_custom_workout.no_exercise');
+  });
+
   it('journey stays frozen: quests/chapter unchanged, discipline +15 per AT-02H rates', async () => {
     await resetProgression();
     const d = day(4);

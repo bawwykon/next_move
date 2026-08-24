@@ -32,6 +32,7 @@ declare
   v_ex_cats text[];
   v_cat text;
   v_total_sec int := 0;
+  v_exercise_count int := 0;
   v_points numeric := 0;
   v_cats text[] := '{}';
 
@@ -119,6 +120,7 @@ begin
       raise exception 'complete_custom_workout.unknown_exercise' using errcode = 'F0002';
     end if;
     v_total_sec := v_total_sec + v_dur;
+    v_exercise_count := v_exercise_count + 1;
     v_points := v_points + v_dur::numeric / 30.0 * v_weight;
     foreach v_cat in array v_ex_cats
     loop
@@ -128,6 +130,14 @@ begin
       end if;
     end loop;
   end loop;
+
+  -- BYQ-06a: a custom workout must contain at least one exercise segment.
+  -- All-rest definitions are structurally valid but earn nothing and are
+  -- nonsense content; the builder already can't ship them (picker only adds
+  -- exercises), so this is the server backstop.
+  if v_exercise_count = 0 then
+    raise exception 'complete_custom_workout.no_exercise' using errcode = 'F0002';
+  end if;
 
   -- Length window: 120..900 seconds across the whole workout (rests included).
   if v_total_sec < 120 or v_total_sec > 900 then
