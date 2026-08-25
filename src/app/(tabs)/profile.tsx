@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image, ImageBackground } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/AppButton';
 import { Screen } from '@/components/ui/Screen';
@@ -97,8 +97,6 @@ export default function ProfileScreen() {
   const [unlockedCount, setUnlockedCount] = useState(0);
   const [history, setHistory] = useState<CompletionHistoryRow[]>([]);
   const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
-  const [editingName, setEditingName] = useState(false);
-  const [nameDraft, setNameDraft] = useState('');
 
   const loadFirstPage = useCallback(async () => {
     setStatus((current) => (current === 'ready' ? current : 'loading'));
@@ -183,30 +181,6 @@ export default function ProfileScreen() {
     }
     return catalog.find((item) => item.id === profile.equipped.title)?.name ?? null;
   }, [catalog, profile]);
-
-  // PH3-01 — inline display name editor.
-  const startEditName = useCallback(() => {
-    setNameDraft(profile?.displayName ?? '');
-    setEditingName(true);
-  }, [profile]);
-
-  const saveDisplayName = useCallback(async () => {
-    const trimmed = nameDraft.trim().slice(0, 30);
-    setEditingName(false);
-    if (!profile || trimmed === (profile.displayName ?? '')) {
-      return;
-    }
-    setProfile((current) => (current ? { ...current, displayName: trimmed || null } : current));
-    const { error } = await supabase
-      .from('profiles')
-      .update({ display_name: trimmed || 'Adventurer' })
-      .eq('id', profile.id);
-    if (error) {
-      setProfile((current) =>
-        current ? { ...current, displayName: profile.displayName } : current,
-      );
-    }
-  }, [nameDraft, profile]);
 
   const initials = email ? (email.split('@')[0] ?? '').slice(0, 2).toUpperCase() : 'A';
   const todayKey = dayKey(new Date());
@@ -297,33 +271,21 @@ export default function ProfileScreen() {
                   )}
                 </View>
               </View>
-              {editingName ? (
-                <TextInput
-                  autoFocus
-                  value={nameDraft}
-                  onChangeText={(text) => setNameDraft(text.slice(0, 30))}
-                  onBlur={saveDisplayName}
-                  onSubmitEditing={saveDisplayName}
-                  returnKeyType="done"
-                  maxLength={30}
-                  style={styles.nameInput}
-                  placeholder="Adventurer"
-                  placeholderTextColor={colors.textMuted}
-                />
-              ) : (
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  onPress={withTapCue(startEditName)}
-                  hitSlop={{ top: 8, bottom: 8 }}
-                >
-                  <Text style={styles.name}>
-                    {titleName
-                      ? `${titleName} · ${profile?.displayName ?? 'Adventurer'}`
-                      : (profile?.displayName ??
-                        (email ? `Signed in as ${email}` : 'Your journey'))}
-                  </Text>
-                </TouchableOpacity>
-              )}
+              {/* PH3-01a — dedicated edit screen replaces inline tap-to-edit. */}
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Edit profile"
+                style={styles.editPill}
+                onPress={withTapCue(() => router.push('/edit-profile'))}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Text style={styles.editPillLabel}>Edit</Text>
+              </TouchableOpacity>
+              <Text style={styles.name}>
+                {titleName
+                  ? `${titleName} · ${profile?.displayName ?? 'Adventurer'}`
+                  : (profile?.displayName ?? (email ? `Signed in as ${email}` : 'Your journey'))}
+              </Text>
               <Text style={styles.levelLine}>
                 {profile ? levelLine(profile.level) : 'Level 1 · Beginner'}
               </Text>
@@ -543,15 +505,20 @@ const styles = StyleSheet.create({
     fontSize: 20,
     textAlign: 'center',
   },
-  nameInput: {
-    color: colors.text,
-    fontFamily: fonts.display.family,
-    fontSize: 20,
-    textAlign: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: colors.reward,
+  editPill: {
+    position: 'absolute',
+    top: spacing.md,
+    right: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.surfaceElevated,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
-    minWidth: 120,
+  },
+  editPillLabel: {
+    color: colors.textMuted,
+    fontFamily: fonts.bodyBold.family,
+    fontSize: 13,
   },
   levelLine: {
     color: colors.textMuted,
