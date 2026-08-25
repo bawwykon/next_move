@@ -39,6 +39,7 @@ import {
   zoneForXp,
 } from '@/domain/customWorkout/model';
 import { WEEKLY_TARGET, dayWindow, weeklyWindow } from '@/domain/board/window';
+import { dailyMessageFor } from '@/domain/journal/dailyMessages';
 import { DAILY_QUEST_ART, WEEKLY_CHALLENGE_ART, difficultyArt } from '@/features/assets/assetMap';
 import { DIFFICULTY_DESCRIPTORS, difficultyBadge } from '@/features/questBoard/badges';
 import { isCompletedToday } from '@/features/questBoard/completedToday';
@@ -275,6 +276,10 @@ export default function QuestBoardScreen() {
                   {greeting}, {titleName ? `${titleName} · ${displayName}` : displayName}.
                 </Text>
                 <Text style={styles.greetingLine}>{line}</Text>
+                {/* PH4-02 — one message per day, seeded by the day key. */}
+                <View style={styles.dailyMessageCard}>
+                  <Text style={styles.dailyMessageText}>{dailyMessageFor(todayKey)}</Text>
+                </View>
                 <View style={styles.pillRow}>
                   <View style={styles.streakPill}>
                     <Text style={styles.streakText}>{streakPill.main}</Text>
@@ -725,6 +730,21 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontFamily: fonts.body.family,
     fontSize: 14,
+  },
+  dailyMessageCard: {
+    alignSelf: 'stretch',
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    marginTop: spacing.sm,
+  },
+  dailyMessageText: {
+    color: colors.text,
+    fontFamily: fonts.body.family,
+    fontSize: 14,
+    fontStyle: 'italic',
+    textAlign: 'center',
   },
   pillRow: {
     flexDirection: 'row',
