@@ -403,17 +403,6 @@ export default function ProfileScreen() {
               ) : null}
             </View>
 
-            {/* PH4-01 — journal entry point (auto-written completion record). */}
-            <TouchableOpacity
-              accessibilityRole="button"
-              style={styles.journalRow}
-              onPress={withTapCue(() => router.push('/journal'))}
-            >
-              <Ionicons name="book-outline" size={20} color={colors.textMuted} />
-              <Text style={styles.journalLabel}>Quest journal</Text>
-              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-            </TouchableOpacity>
-
             <View style={styles.footer}>
               <AppButton label="Sign out" variant="secondary" onPress={() => void signOut()} />
             </View>
@@ -683,21 +672,6 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontFamily: fonts.bodyBold.family,
     fontSize: 14,
-  },
-  journalRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    minHeight: 52,
-    backgroundColor: colors.surfaceElevated,
-    borderRadius: radius.lg,
-    paddingHorizontal: spacing.lg,
-  },
-  journalLabel: {
-    flex: 1,
-    color: colors.text,
-    fontFamily: fonts.bodyBold.family,
-    fontSize: 15,
   },
   footer: {
     paddingTop: spacing.sm,
