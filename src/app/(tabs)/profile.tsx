@@ -289,7 +289,7 @@ export default function ProfileScreen() {
                   {nameplateArt('premium_nameplate') ? (
                     <Image
                       source={nameplateArt('premium_nameplate')!}
-                      style={StyleSheet.absoluteFill}
+                      style={[StyleSheet.absoluteFill, { transform: [{ scale: 1.2 }] }]}
                       contentFit="cover"
                     />
                   ) : null}
@@ -544,10 +544,12 @@ const styles = StyleSheet.create({
     borderColor: colors.rewardStrong,
     borderRadius: radius.md,
     backgroundColor: 'rgba(0,0,0,0.2)',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    minWidth: 140,
+    paddingHorizontal: 19.2,
+    paddingVertical: 9.6,
+    minWidth: 168,
+    minHeight: 44,
     alignItems: 'center',
+    justifyContent: 'center',
     overflow: 'hidden',
     position: 'relative',
   },
