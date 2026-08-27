@@ -51,15 +51,15 @@ import { useSessionStore } from '@/state/sessionStore';
 // Unmeasured frames fall back to the canvas center + 280 dp until their art
 // is measured.
 const FRAME_HOLE_CENTER: Record<string, { x: number; y: number; size: number }> = {
-  'frame-default': { x: 253.8, y: 236.3, size: 192.78 },
-  'frame-level-05': { x: 255.8, y: 233.9, size: 147.84 },
-  'frame-level-10': { x: 255.4, y: 243.5, size: 147.84 },
-  'frame-level-25': { x: 232.3, y: 247.5, size: 147.84 },
-  'frame-level-50': { x: 265.1, y: 250.5, size: 147.84 },
-  'frame-level-100': { x: 277.6, y: 254.5, size: 147.84 },
-  premium_frame: { x: 256, y: 256, size: 147.84 },
+  'frame-default': { x: 253.8, y: 236.3, size: 202.42 },
+  'frame-level-05': { x: 255.8, y: 233.9, size: 155.23 },
+  'frame-level-10': { x: 255.4, y: 243.5, size: 155.23 },
+  'frame-level-25': { x: 232.3, y: 247.5, size: 155.23 },
+  'frame-level-50': { x: 265.1, y: 250.5, size: 155.23 },
+  'frame-level-100': { x: 277.6, y: 254.5, size: 155.23 },
+  premium_frame: { x: 256, y: 256, size: 155.23 },
 };
-const DEFAULT_HOLE_CENTER = { x: 256, y: 256, size: 147.84 };
+const DEFAULT_HOLE_CENTER = { x: 256, y: 256, size: 155.23 };
 
 // AT-02G — the profile card previews only the latest completions; the
 // dedicated history screen owns paging through the full 30-day window.
@@ -517,8 +517,8 @@ const styles = StyleSheet.create({
   },
   avatarFrame: {
     position: 'absolute',
-    maxWidth: 147.84,
-    maxHeight: 147.84,
+    maxWidth: 155.23,
+    maxHeight: 155.23,
     aspectRatio: 1,
     zIndex: 0,
   },
