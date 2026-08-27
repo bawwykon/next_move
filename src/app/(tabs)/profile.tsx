@@ -25,7 +25,7 @@ import {
   DEFAULT_SLOT_SLUGS,
   type CosmeticSlot,
 } from '@/domain/cosmetics/loadout';
-import { achievementArt, cosmeticArt, masteryArt } from '@/features/assets/assetMap';
+import { achievementArt, cosmeticArt, masteryArt, nameplateArt } from '@/features/assets/assetMap';
 import { withTapCue } from '@/lib/sounds';
 import { LoadoutCard } from '@/features/profile/LoadoutCard';
 import {
@@ -57,8 +57,9 @@ const FRAME_HOLE_CENTER: Record<string, { x: number; y: number; size: number }> 
   'frame-level-25': { x: 232.3, y: 247.5, size: 176 },
   'frame-level-50': { x: 265.1, y: 250.5, size: 176 },
   'frame-level-100': { x: 277.6, y: 254.5, size: 176 },
+  premium_frame: { x: 256, y: 256, size: 176 },
 };
-const DEFAULT_HOLE_CENTER = { x: 256, y: 256, size: 280 };
+const DEFAULT_HOLE_CENTER = { x: 256, y: 256, size: 176 };
 
 // AT-02G — the profile card previews only the latest completions; the
 // dedicated history screen owns paging through the full 30-day window.
@@ -285,7 +286,14 @@ export default function ProfileScreen() {
               {/* PH3-01b — name frame + badge hierarchy: badge overlaps frame, no title */}
               <View style={styles.nameFrameWrap}>
                 <View style={styles.nameFrame}>
-                  <Text style={styles.name}>
+                  {nameplateArt('premium_nameplate') ? (
+                    <Image
+                      source={nameplateArt('premium_nameplate')!}
+                      style={StyleSheet.absoluteFill}
+                      contentFit="cover"
+                    />
+                  ) : null}
+                  <Text style={[styles.name, { zIndex: 1 }]}>
                     {(
                       profile?.displayName ?? (email ? `Signed in as ${email}` : 'Your journey')
                     ).toUpperCase()}
@@ -501,6 +509,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+    zIndex: 1,
   },
   avatarImage: {
     width: '100%',
@@ -508,6 +517,10 @@ const styles = StyleSheet.create({
   },
   avatarFrame: {
     position: 'absolute',
+    maxWidth: 176,
+    maxHeight: 176,
+    aspectRatio: 1,
+    zIndex: 0,
   },
   initials: {
     color: colors.reward,
@@ -535,6 +548,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     minWidth: 140,
     alignItems: 'center',
+    overflow: 'hidden',
+    position: 'relative',
   },
   badgeOverlap: {
     position: 'absolute',
