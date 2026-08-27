@@ -38,7 +38,7 @@ import {
   difficultyLabel,
   type ExerciseDifficulty,
 } from '@/domain/exercises/difficulty';
-import { difficultyArt, exerciseArt } from '@/features/assets/assetMap';
+import { difficultyArt, exerciseArt, REST_SIMPLE_ART } from '@/features/assets/assetMap';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 import { withTapCue } from '@/lib/sounds';
 
@@ -424,9 +424,7 @@ function BuildRow({
     <View style={[styles.rowCard, isRest ? styles.rowCardRest : null]}>
       <View style={styles.rowMain}>
         {isRest ? (
-          <View style={styles.restIconBox}>
-            <Ionicons name="moon-outline" size={22} color={colors.calmStrong} />
-          </View>
+          <Image source={REST_SIMPLE_ART} style={styles.restSimpleIcon} contentFit="contain" />
         ) : thumb !== null ? (
           <Image source={thumb} style={styles.rowThumb} contentFit="contain" />
         ) : null}
@@ -627,6 +625,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.background,
+  },
+  restSimpleIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.sm,
   },
   restChip: {
     flexDirection: 'row',

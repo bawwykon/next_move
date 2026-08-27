@@ -32,7 +32,7 @@ import {
   type Workout,
   type WorkoutSegmentKind,
 } from '@/domain/timer/workoutEngine';
-import { exerciseArt } from '@/features/assets/assetMap';
+import { REST_DETAILED_ART, REST_SIMPLE_ART, exerciseArt } from '@/features/assets/assetMap';
 import { formatCountdown, formatTotalRemaining } from '@/features/timer/format';
 import { finishQuest } from '@/features/workout/finishQuest';
 import { decideOnForeground } from '@/features/workout/decideOnForeground';
@@ -454,7 +454,15 @@ export default function WorkoutScreen() {
         <View style={styles.center}>
           {segment ? (
             <>
-              {heroSource !== null ? (
+              {segment.kind === 'rest' ? (
+                <Image
+                  source={REST_DETAILED_ART}
+                  style={[styles.hero, { width: heroWidth, height: heroHeight }]}
+                  contentFit="contain"
+                  accessibilityLabel="Rest"
+                  transition={150}
+                />
+              ) : heroSource !== null ? (
                 // AT-01D — exercise guide illustration per workout segment
                 // (FR-TIMER-2b); no art → the screen renders exactly as before.
                 <Image
@@ -465,8 +473,18 @@ export default function WorkoutScreen() {
                   transition={150}
                 />
               ) : null}
-              <View style={[styles.badge, { backgroundColor: KIND_COLORS[segment.kind] }]}>
-                <Text style={styles.badgeLabel}>{segmentKindLabel(segment.kind)}</Text>
+              <View style={styles.badgeRow}>
+                <View style={[styles.badge, { backgroundColor: KIND_COLORS[segment.kind] }]}>
+                  <Text style={styles.badgeLabel}>{segmentKindLabel(segment.kind)}</Text>
+                </View>
+                {segment.kind === 'rest' ? (
+                  <Image
+                    source={REST_SIMPLE_ART}
+                    style={styles.restSimpleBadge}
+                    contentFit="contain"
+                    accessibilityLabel="Rest"
+                  />
+                ) : null}
               </View>
               <View style={styles.digitsBox}>
                 {countdownDigit !== null ? (
@@ -632,6 +650,16 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  restSimpleBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 4,
   },
   badgeLabel: {
     color: colors.background,

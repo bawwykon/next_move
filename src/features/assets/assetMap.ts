@@ -48,6 +48,8 @@ export const ACHIEVEMENT_ART: Record<string, number> = {
   'early-bird': require('@/assets/badges/badge_early_bird.png'),
   'night-owl': require('@/assets/badges/badge_night_owl.png'),
   'master-adventurer': require('@/assets/badges/badge_master_adventurer.png'),
+  'founders-emblem': require('@/assets/badges/premium_badge.png'),
+  premium_badge: require('@/assets/badges/premium_badge.png'),
 };
 
 export function achievementArt(slug: string | null | undefined): number | null {
@@ -77,6 +79,7 @@ export const COSMETIC_ART: Record<string, number> = {
   'frame-level-25': require('@/assets/frames/frame_level_25.png'),
   'frame-level-50': require('@/assets/frames/frame_level_50.png'),
   'frame-level-100': require('@/assets/frames/frame_level_100.png'),
+  premium_frame: require('@/assets/frames/premium_frame.png'),
   'title-adventurer': require('@/assets/titles/title_adventurer.png'),
   'title-level-05': require('@/assets/titles/title_explorer.png'),
   'title-level-10': require('@/assets/titles/title_trailblazer.png'),
@@ -86,10 +89,20 @@ export const COSMETIC_ART: Record<string, number> = {
   'portrait-default': require('@/assets/portraits/portrait_default.png'),
   'portrait-phoenix': require('@/assets/portraits/portrait_phoenix.png'),
   'portrait-master': require('@/assets/portraits/portrait_master.png'),
+  premium_portrait: require('@/assets/portraits/premium_portrait.png'),
   'bg-chapter-02': require('@/assets/backgrounds/bg_chapter_02.jpg'),
   'bg-chapter-04': require('@/assets/backgrounds/bg_chapter_04.jpg'),
   'bg-chapter-06': require('@/assets/backgrounds/bg_chapter_06.jpg'),
 };
+
+// --- Premium nameplate (assets/nameplates/) ---
+export const NAMEPLATE_ART: Record<string, number> = {
+  premium_nameplate: require('@/assets/nameplates/premium_nameplate.png'),
+};
+
+export function nameplateArt(slug: string | null | undefined): number | null {
+  return slug ? (NAMEPLATE_ART[slug] ?? null) : null;
+}
 
 export function cosmeticArt(slug: string | null | undefined): number | null {
   return slug ? (COSMETIC_ART[slug] ?? null) : null;
@@ -120,14 +133,30 @@ export function masteryArt(track: string): number | null {
   return MASTERY_ART[track] ?? null;
 }
 
-// --- Onboarding heroes (assets/onboarding/, 1..4 by step order) ---
+// --- Onboarding heroes (assets/onboarding/, 1..5 by step order) ---
 const ONBOARDING_ART: Record<number, number> = {
   1: require('@/assets/onboarding/onboarding_1.png'),
   2: require('@/assets/onboarding/onboarding_2.png'),
   3: require('@/assets/onboarding/onboarding_3.png'),
   4: require('@/assets/onboarding/onboarding_4.png'),
+  5: require('@/assets/onboarding/step5_name.png'),
 };
+
+export const STEP5_NAME_ART = require('@/assets/onboarding/step5_name.png') as number;
 
 export function onboardingArt(step: number): number | null {
   return ONBOARDING_ART[step] ?? null;
+}
+
+// --- Rest assets (assets/rest/) ---
+export const REST_ART: Record<string, number> = {
+  rest_detailed: require('@/assets/rest/rest_detailed.png'),
+  rest_simple: require('@/assets/rest/rest_simple.png'),
+};
+
+export const REST_DETAILED_ART = require('@/assets/rest/rest_detailed.png') as number;
+export const REST_SIMPLE_ART = require('@/assets/rest/rest_simple.png') as number;
+
+export function restArt(key: string | null | undefined): number | null {
+  return key ? (REST_ART[key] ?? null) : null;
 }
