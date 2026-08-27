@@ -51,7 +51,7 @@ import { useSessionStore } from '@/state/sessionStore';
 // Unmeasured frames fall back to the canvas center + 280 dp until their art
 // is measured.
 const FRAME_HOLE_CENTER: Record<string, { x: number; y: number; size: number }> = {
-  'frame-default': { x: 253.8, y: 236.3, size: 202.42 },
+  'frame-default': { x: 253.8, y: 236.3, size: 155.23 },
   'frame-level-05': { x: 255.8, y: 233.9, size: 155.23 },
   'frame-level-10': { x: 255.4, y: 243.5, size: 155.23 },
   'frame-level-25': { x: 232.3, y: 247.5, size: 155.23 },
