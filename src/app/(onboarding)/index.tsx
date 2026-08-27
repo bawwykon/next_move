@@ -145,7 +145,12 @@ export default function OnboardingScreen() {
 
   return (
     <Screen>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         <View
           style={styles.dots}
           accessibilityLabel={`Step ${wizard.stepIndex + 1} of ${STEP_COUNT}`}
@@ -246,8 +251,13 @@ export default function OnboardingScreen() {
 }
 
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1,
+    width: '100%',
+  },
   content: {
     flexGrow: 1,
+    width: '100%',
   },
   dots: {
     flexDirection: 'row',

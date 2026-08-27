@@ -1,4 +1,4 @@
-﻿-- AT-02H - mastery pacing rebalance (owner: try 3x; fallback 2x = +20/+10 if
+-- AT-02H - mastery pacing rebalance (owner: try 3x; fallback 2x = +20/+10 if
 -- too fast). Re-emits complete_quest from 0020 verbatim except the accrual:
 --   mastery points (FR-MAS-2): +30 per touched strength/endurance/mobility
 --     category, +15 discipline on every completion (was +10 / +5)
