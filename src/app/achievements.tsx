@@ -216,13 +216,21 @@ export default function AchievementsScreen() {
                       })}
                       disabled={!isUnlocked}
                     >
-                      <View style={[styles.gridEmblem, !isUnlocked && styles.gridEmblemLocked]}>
+                      <View
+                        style={[
+                          styles.gridEmblem,
+                          row.slug !== 'founders-emblem' && styles.gridEmblemLarge,
+                          !isUnlocked && styles.gridEmblemLocked,
+                        ]}
+                      >
                         {art ? (
                           <Image
                             source={art}
                             style={[
                               styles.gridBadge,
-                              { width: 68, height: 68, aspectRatio: 1, maxWidth: 68 },
+                              row.slug === 'founders-emblem'
+                                ? { width: 68, height: 68, aspectRatio: 1, maxWidth: 68 }
+                                : { width: 112, height: 112, aspectRatio: 1, maxWidth: 112 },
                               !isUnlocked && styles.badgeLocked,
                             ]}
                             contentFit="contain"
@@ -277,13 +285,23 @@ function AchievementRowView({ row }: { row: AchievementRow }) {
     const strings = lockedRowStrings(row);
     return (
       <View style={[styles.row, styles.rowLocked]}>
-        <View style={[styles.emblem, styles.emblemLocked]}>
+        <View
+          style={
+            [
+              styles.emblem,
+              row.slug !== 'founders-emblem' && styles.emblemLarge,
+              styles.emblemLocked,
+            ].filter(Boolean) as never
+          }
+        >
           {badge ? (
             <Image
               source={badge}
               style={[
                 styles.badge,
-                { width: 56, height: 56, aspectRatio: 1, maxWidth: 56 },
+                row.slug === 'founders-emblem'
+                  ? { width: 56, height: 56, aspectRatio: 1, maxWidth: 56 }
+                  : { width: 112, height: 112, aspectRatio: 1, maxWidth: 112 },
                 styles.badgeLocked,
               ]}
               contentFit="contain"
@@ -303,10 +321,21 @@ function AchievementRowView({ row }: { row: AchievementRow }) {
   return (
     <View style={styles.row}>
       {badge ? (
-        <View style={styles.emblem}>
+        <View
+          style={
+            [styles.emblem, row.slug !== 'founders-emblem' && styles.emblemLarge].filter(
+              Boolean,
+            ) as never
+          }
+        >
           <Image
             source={badge}
-            style={[styles.badge, { width: 56, height: 56, aspectRatio: 1, maxWidth: 56 }]}
+            style={[
+              styles.badge,
+              row.slug === 'founders-emblem'
+                ? { width: 56, height: 56, aspectRatio: 1, maxWidth: 56 }
+                : { width: 112, height: 112, aspectRatio: 1, maxWidth: 112 },
+            ]}
             contentFit="contain"
           />
         </View>
@@ -392,6 +421,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
+  gridEmblemLarge: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
   gridEmblemLocked: { backgroundColor: colors.surfaceElevated },
   gridBadge: { width: 68, height: 68, maxWidth: 68, maxHeight: 68, aspectRatio: 1 },
   badgeLocked: { opacity: 0.45 },
@@ -446,6 +483,14 @@ const styles = StyleSheet.create({
     borderRadius: radius.xl,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  emblemLarge: {
+    width: 112,
+    height: 112,
+    borderRadius: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
   },
   badge: {
     width: 56,
