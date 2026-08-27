@@ -21,7 +21,6 @@ import {
   type SavedCustomWorkout,
 } from '@/data/repositories/customWorkouts';
 import { fetchActiveQuests, type ActiveQuest } from '@/data/repositories/quests';
-import { fetchCosmeticCatalog, type CosmeticRow } from '@/data/repositories/cosmetics';
 import { supabase } from '@/data/supabase';
 import { withTapCue } from '@/lib/sounds';
 import { alternatives, recommendQuest } from '@/domain/recommendation/recommendQuest';
@@ -92,9 +91,6 @@ export default function QuestBoardScreen() {
   // read from (server-authoritative difficulty, same column the RPC weights).
   const [customs, setCustoms] = useState<SavedCustomWorkout[]>([]);
   const [exerciseCatalog, setExerciseCatalog] = useState<CatalogExercise[]>([]);
-  // PH3-01 — cosmetics catalog for resolving the equipped title name.
-  const [cosmeticsCatalog, setCosmeticsCatalog] = useState<CosmeticRow[]>([]);
-
   const loadContent = useCallback(async () => {
     setCatalogStatus((current) => (current === 'ready' ? current : 'loading'));
     const {
@@ -104,11 +100,10 @@ export default function QuestBoardScreen() {
       setCatalogStatus('error');
       return;
     }
-    const [questsResult, onboardingAnswers, customsResult, cosmeticsResult] = await Promise.all([
+    const [questsResult, onboardingAnswers, customsResult] = await Promise.all([
       fetchActiveQuests(),
       getOnboarding(user.id),
       fetchCustomWorkouts(),
-      fetchCosmeticCatalog(),
     ]);
     if (questsResult.error) {
       setCatalogStatus('error');
@@ -116,9 +111,6 @@ export default function QuestBoardScreen() {
     }
     setCatalog(questsResult.data ?? []);
     setOnboarding(onboardingAnswers);
-    if (!cosmeticsResult.error && cosmeticsResult.data) {
-      setCosmeticsCatalog(cosmeticsResult.data);
-    }
     if (!customsResult.error && customsResult.data) {
       setCustoms(customsResult.data);
       if (customsResult.data.length > 0 && exerciseCatalog.length === 0) {
@@ -233,10 +225,6 @@ export default function QuestBoardScreen() {
 
   const { greeting, line } = greetingForHour(new Date().getHours());
   const displayName = profile?.displayName ?? 'Adventurer';
-  // PH3-01 — resolve equipped title cosmetic to its display name.
-  const titleName = profile?.equipped?.title
-    ? (cosmeticsCatalog.find((item) => item.id === profile.equipped.title)?.name ?? null)
-    : null;
   const streakCount = streak?.current ?? 0;
   const streakPill = streakPillCopy(streakCount);
 
@@ -273,7 +261,7 @@ export default function QuestBoardScreen() {
             <>
               <View style={styles.header}>
                 <Text style={styles.greeting}>
-                  {greeting}, {titleName ? `${titleName} · ${displayName}` : displayName}.
+                  {greeting}, {displayName}.
                 </Text>
                 <Text style={styles.greetingLine}>{line}</Text>
                 {/* PH4-02 — one message per day, seeded by the day key. */}

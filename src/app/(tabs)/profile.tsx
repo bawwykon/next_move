@@ -25,7 +25,7 @@ import {
   DEFAULT_SLOT_SLUGS,
   type CosmeticSlot,
 } from '@/domain/cosmetics/loadout';
-import { cosmeticArt, masteryArt } from '@/features/assets/assetMap';
+import { achievementArt, cosmeticArt, masteryArt } from '@/features/assets/assetMap';
 import { withTapCue } from '@/lib/sounds';
 import { LoadoutCard } from '@/features/profile/LoadoutCard';
 import {
@@ -174,14 +174,6 @@ export default function ProfileScreen() {
     [profile, owned, catalog],
   );
 
-  // PH3-01 — resolve the equipped title cosmetic to its display name.
-  const titleName = useMemo(() => {
-    if (!profile?.equipped?.title) {
-      return null;
-    }
-    return catalog.find((item) => item.id === profile.equipped.title)?.name ?? null;
-  }, [catalog, profile]);
-
   const initials = email ? (email.split('@')[0] ?? '').slice(0, 2).toUpperCase() : 'A';
   const todayKey = dayKey(new Date());
   // AT-01D — resolve the equipped item ids to catalogue slugs for the art
@@ -245,6 +237,15 @@ export default function ProfileScreen() {
                   accessibilityLabel="Character background"
                 />
               ) : null}
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Open settings"
+                style={styles.settingsGear}
+                onPress={withTapCue(() => router.push('/settings' as never))}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons name="settings-outline" size={22} color={colors.text} />
+              </TouchableOpacity>
               <View style={styles.avatarWrap}>
                 {frameArt !== null ? (
                   // AT-01E — frame paints BEHIND the portrait; each frame
@@ -281,11 +282,25 @@ export default function ProfileScreen() {
               >
                 <Text style={styles.editPillLabel}>Edit</Text>
               </TouchableOpacity>
-              <Text style={styles.name}>
-                {titleName
-                  ? `${titleName} · ${profile?.displayName ?? 'Adventurer'}`
-                  : (profile?.displayName ?? (email ? `Signed in as ${email}` : 'Your journey'))}
-              </Text>
+              {/* PH3-01b — name frame + badge hierarchy: badge overlaps frame, no title */}
+              <View style={styles.nameFrameWrap}>
+                <View style={styles.nameFrame}>
+                  <Text style={styles.name}>
+                    {(
+                      profile?.displayName ?? (email ? `Signed in as ${email}` : 'Your journey')
+                    ).toUpperCase()}
+                  </Text>
+                </View>
+                {profile?.equipped?.badge ? (
+                  <View style={styles.badgeOverlap}>
+                    <Image
+                      source={achievementArt(profile.equipped.badge) ?? undefined}
+                      style={styles.badgeOverlapImage}
+                      contentFit="contain"
+                    />
+                  </View>
+                ) : null}
+              </View>
               <Text style={styles.levelLine}>
                 {profile ? levelLine(profile.level) : 'Level 1 · Beginner'}
               </Text>
@@ -413,7 +428,7 @@ export default function ProfileScreen() {
   );
 }
 
-const emptyEquipped = { frame: null, title: null, background: null, portrait: null };
+const emptyEquipped = { frame: null, title: null, background: null, portrait: null, badge: null };
 
 const styles = StyleSheet.create({
   screen: {
@@ -504,11 +519,57 @@ const styles = StyleSheet.create({
     fontFamily: fonts.display.family,
     fontSize: 20,
     textAlign: 'center',
+    letterSpacing: 0.5,
+  },
+  nameFrameWrap: {
+    alignSelf: 'center',
+    marginTop: spacing.xs,
+    position: 'relative',
+  },
+  nameFrame: {
+    borderWidth: 2,
+    borderColor: colors.rewardStrong,
+    borderRadius: radius.md,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    minWidth: 140,
+    alignItems: 'center',
+  },
+  badgeOverlap: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    width: 28,
+    height: 28,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+    borderWidth: 2,
+    borderColor: colors.reward,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  badgeOverlapImage: {
+    width: 20,
+    height: 20,
+  },
+  settingsGear: {
+    position: 'absolute',
+    top: spacing.md,
+    right: spacing.md,
+    width: 36,
+    height: 36,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
   },
   editPill: {
     position: 'absolute',
     top: spacing.md,
-    right: spacing.md,
+    left: spacing.md,
     borderWidth: 1,
     borderColor: colors.surfaceElevated,
     borderRadius: radius.pill,
