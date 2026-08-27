@@ -193,6 +193,7 @@ export default function ProfileScreen() {
   const frameSlug = equippedSlug('frame');
   const frameArt = frameSlug ? cosmeticArt(frameSlug) : null;
   const backgroundArt = equippedSlug('background') ? cosmeticArt(equippedSlug('background')) : null;
+  const hasNameplate = !!nameplateArt('premium_nameplate');
   const bar = useMemo(
     () => (profile ? xpBar(profile.totalXp, profile.level) : xpBar(0, 1)),
     [profile],
@@ -285,11 +286,11 @@ export default function ProfileScreen() {
               </TouchableOpacity>
               {/* PH3-01b — name frame + badge hierarchy: badge overlaps frame, no title */}
               <View style={styles.nameFrameWrap}>
-                <View style={styles.nameFrame}>
+                <View style={[styles.nameFrame, hasNameplate && styles.nameFramePremium]}>
                   {nameplateArt('premium_nameplate') ? (
                     <Image
                       source={nameplateArt('premium_nameplate')!}
-                      style={[StyleSheet.absoluteFill, { transform: [{ scale: 1.2 }] }]}
+                      style={StyleSheet.absoluteFill}
                       contentFit="cover"
                     />
                   ) : null}
@@ -552,6 +553,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
     position: 'relative',
+  },
+  nameFramePremium: {
+    borderWidth: 0,
+    backgroundColor: 'transparent',
   },
   badgeOverlap: {
     position: 'absolute',
