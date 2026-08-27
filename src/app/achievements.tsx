@@ -9,13 +9,14 @@ import {
   fetchAchievementCatalog,
   fetchProfileAchievements,
 } from '@/data/repositories/achievements';
+import { fetchProfile } from '@/data/repositories/board';
 import { supabase } from '@/data/supabase';
 import { withTapCue } from '@/lib/sounds';
 import {
-  mergeCatalogWithUnlocks,
   type AchievementCatalogRow,
   type AchievementRow,
   type AchievementUnlock,
+  mergeCatalogWithUnlocks,
 } from '@/domain/achievements/merge';
 import { achievementArt } from '@/features/assets/assetMap';
 import {
@@ -23,20 +24,10 @@ import {
   lockedRowStrings,
   unlockedRowStrings,
 } from '@/features/achievements/format';
+import { RARITY_BORDER, rarityFor } from '@/domain/badges/rarity';
+import { badgeProgress } from '@/domain/badges/progress';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 
-/**
- * S7-02 — Achievements (FR-ACH-1/4/5). Read-only list of the 13-achievement
- * seat small catalogue: unlocked = full-color code-drawn emblem + title +
- * description + unlock date; locked = dimmed "?" emblem + vague hint. No
- * progress bars, no rule-derived numbers, encouragement copy only.
- */
-
-// Each 512x512 badge PNG carries transparent padding (visible art only
-// ~35-49% of the canvas), so a fixed box renders the badge as a tiny 19-27 dp
-// glyph. BADGE_BOX scales the render box per slug so the visible badge fills
-// ~78% of the 60 dp circular container (65% + 20% bump), centered, no
-// crop/stretch/art change.
 const BADGE_BOX: Record<string, number> = {
   'early-bird': 113,
   'first-level': 125,
@@ -51,16 +42,26 @@ const BADGE_BOX: Record<string, number> = {
   'workouts-100': 122,
   'workouts-250': 108,
   'workouts-50': 136,
+  'founders-emblem': 120,
 };
+
+type Tab = 'badges' | 'list';
 
 export default function AchievementsScreen() {
   const router = useRouter();
   const [catalog, setCatalog] = useState<AchievementCatalogRow[] | null>(null);
   const [unlocks, setUnlocks] = useState<AchievementUnlock[]>([]);
+  const [equippedBadge, setEquippedBadge] = useState<string | null>(null);
+  const [profileStats, setProfileStats] = useState<{
+    questCount: number;
+    streak: number;
+    level: number;
+  } | null>(null);
   const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [tab, setTab] = useState<Tab>('badges');
 
   const load = useCallback(async () => {
-    setStatus((current) => (current === 'ready' ? current : 'loading'));
+    setStatus((c) => (c === 'ready' ? c : 'loading'));
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -68,9 +69,10 @@ export default function AchievementsScreen() {
       setStatus('error');
       return;
     }
-    const [catalogResult, unlocksResult] = await Promise.all([
+    const [catalogResult, unlocksResult, profileResult] = await Promise.all([
       fetchAchievementCatalog(),
       fetchProfileAchievements(user.id),
+      fetchProfile(user.id),
     ]);
     if (catalogResult.error || unlocksResult.error) {
       setStatus('error');
@@ -78,6 +80,14 @@ export default function AchievementsScreen() {
     }
     setCatalog(catalogResult.data ?? []);
     setUnlocks(unlocksResult.data ?? []);
+    if (profileResult.data) {
+      setProfileStats({
+        questCount: profileResult.data.journeyQuestCount,
+        streak: profileResult.data.currentStreak,
+        level: profileResult.data.level,
+      });
+      setEquippedBadge(profileResult.data.equipped.badge ?? null);
+    }
     setStatus('ready');
   }, []);
 
@@ -91,7 +101,25 @@ export default function AchievementsScreen() {
     () => (catalog ? mergeCatalogWithUnlocks(catalog, unlocks) : []),
     [catalog, unlocks],
   );
-  const unlockedCount = rows.filter((row) => row.state === 'unlocked').length;
+  const unlockedCount = rows.filter((r) => r.state === 'unlocked').length;
+
+  const handleEquip = useCallback(
+    async (slug: string) => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      const isEquipped = equippedBadge === slug;
+      const next = isEquipped ? null : slug;
+      setEquippedBadge(next);
+      const { error } = await supabase
+        .from('profiles')
+        .update({ equipped_badge: next } as never)
+        .eq('id', user.id);
+      if (error) setEquippedBadge(equippedBadge);
+    },
+    [equippedBadge],
+  );
 
   return (
     <Screen>
@@ -134,11 +162,107 @@ export default function AchievementsScreen() {
               </Text>
             </View>
 
-            <View style={styles.list}>
-              {rows.map((row) => (
-                <AchievementRowView key={row.slug} row={row} />
-              ))}
+            <View style={styles.tabs}>
+              <TouchableOpacity
+                style={[styles.tab, tab === 'badges' && styles.tabActive]}
+                onPress={withTapCue(() => setTab('badges'))}
+              >
+                <Text style={[styles.tabLabel, tab === 'badges' && styles.tabLabelActive]}>
+                  Badge Collection
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.tab, tab === 'list' && styles.tabActive]}
+                onPress={withTapCue(() => setTab('list'))}
+              >
+                <Text style={[styles.tabLabel, tab === 'list' && styles.tabLabelActive]}>
+                  Details
+                </Text>
+              </TouchableOpacity>
             </View>
+
+            {tab === 'badges' ? (
+              <View style={styles.grid}>
+                {rows.map((row) => {
+                  const isUnlocked = row.state === 'unlocked';
+                  const rarity = rarityFor(row.slug, row.rarity ?? 'Common');
+                  const borderColor = RARITY_BORDER[rarity];
+                  const progress = !isUnlocked
+                    ? badgeProgress(row.slug, {
+                        questCount: profileStats?.questCount ?? 0,
+                        streak: profileStats?.streak ?? 0,
+                        level: profileStats?.level ?? 1,
+                        distinctDays: 0,
+                        earlyBirdCount: 0,
+                        nightOwlCount: 0,
+                        gapDays: null,
+                      })
+                    : null;
+                  const isEquipped = equippedBadge === row.slug;
+                  const art = achievementArt(row.slug);
+                  return (
+                    <TouchableOpacity
+                      key={row.slug}
+                      accessibilityRole="button"
+                      style={[
+                        styles.gridCell,
+                        { borderColor },
+                        isEquipped && styles.gridCellEquipped,
+                      ]}
+                      onPress={withTapCue(() => {
+                        if (isUnlocked) void handleEquip(row.slug);
+                      })}
+                      disabled={!isUnlocked}
+                    >
+                      <View style={[styles.gridEmblem, !isUnlocked && styles.gridEmblemLocked]}>
+                        {art ? (
+                          <Image
+                            source={art}
+                            style={[
+                              styles.gridBadge,
+                              {
+                                width: BADGE_BOX[row.slug] ?? 90,
+                                height: BADGE_BOX[row.slug] ?? 90,
+                              },
+                              !isUnlocked && styles.badgeLocked,
+                            ]}
+                            contentFit="contain"
+                          />
+                        ) : (
+                          <Text style={styles.questionMark}>?</Text>
+                        )}
+                        {progress && progress.fraction < 1 ? (
+                          <View style={styles.progressRingWrap}>
+                            <Text style={styles.progressRingText}>
+                              {progress.current}/{progress.target}
+                            </Text>
+                          </View>
+                        ) : null}
+                      </View>
+                      <Text
+                        style={[styles.gridTitle, !isUnlocked && styles.gridTitleLocked]}
+                        numberOfLines={1}
+                      >
+                        {row.title}
+                      </Text>
+                      <Text style={styles.gridRarity}>{rarity}</Text>
+                      {isEquipped ? <Text style={styles.equippedLabel}>Equipped</Text> : null}
+                      {!isUnlocked ? (
+                        <View style={styles.lockOverlay}>
+                          <Ionicons name="lock-closed" size={14} color={colors.textMuted} />
+                        </View>
+                      ) : null}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            ) : (
+              <View style={styles.list}>
+                {rows.map((row) => (
+                  <AchievementRowView key={row.slug} row={row} />
+                ))}
+              </View>
+            )}
           </ScrollView>
         )}
       </View>
@@ -150,19 +274,17 @@ function AchievementRowView({ row }: { row: AchievementRow }) {
   const art = ACHIEVEMENT_CATEGORY_ART[row.category];
   const badge = achievementArt(row.slug);
   const isLocked = row.state === 'locked';
-
   if (isLocked) {
     const strings = lockedRowStrings(row);
     return (
       <View style={[styles.row, styles.rowLocked]}>
         <View style={[styles.emblem, styles.emblemLocked]}>
-          {badge !== null ? (
-            // AT-01D — locked badges render desaturated (code grayscale).
+          {badge ? (
             <Image
               source={badge}
               style={[
                 styles.badge,
-                { width: BADGE_BOX[row.slug], height: BADGE_BOX[row.slug] },
+                { width: BADGE_BOX[row.slug] ?? 56, height: BADGE_BOX[row.slug] ?? 56 },
                 styles.badgeLocked,
               ]}
               contentFit="contain"
@@ -178,15 +300,17 @@ function AchievementRowView({ row }: { row: AchievementRow }) {
       </View>
     );
   }
-
   const strings = unlockedRowStrings(row);
   return (
     <View style={styles.row}>
-      {badge !== null ? (
+      {badge ? (
         <View style={styles.emblem}>
           <Image
             source={badge}
-            style={[styles.badge, { width: BADGE_BOX[row.slug], height: BADGE_BOX[row.slug] }]}
+            style={[
+              styles.badge,
+              { width: BADGE_BOX[row.slug] ?? 56, height: BADGE_BOX[row.slug] ?? 56 },
+            ]}
             contentFit="contain"
           />
         </View>
@@ -205,28 +329,11 @@ function AchievementRowView({ row }: { row: AchievementRow }) {
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    gap: spacing.md,
-  },
-  backRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    minHeight: 44,
-  },
-  backLabel: {
-    color: colors.text,
-    fontFamily: fonts.bodyBold.family,
-    fontSize: 15,
-  },
-  scroll: {
-    flex: 1,
-  },
-  content: {
-    paddingBottom: spacing.xxxl,
-    gap: spacing.xl,
-  },
+  screen: { flex: 1, gap: spacing.md },
+  backRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, minHeight: 44 },
+  backLabel: { color: colors.text, fontFamily: fonts.bodyBold.family, fontSize: 15 },
+  scroll: { flex: 1 },
+  content: { paddingBottom: spacing.xxxl, gap: spacing.xl },
   center: {
     flex: 1,
     alignItems: 'center',
@@ -254,27 +361,77 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  retryLabel: {
-    color: colors.background,
-    fontFamily: fonts.bodyBold.family,
-    fontSize: 15,
+  retryLabel: { color: colors.background, fontFamily: fonts.bodyBold.family, fontSize: 15 },
+  header: { gap: spacing.xs },
+  title: { color: colors.text, fontFamily: fonts.display.family, fontSize: 26 },
+  subtitle: { color: colors.textMuted, fontFamily: fonts.body.family, fontSize: 14 },
+  tabs: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderRadius: radius.pill,
+    padding: 4,
   },
-  header: {
+  tab: { flex: 1, alignItems: 'center', paddingVertical: spacing.sm, borderRadius: radius.pill },
+  tabActive: { backgroundColor: colors.surfaceElevated },
+  tabLabel: { color: colors.textMuted, fontFamily: fonts.bodyBold.family, fontSize: 14 },
+  tabLabelActive: { color: colors.text },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
+  gridCell: {
+    width: '48%',
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    alignItems: 'center',
     gap: spacing.xs,
+    borderWidth: 2,
+    position: 'relative',
   },
-  title: {
+  gridCellEquipped: { borderWidth: 3 },
+  gridEmblem: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  gridEmblemLocked: { backgroundColor: colors.surfaceElevated },
+  gridBadge: { width: 56, height: 56 },
+  badgeLocked: { opacity: 0.45 },
+  questionMark: { color: colors.textMuted, fontFamily: fonts.display.family, fontSize: 26 },
+  progressRingWrap: {
+    position: 'absolute',
+    bottom: -4,
+    backgroundColor: colors.background,
+    borderRadius: radius.pill,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  progressRingText: { color: colors.textMuted, fontFamily: fonts.bodyBold.family, fontSize: 10 },
+  gridTitle: {
     color: colors.text,
-    fontFamily: fonts.display.family,
-    fontSize: 26,
+    fontFamily: fonts.bodyBold.family,
+    fontSize: 13,
+    textAlign: 'center',
   },
-  subtitle: {
+  gridTitleLocked: { color: colors.textMuted },
+  gridRarity: {
     color: colors.textMuted,
     fontFamily: fonts.body.family,
-    fontSize: 14,
+    fontSize: 11,
+    textTransform: 'uppercase',
   },
-  list: {
-    gap: spacing.md,
+  equippedLabel: { color: colors.reward, fontFamily: fonts.bodyBold.family, fontSize: 11 },
+  lockOverlay: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: radius.pill,
+    padding: 4,
   },
+  list: { gap: spacing.md },
   row: {
     flexDirection: 'row',
     gap: spacing.md,
@@ -294,51 +451,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badge: {
-    width: 56,
-    height: 56,
-    borderRadius: radius.lg,
-  },
-  badgeLocked: {
-    // AT-01D locked treatment — code grayscale + dim.
-    opacity: 0.45,
-    filter: [{ grayscale: 1 }],
-  },
-  emblemLocked: {
-    backgroundColor: colors.surfaceElevated,
-  },
-  questionMark: {
-    color: colors.textMuted,
-    fontFamily: fonts.display.family,
-    fontSize: 26,
-  },
-  rowBody: {
-    flex: 1,
-    gap: spacing.xs,
-    justifyContent: 'center',
-  },
-  rowTitle: {
-    color: colors.text,
-    fontFamily: fonts.bodyBold.family,
-    fontSize: 16,
-  },
-  rowTitleLocked: {
-    color: colors.textMuted,
-  },
-  rowDescription: {
-    color: colors.textMuted,
-    fontFamily: fonts.body.family,
-    fontSize: 14,
-  },
+  badge: { width: 56, height: 56, borderRadius: radius.lg },
+  emblemLocked: { backgroundColor: colors.surfaceElevated },
+  rowBody: { flex: 1, gap: spacing.xs, justifyContent: 'center' },
+  rowTitle: { color: colors.text, fontFamily: fonts.bodyBold.family, fontSize: 16 },
+  rowTitleLocked: { color: colors.textMuted },
+  rowDescription: { color: colors.textMuted, fontFamily: fonts.body.family, fontSize: 14 },
   rowHint: {
     color: colors.textMuted,
     fontFamily: fonts.body.family,
     fontSize: 14,
     fontStyle: 'italic',
   },
-  rowDate: {
-    color: colors.calmStrong,
-    fontFamily: fonts.bodyBold.family,
-    fontSize: 12,
-  },
+  rowDate: { color: colors.calmStrong, fontFamily: fonts.bodyBold.family, fontSize: 12 },
 });

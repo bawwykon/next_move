@@ -32,6 +32,7 @@ export interface CharacterProfile {
     title: string | null;
     background: string | null;
     portrait: string | null;
+    badge: string | null;
   };
 }
 
@@ -51,7 +52,7 @@ export async function fetchProfile(profileId: string): Promise<RepoResult<Charac
   const { data, error } = await supabase
     .from('profiles')
     .select(
-      'id, display_name, onboarded, journey_quests, current_chapter, total_xp, level, current_streak, longest_streak, last_completed_day, equipped_frame, equipped_title, equipped_background, equipped_portrait',
+      'id, display_name, onboarded, journey_quests, current_chapter, total_xp, level, current_streak, longest_streak, last_completed_day, equipped_frame, equipped_title, equipped_background, equipped_portrait, equipped_badge',
     )
     .eq('id', profileId)
     .maybeSingle();
@@ -78,6 +79,7 @@ export async function fetchProfile(profileId: string): Promise<RepoResult<Charac
       title: data.equipped_title,
       background: data.equipped_background,
       portrait: data.equipped_portrait,
+      badge: (data as unknown as { equipped_badge: string | null }).equipped_badge ?? null,
     },
   });
 }

@@ -8,7 +8,7 @@ import type { AchievementCatalogRow, AchievementUnlock } from '@/domain/achievem
  * allowed-field strip below, so even a future schema change that returns extra
  * columns cannot smuggle it into the typed row.
  */
-const CATALOG_FIELDS = ['slug', 'title', 'description', 'hint', 'category'] as const;
+const CATALOG_FIELDS = ['slug', 'title', 'description', 'hint', 'category', 'rarity'] as const;
 type CatalogField = (typeof CATALOG_FIELDS)[number];
 
 const strip = (row: Record<string, unknown>): Pick<AchievementCatalogRow, CatalogField> => {
@@ -24,7 +24,7 @@ const strip = (row: Record<string, unknown>): Pick<AchievementCatalogRow, Catalo
 export async function fetchAchievementCatalog(): Promise<RepoResult<AchievementCatalogRow[]>> {
   const { data, error } = await supabase
     .from('achievements')
-    .select('slug, title, description, hint, category')
+    .select('slug, title, description, hint, category, rarity')
     .order('slug');
 
   if (error) {

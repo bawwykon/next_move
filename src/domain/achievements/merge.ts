@@ -14,6 +14,7 @@ export interface AchievementCatalogRow {
   description: string | null;
   hint: string | null;
   category: AchievementCategory;
+  rarity?: string | null;
 }
 
 export interface AchievementUnlock {
@@ -29,6 +30,7 @@ export interface AchievementRow {
   title: string;
   description: string | null;
   category: AchievementCategory;
+  rarity: string | null;
   state: AchievementState;
   /** Only on locked rows — the vague hint, never the trigger. */
   hint?: string | null;
@@ -64,6 +66,7 @@ export function mergeCatalogWithUnlocks(
       title: row.title,
       description: row.description,
       category: row.category,
+      rarity: row.rarity ?? null,
     };
     if (unlockedSlugs.has(row.slug)) {
       const unlockedAt = unlocks.find((unlock) => unlock.slug === row.slug)?.unlockedAt;

@@ -10,6 +10,7 @@ export type Database = {
           description: string | null;
           hint: string | null;
           id: string;
+          rarity: string;
           slug: string;
           title: string;
           unlock_rule: Json;
@@ -21,6 +22,7 @@ export type Database = {
           description?: string | null;
           hint?: string | null;
           id?: string;
+          rarity?: string;
           slug: string;
           title: string;
           unlock_rule?: Json;
@@ -32,6 +34,7 @@ export type Database = {
           description?: string | null;
           hint?: string | null;
           id?: string;
+          rarity?: string;
           slug?: string;
           title?: string;
           unlock_rule?: Json;
@@ -286,6 +289,7 @@ export type Database = {
           current_streak: number;
           display_name: string;
           equipped_background: string | null;
+          equipped_badge: string | null;
           equipped_frame: string | null;
           equipped_portrait: string | null;
           equipped_title: string | null;
@@ -295,6 +299,7 @@ export type Database = {
           level: number;
           longest_streak: number;
           onboarded: boolean;
+          settings: Json;
           total_xp: number;
           updated_at: string;
         };
@@ -304,6 +309,7 @@ export type Database = {
           current_streak?: number;
           display_name?: string;
           equipped_background?: string | null;
+          equipped_badge?: string | null;
           equipped_frame?: string | null;
           equipped_portrait?: string | null;
           equipped_title?: string | null;
@@ -313,6 +319,7 @@ export type Database = {
           level?: number;
           longest_streak?: number;
           onboarded?: boolean;
+          settings?: Json;
           total_xp?: number;
           updated_at?: string;
         };
@@ -322,6 +329,7 @@ export type Database = {
           current_streak?: number;
           display_name?: string;
           equipped_background?: string | null;
+          equipped_badge?: string | null;
           equipped_frame?: string | null;
           equipped_portrait?: string | null;
           equipped_title?: string | null;
@@ -331,6 +339,7 @@ export type Database = {
           level?: number;
           longest_streak?: number;
           onboarded?: boolean;
+          settings?: Json;
           total_xp?: number;
           updated_at?: string;
         };
