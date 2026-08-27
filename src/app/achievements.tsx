@@ -216,21 +216,13 @@ export default function AchievementsScreen() {
                       })}
                       disabled={!isUnlocked}
                     >
-                      <View
-                        style={[
-                          styles.gridEmblem,
-                          row.slug !== 'founders-emblem' && styles.gridEmblemLarge,
-                          !isUnlocked && styles.gridEmblemLocked,
-                        ]}
-                      >
+                      <View style={styles.gridEmblem}>
                         {art ? (
                           <Image
                             source={art}
                             style={[
                               styles.gridBadge,
-                              row.slug === 'founders-emblem'
-                                ? { width: 68, height: 68, aspectRatio: 1, maxWidth: 68 }
-                                : { width: 112, height: 112, aspectRatio: 1, maxWidth: 112 },
+                              { width: 56, height: 56, aspectRatio: 1, maxWidth: 56 },
                               !isUnlocked && styles.badgeLocked,
                             ]}
                             contentFit="contain"
@@ -285,23 +277,13 @@ function AchievementRowView({ row }: { row: AchievementRow }) {
     const strings = lockedRowStrings(row);
     return (
       <View style={[styles.row, styles.rowLocked]}>
-        <View
-          style={
-            [
-              styles.emblem,
-              row.slug !== 'founders-emblem' && styles.emblemLarge,
-              styles.emblemLocked,
-            ].filter(Boolean) as never
-          }
-        >
+        <View style={styles.emblem}>
           {badge ? (
             <Image
               source={badge}
               style={[
                 styles.badge,
-                row.slug === 'founders-emblem'
-                  ? { width: 56, height: 56, aspectRatio: 1, maxWidth: 56 }
-                  : { width: 112, height: 112, aspectRatio: 1, maxWidth: 112 },
+                { width: 56, height: 56, aspectRatio: 1, maxWidth: 56 },
                 styles.badgeLocked,
               ]}
               contentFit="contain"
@@ -321,21 +303,10 @@ function AchievementRowView({ row }: { row: AchievementRow }) {
   return (
     <View style={styles.row}>
       {badge ? (
-        <View
-          style={
-            [styles.emblem, row.slug !== 'founders-emblem' && styles.emblemLarge].filter(
-              Boolean,
-            ) as never
-          }
-        >
+        <View style={styles.emblem}>
           <Image
             source={badge}
-            style={[
-              styles.badge,
-              row.slug === 'founders-emblem'
-                ? { width: 56, height: 56, aspectRatio: 1, maxWidth: 56 }
-                : { width: 112, height: 112, aspectRatio: 1, maxWidth: 112 },
-            ]}
+            style={[styles.badge, { width: 56, height: 56, aspectRatio: 1, maxWidth: 56 }]}
             contentFit="contain"
           />
         </View>
@@ -429,9 +400,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  gridEmblemLocked: { backgroundColor: colors.surfaceElevated },
-  gridBadge: { width: 68, height: 68, maxWidth: 68, maxHeight: 68, aspectRatio: 1 },
-  badgeLocked: { opacity: 0.45 },
+  gridBadge: { width: 56, height: 56, maxWidth: 56, maxHeight: 56, aspectRatio: 1 },
+  badgeLocked: { opacity: 0.4 },
   questionMark: { color: colors.textMuted, fontFamily: fonts.display.family, fontSize: 26 },
   progressRingWrap: {
     position: 'absolute',
@@ -478,19 +448,11 @@ const styles = StyleSheet.create({
     borderColor: colors.surfaceElevated,
   },
   emblem: {
-    width: 60,
-    height: 60,
+    width: 56,
+    height: 56,
     borderRadius: radius.xl,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  emblemLarge: {
-    width: 112,
-    height: 112,
-    borderRadius: 56,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
   },
   badge: {
     width: 56,
@@ -500,7 +462,6 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     borderRadius: radius.lg,
   },
-  emblemLocked: { backgroundColor: colors.surfaceElevated },
   rowBody: { flex: 1, gap: spacing.xs, justifyContent: 'center' },
   rowTitle: { color: colors.text, fontFamily: fonts.bodyBold.family, fontSize: 16 },
   rowTitleLocked: { color: colors.textMuted },
