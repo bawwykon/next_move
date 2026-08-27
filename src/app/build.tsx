@@ -339,7 +339,12 @@ export default function BuilderScreen() {
                   disabled={segments.length >= MAX_SEGMENTS}
                   onPress={withTapCue(addRest)}
                 >
-                  <Ionicons name="moon-outline" size={18} color={colors.calmStrong} />
+                  <Image
+                    source={REST_SIMPLE_ART}
+                    style={styles.restChipIcon}
+                    contentFit="contain"
+                    accessibilityLabel="Rest"
+                  />
                   <Text style={styles.pickName}>Take a breather</Text>
                   <Text style={styles.restChipHint}>15/30/45/60s · no XP</Text>
                 </TouchableOpacity>
@@ -629,6 +634,11 @@ const styles = StyleSheet.create({
   restSimpleIcon: {
     width: 44,
     height: 44,
+    borderRadius: radius.sm,
+  },
+  restChipIcon: {
+    width: 28,
+    height: 28,
     borderRadius: radius.sm,
   },
   restChip: {

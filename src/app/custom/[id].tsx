@@ -28,7 +28,7 @@ import {
 } from '@/domain/customWorkout/model';
 import { DIFFICULTY_ART_KEY, difficultyLabel } from '@/domain/exercises/difficulty';
 import type { QuestDifficulty } from '@/domain/recommendation/types';
-import { difficultyArt, exerciseArt } from '@/features/assets/assetMap';
+import { REST_SIMPLE_ART, difficultyArt, exerciseArt } from '@/features/assets/assetMap';
 import { difficultyBadge } from '@/features/questBoard/badges';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 import { withTapCue } from '@/lib/sounds';
@@ -173,9 +173,12 @@ export default function CustomQuestScreen() {
               if (segment.kind === 'rest') {
                 return (
                   <View key={`rest-${index}`} style={[styles.segmentRow, styles.restRow]}>
-                    <View style={styles.restIconBox}>
-                      <Ionicons name="moon-outline" size={18} color={colors.calmStrong} />
-                    </View>
+                    <Image
+                      source={REST_SIMPLE_ART}
+                      style={styles.restSimpleIcon}
+                      contentFit="contain"
+                      accessibilityLabel="Rest"
+                    />
                     <Text style={[styles.segmentName, styles.restName]} numberOfLines={1}>
                       Take a breather
                     </Text>
@@ -400,6 +403,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.background,
+  },
+  restSimpleIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.sm,
   },
   restName: {
     color: colors.textMuted,
