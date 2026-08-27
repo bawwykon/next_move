@@ -28,6 +28,8 @@ import { RARITY_BORDER, rarityFor } from '@/domain/badges/rarity';
 import { badgeProgress } from '@/domain/badges/progress';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 
+// Uniform badge sizing (FIX-04) no longer needs per-slug boxes — keep for reference.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const BADGE_BOX: Record<string, number> = {
   'early-bird': 113,
   'first-level': 125,
@@ -220,10 +222,7 @@ export default function AchievementsScreen() {
                             source={art}
                             style={[
                               styles.gridBadge,
-                              {
-                                width: BADGE_BOX[row.slug] ?? 90,
-                                height: BADGE_BOX[row.slug] ?? 90,
-                              },
+                              { width: 56, height: 56, aspectRatio: 1, maxWidth: 56 },
                               !isUnlocked && styles.badgeLocked,
                             ]}
                             contentFit="contain"
@@ -284,7 +283,7 @@ function AchievementRowView({ row }: { row: AchievementRow }) {
               source={badge}
               style={[
                 styles.badge,
-                { width: BADGE_BOX[row.slug] ?? 56, height: BADGE_BOX[row.slug] ?? 56 },
+                { width: 56, height: 56, aspectRatio: 1, maxWidth: 56 },
                 styles.badgeLocked,
               ]}
               contentFit="contain"
@@ -307,10 +306,7 @@ function AchievementRowView({ row }: { row: AchievementRow }) {
         <View style={styles.emblem}>
           <Image
             source={badge}
-            style={[
-              styles.badge,
-              { width: BADGE_BOX[row.slug] ?? 56, height: BADGE_BOX[row.slug] ?? 56 },
-            ]}
+            style={[styles.badge, { width: 56, height: 56, aspectRatio: 1, maxWidth: 56 }]}
             contentFit="contain"
           />
         </View>
@@ -397,7 +393,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   gridEmblemLocked: { backgroundColor: colors.surfaceElevated },
-  gridBadge: { width: 56, height: 56 },
+  gridBadge: { width: 56, height: 56, maxWidth: 56, maxHeight: 56, aspectRatio: 1 },
   badgeLocked: { opacity: 0.45 },
   questionMark: { color: colors.textMuted, fontFamily: fonts.display.family, fontSize: 26 },
   progressRingWrap: {
@@ -451,7 +447,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badge: { width: 56, height: 56, borderRadius: radius.lg },
+  badge: {
+    width: 56,
+    height: 56,
+    maxWidth: 56,
+    maxHeight: 56,
+    aspectRatio: 1,
+    borderRadius: radius.lg,
+  },
   emblemLocked: { backgroundColor: colors.surfaceElevated },
   rowBody: { flex: 1, gap: spacing.xs, justifyContent: 'center' },
   rowTitle: { color: colors.text, fontFamily: fonts.bodyBold.family, fontSize: 16 },
