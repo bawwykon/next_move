@@ -222,7 +222,7 @@ export default function AchievementsScreen() {
                             source={art}
                             style={[
                               styles.gridBadge,
-                              { width: 56, height: 56, aspectRatio: 1, maxWidth: 56 },
+                              { width: 68, height: 68, aspectRatio: 1, maxWidth: 68 },
                               !isUnlocked && styles.badgeLocked,
                             ]}
                             contentFit="contain"
@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   gridEmblemLocked: { backgroundColor: colors.surfaceElevated },
-  gridBadge: { width: 56, height: 56, maxWidth: 56, maxHeight: 56, aspectRatio: 1 },
+  gridBadge: { width: 68, height: 68, maxWidth: 68, maxHeight: 68, aspectRatio: 1 },
   badgeLocked: { opacity: 0.45 },
   questionMark: { color: colors.textMuted, fontFamily: fonts.display.family, fontSize: 26 },
   progressRingWrap: {
