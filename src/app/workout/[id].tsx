@@ -32,7 +32,7 @@ import {
   type Workout,
   type WorkoutSegmentKind,
 } from '@/domain/timer/workoutEngine';
-import { REST_DETAILED_ART, REST_SIMPLE_ART, exerciseArt } from '@/features/assets/assetMap';
+import { REST_SIMPLE_ART, exerciseArt } from '@/features/assets/assetMap';
 import { formatCountdown, formatTotalRemaining } from '@/features/timer/format';
 import { finishQuest } from '@/features/workout/finishQuest';
 import { decideOnForeground } from '@/features/workout/decideOnForeground';
@@ -456,7 +456,7 @@ export default function WorkoutScreen() {
             <>
               {segment.kind === 'rest' ? (
                 <Image
-                  source={REST_DETAILED_ART}
+                  source={REST_SIMPLE_ART}
                   style={[styles.hero, { width: heroWidth, height: heroHeight }]}
                   contentFit="contain"
                   accessibilityLabel="Rest"
@@ -477,14 +477,6 @@ export default function WorkoutScreen() {
                 <View style={[styles.badge, { backgroundColor: KIND_COLORS[segment.kind] }]}>
                   <Text style={styles.badgeLabel}>{segmentKindLabel(segment.kind)}</Text>
                 </View>
-                {segment.kind === 'rest' ? (
-                  <Image
-                    source={REST_SIMPLE_ART}
-                    style={styles.restSimpleBadge}
-                    contentFit="contain"
-                    accessibilityLabel="Rest"
-                  />
-                ) : null}
               </View>
               <View style={styles.digitsBox}>
                 {countdownDigit !== null ? (
