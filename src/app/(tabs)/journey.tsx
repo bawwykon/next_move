@@ -102,8 +102,8 @@ function JourneyNode({ node, index }: { node: ChapterNode; index: number }) {
     <View style={styles.nodeRow}>
       <View style={styles.rail}>
         {emblem !== null ? (
-          // AT-01D — journey emblems; locked chapters render desaturated.
-          <View style={[styles.blob, isLocked && styles.blobLocked]}>
+          // AT-01D — journey emblems; locked chapters render desaturated via opacity on the asset directly.
+          <View style={styles.blob}>
             <Image
               source={emblem}
               style={[
@@ -115,12 +115,7 @@ function JourneyNode({ node, index }: { node: ChapterNode; index: number }) {
             />
           </View>
         ) : (
-          <View
-            style={[
-              styles.blob,
-              { backgroundColor: isLocked ? colors.surfaceElevated : art?.blobColor },
-            ]}
-          >
+          <View style={[styles.blob, { backgroundColor: art?.blobColor }]}>
             <Ionicons
               name={art?.icon ?? 'map-outline'}
               size={22}
@@ -230,16 +225,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 1,
   },
-  blobLocked: {
-    backgroundColor: colors.surfaceElevated,
-  },
   emblem: {
     borderRadius: radius.lg,
   },
   emblemLocked: {
-    // AT-01D locked treatment — code grayscale + dim.
     opacity: 0.45,
-    filter: [{ grayscale: 1 }],
   },
   railLine: {
     position: 'absolute',
