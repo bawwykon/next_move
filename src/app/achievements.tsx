@@ -222,7 +222,7 @@ export default function AchievementsScreen() {
                             source={art}
                             style={[
                               styles.gridBadge,
-                              { width: 56, height: 56, aspectRatio: 1, maxWidth: 56 },
+                              { width: 64, height: 64, aspectRatio: 1, maxWidth: 64 },
                               !isUnlocked && styles.badgeLocked,
                             ]}
                             contentFit="contain"
@@ -283,7 +283,7 @@ function AchievementRowView({ row }: { row: AchievementRow }) {
               source={badge}
               style={[
                 styles.badge,
-                { width: 56, height: 56, aspectRatio: 1, maxWidth: 56 },
+                { width: 64, height: 64, aspectRatio: 1, maxWidth: 64 },
                 styles.badgeLocked,
               ]}
               contentFit="contain"
@@ -306,7 +306,7 @@ function AchievementRowView({ row }: { row: AchievementRow }) {
         <View style={styles.emblem}>
           <Image
             source={badge}
-            style={[styles.badge, { width: 56, height: 56, aspectRatio: 1, maxWidth: 56 }]}
+            style={[styles.badge, { width: 64, height: 64, aspectRatio: 1, maxWidth: 64 }]}
             contentFit="contain"
           />
         </View>
@@ -385,9 +385,9 @@ const styles = StyleSheet.create({
   },
   gridCellEquipped: { borderWidth: 3 },
   gridEmblem: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  gridBadge: { width: 56, height: 56, maxWidth: 56, maxHeight: 56, aspectRatio: 1 },
+  gridBadge: { width: 64, height: 64, maxWidth: 64, maxHeight: 64, aspectRatio: 1 },
   badgeLocked: { opacity: 0.4 },
   questionMark: { color: colors.textMuted, fontFamily: fonts.display.family, fontSize: 26 },
   progressRingWrap: {
@@ -448,17 +448,17 @@ const styles = StyleSheet.create({
     borderColor: colors.surfaceElevated,
   },
   emblem: {
-    width: 56,
-    height: 56,
+    width: 64,
+    height: 64,
     borderRadius: radius.xl,
     alignItems: 'center',
     justifyContent: 'center',
   },
   badge: {
-    width: 56,
-    height: 56,
-    maxWidth: 56,
-    maxHeight: 56,
+    width: 64,
+    height: 64,
+    maxWidth: 64,
+    maxHeight: 64,
     aspectRatio: 1,
     borderRadius: radius.lg,
   },
