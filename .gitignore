@@ -59,3 +59,9 @@ artifacts/
 # VOIDED pre-approval asset delivery (ED-30) — never committed
 assets/wooden_dummy/
 
+# asset normalization temp files
+assets/badges/*.backup*.png
+normalize-badges*.js
+fix-specific-badges*.js
+renormalize-all-badges.js
+
