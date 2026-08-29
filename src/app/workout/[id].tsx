@@ -530,7 +530,7 @@ export default function WorkoutScreen() {
       and safety note, and the single way back into the run. */}
       <Modal
         visible={pausedAtMs !== null}
-        transparent
+        transparent={false}
         animationType="fade"
         onRequestClose={handleResume}
       >
@@ -731,16 +731,13 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   pauseBackdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 100,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    flex: 1,
+    backgroundColor: '#0C0A09',
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.xxxl,
     paddingBottom: spacing.xl,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   pauseScroll: {
     flex: 1,
