@@ -388,10 +388,12 @@ export default function WorkoutScreen() {
   const digits = remaining !== null ? formatCountdown(Math.ceil(remaining / 1000)) : null;
   const countdownDigit = countdown !== null ? String(countdown) : null;
   // WK-01 — the pause overlay shows the frozen segment's how-to + safety copy.
-  const currentInstruction =
-    segment && segment.kind !== 'rest' ? (instructions[segmentIndex ?? -1] ?? null) : null;
-  const currentSafetyNote =
-    segment && segment.kind !== 'rest' ? (safetyNotes[segmentIndex ?? -1] ?? null) : null;
+  const isRest = segment?.kind === 'rest';
+  const currentInstruction = segment && !isRest ? (instructions[segmentIndex ?? -1] ?? null) : null;
+  const currentSafetyNote = segment && !isRest ? (safetyNotes[segmentIndex ?? -1] ?? null) : null;
+  // Rest step fallback copy
+  const restDescription = 'Take a deep breath and let your muscles relax before the next interval.';
+  const restSafetyTip = 'Stay loose — shake out your arms and legs while you wait.';
   // 3-2-1 countdown cue (AT-01K) — fires once when the roll-in begins, never
   // per digit change (the WAV itself ticks 3-2-1).
   const countdownActiveRef = useRef(false);
@@ -540,7 +542,15 @@ export default function WorkoutScreen() {
             contentContainerStyle={styles.pauseContent}
             showsVerticalScrollIndicator={false}
           >
-            {heroSource !== null ? (
+            {isRest ? (
+              <Image
+                source={REST_DETAILED_ART}
+                style={[styles.hero, { width: heroWidth, height: Math.round(heroHeight * 0.7) }]}
+                contentFit="contain"
+                accessibilityLabel="Rest"
+                transition={150}
+              />
+            ) : heroSource !== null ? (
               <Image
                 source={heroSource}
                 style={[styles.hero, { width: heroWidth, height: Math.round(heroHeight * 0.7) }]}
@@ -553,11 +563,18 @@ export default function WorkoutScreen() {
             <Text style={styles.pausedName}>{segmentName ?? 'Move'}</Text>
             {currentInstruction !== null ? (
               <Text style={styles.pausedInstruction}>{currentInstruction}</Text>
+            ) : isRest ? (
+              <Text style={styles.pausedInstruction}>{restDescription}</Text>
             ) : null}
             {currentSafetyNote !== null ? (
               <View style={styles.safetyBox}>
                 <Ionicons name="shield-checkmark-outline" size={14} color={colors.calmStrong} />
                 <Text style={styles.safetyText}>{currentSafetyNote}</Text>
+              </View>
+            ) : isRest ? (
+              <View style={styles.safetyBox}>
+                <Ionicons name="shield-checkmark-outline" size={14} color={colors.calmStrong} />
+                <Text style={styles.safetyText}>{restSafetyTip}</Text>
               </View>
             ) : null}
           </ScrollView>
