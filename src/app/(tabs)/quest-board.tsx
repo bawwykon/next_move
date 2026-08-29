@@ -915,8 +915,8 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   weeklyIcon: {
-    width: 24,
-    height: 24,
+    width: 44,
+    height: 44,
   },
   weeklyGoal: {
     color: colors.text,
