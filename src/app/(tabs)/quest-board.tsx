@@ -913,6 +913,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.sm,
+    minHeight: 28,
   },
   weeklyIcon: {
     width: 44,
@@ -936,6 +937,7 @@ const styles = StyleSheet.create({
   },
   progressTrack: {
     height: 8,
+    minHeight: 8,
     borderRadius: radius.pill,
     backgroundColor: colors.surfaceElevated,
     overflow: 'hidden',
