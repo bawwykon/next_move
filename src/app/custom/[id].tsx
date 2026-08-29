@@ -28,7 +28,7 @@ import {
 } from '@/domain/customWorkout/model';
 import { DIFFICULTY_ART_KEY, difficultyLabel } from '@/domain/exercises/difficulty';
 import type { QuestDifficulty } from '@/domain/recommendation/types';
-import { REST_SIMPLE_ART, difficultyArt, exerciseArt } from '@/features/assets/assetMap';
+import { REST_DETAILED_ART, difficultyArt, exerciseArt } from '@/features/assets/assetMap';
 import { difficultyBadge } from '@/features/questBoard/badges';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 import { withTapCue } from '@/lib/sounds';
@@ -174,13 +174,13 @@ export default function CustomQuestScreen() {
                 return (
                   <View key={`rest-${index}`} style={[styles.segmentRow, styles.restRow]}>
                     <Image
-                      source={REST_SIMPLE_ART}
+                      source={REST_DETAILED_ART}
                       style={styles.restSimpleIcon}
                       contentFit="contain"
                       accessibilityLabel="Rest"
                     />
                     <Text style={[styles.segmentName, styles.restName]} numberOfLines={1}>
-                      Take a breather
+                      Rest
                     </Text>
                     <Text style={styles.segmentDuration}>{segment.durationSec}s</Text>
                   </View>

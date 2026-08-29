@@ -38,7 +38,7 @@ import {
   difficultyLabel,
   type ExerciseDifficulty,
 } from '@/domain/exercises/difficulty';
-import { difficultyArt, exerciseArt, REST_SIMPLE_ART } from '@/features/assets/assetMap';
+import { difficultyArt, exerciseArt, REST_DETAILED_ART } from '@/features/assets/assetMap';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 import { withTapCue } from '@/lib/sounds';
 
@@ -270,9 +270,7 @@ export default function BuilderScreen() {
                       index={index}
                       count={segments.length}
                       segment={segment}
-                      name={
-                        segment.kind === 'rest' ? 'Take a breather' : nameOf(segment.exerciseSlug)
-                      }
+                      name={segment.kind === 'rest' ? 'Rest' : nameOf(segment.exerciseSlug)}
                       difficulty={
                         segment.kind === 'exercise' ? difficultyOf(segment.exerciseSlug) : null
                       }
@@ -340,12 +338,12 @@ export default function BuilderScreen() {
                   onPress={withTapCue(addRest)}
                 >
                   <Image
-                    source={REST_SIMPLE_ART}
+                    source={REST_DETAILED_ART}
                     style={styles.restChipIcon}
                     contentFit="contain"
                     accessibilityLabel="Rest"
                   />
-                  <Text style={styles.pickName}>Take a breather</Text>
+                  <Text style={styles.pickName}>Rest</Text>
                   <Text style={styles.restChipHint}>15/30/45/60s · no XP</Text>
                 </TouchableOpacity>
               </View>
@@ -429,7 +427,7 @@ function BuildRow({
     <View style={[styles.rowCard, isRest ? styles.rowCardRest : null]}>
       <View style={styles.rowMain}>
         {isRest ? (
-          <Image source={REST_SIMPLE_ART} style={styles.restSimpleIcon} contentFit="contain" />
+          <Image source={REST_DETAILED_ART} style={styles.restSimpleIcon} contentFit="contain" />
         ) : thumb !== null ? (
           <Image source={thumb} style={styles.rowThumb} contentFit="contain" />
         ) : null}

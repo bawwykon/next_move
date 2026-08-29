@@ -32,7 +32,7 @@ import {
   type Workout,
   type WorkoutSegmentKind,
 } from '@/domain/timer/workoutEngine';
-import { REST_SIMPLE_ART, exerciseArt } from '@/features/assets/assetMap';
+import { REST_DETAILED_ART, exerciseArt } from '@/features/assets/assetMap';
 import { formatCountdown, formatTotalRemaining } from '@/features/timer/format';
 import { finishQuest } from '@/features/workout/finishQuest';
 import { decideOnForeground } from '@/features/workout/decideOnForeground';
@@ -315,7 +315,7 @@ export default function WorkoutScreen() {
       return;
     }
     announcedSegmentRef.current = segmentIndex;
-    const label = seg.kind === 'rest' ? 'Take a breather' : (names[segmentIndex] ?? 'Move');
+    const label = seg.kind === 'rest' ? 'Rest' : (names[segmentIndex] ?? 'Move');
     AccessibilityInfo.announceForAccessibility(`${label} — ${segmentKindLabel(seg.kind)}`);
   }, [names, segmentIndex, workout]);
 
@@ -374,7 +374,7 @@ export default function WorkoutScreen() {
 
   const segmentName = segment
     ? segment.kind === 'rest'
-      ? 'Take a breather'
+      ? 'Rest'
       : (names[segmentIndex ?? -1] ?? 'Move')
     : null;
   const currentSlug =
@@ -382,7 +382,7 @@ export default function WorkoutScreen() {
   const heroSource = currentSlug ? exerciseArt(currentSlug) : null;
   const nextName = next
     ? next.kind === 'rest'
-      ? 'Take a breather'
+      ? 'Rest'
       : (names[(segmentIndex ?? -1) + 1] ?? 'Move')
     : null;
   const digits = remaining !== null ? formatCountdown(Math.ceil(remaining / 1000)) : null;
@@ -456,7 +456,7 @@ export default function WorkoutScreen() {
             <>
               {segment.kind === 'rest' ? (
                 <Image
-                  source={REST_SIMPLE_ART}
+                  source={REST_DETAILED_ART}
                   style={[styles.hero, { width: heroWidth, height: heroHeight }]}
                   contentFit="contain"
                   accessibilityLabel="Rest"

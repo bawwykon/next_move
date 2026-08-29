@@ -198,7 +198,7 @@ function SegmentRow({ segment }: { segment: QuestSegment }) {
           {segmentKindLabel(segment.kind)}
         </Text>
         <Text style={isRest ? styles.segmentRest : styles.segmentName}>
-          {isRest ? 'Take a breather' : (segment.exerciseName ?? 'Move')}
+          {isRest ? 'Rest' : (segment.exerciseName ?? 'Move')}
         </Text>
       </View>
       {!isRest && difficulty !== null ? (
