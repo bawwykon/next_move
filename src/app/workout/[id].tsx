@@ -632,7 +632,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   hero: {
-    backgroundColor: '#121212',
+    backgroundColor: '#1a1712',
   },
   badge: {
     borderRadius: radius.pill,
@@ -732,18 +732,18 @@ const styles = StyleSheet.create({
   },
   pauseBackdrop: {
     flex: 1,
-    backgroundColor: '#0C0A09',
+    backgroundColor: '#1a1712',
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.xxxl,
     paddingBottom: spacing.xl,
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'stretch',
   },
   pauseScroll: {
     flex: 1,
   },
   pauseContent: {
-    alignItems: 'center',
+    alignItems: 'stretch',
     gap: spacing.md,
   },
   pausedTitle: {
@@ -784,6 +784,7 @@ const styles = StyleSheet.create({
   },
   resumeButton: {
     minHeight: 52,
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
