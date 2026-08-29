@@ -12,7 +12,7 @@ import {
   difficultyLabel,
   exerciseDifficulty,
 } from '@/domain/exercises/difficulty';
-import { difficultyArt, exerciseArt } from '@/features/assets/assetMap';
+import { difficultyArt, exerciseArt, REST_DETAILED_ART } from '@/features/assets/assetMap';
 import { difficultyBadge } from '@/features/questBoard/badges';
 import { isCompletedToday } from '@/features/questBoard/completedToday';
 import { formatDuration } from '@/features/questBoard/format';
@@ -183,22 +183,20 @@ function SegmentRow({ segment }: { segment: QuestSegment }) {
   const isRest = segment.kind === 'rest';
   const isEdge = segment.kind === 'warmup' || segment.kind === 'cooldown';
   const labelColor = isRest ? colors.textMuted : isEdge ? colors.calm : colors.text;
-  const thumb = isRest ? null : exerciseArt(segment.exerciseSlug);
+  const thumb = isRest ? REST_DETAILED_ART : exerciseArt(segment.exerciseSlug);
   // AT-02E amendment — the difficulty badge owns a FIXED slot at the row's
   // end (before the duration): it can no longer shift with title length or
   // drop below wrapped text.
   const difficulty = isRest ? null : exerciseDifficulty(segment.exerciseSlug);
   return (
     <View style={styles.segmentRow}>
-      {thumb !== null ? (
-        <Image source={thumb} style={styles.segmentThumb} contentFit="contain" />
-      ) : null}
+      <Image source={thumb} style={styles.segmentThumb} contentFit="contain" />
       <View style={styles.segmentLeft}>
         <Text style={[styles.segmentKind, { color: labelColor }]}>
           {segmentKindLabel(segment.kind)}
         </Text>
         <Text style={isRest ? styles.segmentRest : styles.segmentName}>
-          {isRest ? 'Rest' : (segment.exerciseName ?? 'Move')}
+          {isRest ? 'Take a breather' : (segment.exerciseName ?? 'Move')}
         </Text>
       </View>
       {!isRest && difficulty !== null ? (
