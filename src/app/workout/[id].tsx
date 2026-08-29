@@ -747,10 +747,11 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   pausedTitle: {
-    color: colors.textMuted,
+    color: colors.reward,
     fontFamily: fonts.display.family,
     fontSize: 18,
     letterSpacing: 1.5,
+    textAlign: 'center',
     textTransform: 'uppercase',
   },
   pausedName: {
