@@ -269,9 +269,6 @@ export default function QuestBoardScreen() {
                   <Text style={styles.dailyMessageText}>{dailyMessageFor(todayKey)}</Text>
                 </View>
                 <View style={styles.pillRow}>
-                  <View style={styles.streakPill}>
-                    <Text style={styles.streakText}>{streakPill.main}</Text>
-                  </View>
                   {/* S9-01 — countdown to the next server streak milestone.
                       Null past the top of the ladder or on a dead streak. */}
                   {streakPill.milestone ? (
