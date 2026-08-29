@@ -632,11 +632,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   hero: {
-    // AT-02F — width/height are set inline from useWindowDimensions (~35% of
-    // the screen tall, full content width); contentFit="contain" keeps the
-    // art aspect-fit and centered, never cropped. The tile color matches the
-    // app background so the transparent art reads flush with the screen.
-    backgroundColor: colors.background,
+    backgroundColor: '#121212',
   },
   badge: {
     borderRadius: radius.pill,
@@ -735,8 +731,13 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   pauseBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.82)',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 100,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.xxxl,
     paddingBottom: spacing.xl,
