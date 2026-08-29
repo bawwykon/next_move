@@ -274,17 +274,7 @@ export default function ProfileScreen() {
                   )}
                 </View>
               </View>
-              {/* PH3-01a — dedicated edit screen replaces inline tap-to-edit. */}
-              <TouchableOpacity
-                accessibilityRole="button"
-                accessibilityLabel="Edit profile"
-                style={styles.editPill}
-                onPress={withTapCue(() => router.push('/edit-profile'))}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <Text style={styles.editPillLabel}>Edit</Text>
-              </TouchableOpacity>
-              {/* PH3-01b — name frame + badge hierarchy: badge overlaps frame, no title */}
+              {/* PH3-01b — name frame + badge centered below name banner */}
               <View style={styles.nameFrameWrap}>
                 <View style={[styles.nameFrame, hasNameplate && styles.nameFramePremium]}>
                   {nameplateArt('premium_nameplate') ? (
@@ -301,10 +291,10 @@ export default function ProfileScreen() {
                   </Text>
                 </View>
                 {profile?.equipped?.badge ? (
-                  <View style={styles.badgeOverlap}>
+                  <View style={styles.badgeCentered}>
                     <Image
                       source={achievementArt(profile.equipped.badge) ?? undefined}
-                      style={styles.badgeOverlapImage}
+                      style={styles.badgeCenteredImage}
                       contentFit="contain"
                     />
                   </View>
@@ -558,12 +548,11 @@ const styles = StyleSheet.create({
     borderWidth: 0,
     backgroundColor: 'transparent',
   },
-  badgeOverlap: {
-    position: 'absolute',
-    top: -8,
-    right: -8,
-    width: 28,
-    height: 28,
+  badgeCentered: {
+    alignSelf: 'center',
+    marginTop: spacing.xs,
+    width: 36,
+    height: 36,
     borderRadius: radius.pill,
     backgroundColor: colors.surface,
     borderWidth: 2,
@@ -572,9 +561,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  badgeOverlapImage: {
-    width: 20,
-    height: 20,
+  badgeCenteredImage: {
+    width: 28,
+    height: 28,
   },
   settingsGear: {
     position: 'absolute',
@@ -588,25 +577,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 2,
   },
-  editPill: {
-    position: 'absolute',
-    top: spacing.md,
-    left: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.surfaceElevated,
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-  },
-  editPillLabel: {
-    color: colors.textMuted,
-    fontFamily: fonts.bodyBold.family,
-    fontSize: 13,
-  },
   levelLine: {
     color: colors.textMuted,
     fontFamily: fonts.body.family,
     fontSize: 16,
+    marginTop: spacing.md,
   },
   card: {
     backgroundColor: colors.surface,
