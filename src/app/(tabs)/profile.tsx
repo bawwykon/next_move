@@ -593,7 +593,7 @@ const styles = StyleSheet.create({
     width: 240,
     maxWidth: 260,
     minWidth: 180,
-    paddingHorizontal: 24,
+    paddingHorizontal: 32,
     paddingVertical: 0,
   },
   namePremium: {
@@ -603,6 +603,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 3,
     letterSpacing: 1.2,
     fontSize: 18,
+    textAlign: 'center',
   },
   badgeCentered: {
     alignSelf: 'center',

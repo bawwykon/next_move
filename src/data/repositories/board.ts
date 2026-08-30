@@ -172,11 +172,18 @@ export async function equipCosmetic(
       return fail(`Cosmetic is not owned: ${item.data.slug}`);
     }
   }
+  let nameplateSlug: string | null = null;
+  if (column === 'equipped_nameplate' && itemId !== null) {
+    const catResult = await catalogItemById(itemId);
+    nameplateSlug =
+      catResult.error === null && catResult.data ? catResult.data.slug : 'nameplate-default';
+  }
+
   const patch =
     column === 'equipped_frame'
       ? { equipped_frame: itemId }
       : column === 'equipped_nameplate'
-        ? { equipped_nameplate: itemId ?? 'nameplate-default' }
+        ? { equipped_nameplate: nameplateSlug ?? 'nameplate-default' }
         : { equipped_portrait: itemId };
   const { error } = await supabase.from('profiles').update(patch).eq('id', profileId);
 

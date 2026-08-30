@@ -165,20 +165,22 @@ export function LoadoutCard({
             <View style={styles.sheet}>
               <Text style={styles.sheetTitle}>{SLOT_LABELS[openSlot]}</Text>
 
-              <TouchableOpacity
-                accessibilityRole="button"
-                style={styles.optionRow}
-                disabled={saving}
-                onPress={withTapCue(() => setSelected(null))}
-              >
-                <Ionicons
-                  name={selected === null ? 'checkmark-circle' : 'ellipse-outline'}
-                  size={20}
-                  color={selected === null ? colors.reward : colors.textMuted}
-                />
-                <Text style={styles.optionLabel}>Default</Text>
-                <Text style={styles.optionMeta}>Always available</Text>
-              </TouchableOpacity>
+              {openSlot !== 'nameplate' && (
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  style={styles.optionRow}
+                  disabled={saving}
+                  onPress={withTapCue(() => setSelected(null))}
+                >
+                  <Ionicons
+                    name={selected === null ? 'checkmark-circle' : 'ellipse-outline'}
+                    size={20}
+                    color={selected === null ? colors.reward : colors.textMuted}
+                  />
+                  <Text style={styles.optionLabel}>Default</Text>
+                  <Text style={styles.optionMeta}>Always available</Text>
+                </TouchableOpacity>
+              )}
 
               {bySlot[openSlot].map((item) => {
                 const strings = pickerRowStrings(item);
