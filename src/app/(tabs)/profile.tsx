@@ -295,13 +295,27 @@ export default function ProfileScreen() {
                     ).toUpperCase()}
                   </Text>
                 </View>
-                {profile?.equipped?.badge ? (
-                  <View style={styles.badgeCentered}>
-                    <Image
-                      source={achievementArt(profile.equipped.badge) ?? undefined}
-                      style={styles.badgeCenteredImage}
-                      contentFit="contain"
-                    />
+                {profile?.equipped?.badges && profile.equipped.badges.length > 0 ? (
+                  <View style={styles.badgeRow}>
+                    {profile.equipped.badges.slice(0, 3).map((slug, index) => (
+                      <View key={`${slug}-${index}`} style={styles.badgeSlot}>
+                        <Image
+                          source={achievementArt(slug) ?? undefined}
+                          style={styles.badgeSlotImage}
+                          contentFit="contain"
+                        />
+                      </View>
+                    ))}
+                  </View>
+                ) : profile?.equipped?.badge ? (
+                  <View style={styles.badgeRow}>
+                    <View style={styles.badgeSlot}>
+                      <Image
+                        source={achievementArt(profile.equipped.badge) ?? undefined}
+                        style={styles.badgeSlotImage}
+                        contentFit="contain"
+                      />
+                    </View>
                   </View>
                 ) : null}
               </View>
@@ -432,7 +446,14 @@ export default function ProfileScreen() {
   );
 }
 
-const emptyEquipped = { frame: null, title: null, background: null, portrait: null, badge: null };
+const emptyEquipped = {
+  frame: null,
+  title: null,
+  background: null,
+  portrait: null,
+  badge: null,
+  badges: [],
+};
 
 const styles = StyleSheet.create({
   screen: {
@@ -581,6 +602,27 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   badgeCenteredImage: {
+    width: 28,
+    height: 28,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    alignSelf: 'center',
+    marginTop: spacing.xs,
+    gap: spacing.sm,
+  },
+  badgeSlot: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+    borderWidth: 2,
+    borderColor: colors.reward,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  badgeSlotImage: {
     width: 28,
     height: 28,
   },

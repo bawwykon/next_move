@@ -53,7 +53,7 @@ export default function AchievementsScreen() {
   const router = useRouter();
   const [catalog, setCatalog] = useState<AchievementCatalogRow[] | null>(null);
   const [unlocks, setUnlocks] = useState<AchievementUnlock[]>([]);
-  const [equippedBadge, setEquippedBadge] = useState<string | null>(null);
+  const [equippedBadges, setEquippedBadges] = useState<string[]>([]);
   const [profileStats, setProfileStats] = useState<{
     questCount: number;
     streak: number;
@@ -88,7 +88,7 @@ export default function AchievementsScreen() {
         streak: profileResult.data.currentStreak,
         level: profileResult.data.level,
       });
-      setEquippedBadge(profileResult.data.equipped.badge ?? null);
+      setEquippedBadges(profileResult.data.equipped.badges ?? []);
     }
     setStatus('ready');
   }, []);
@@ -104,6 +104,7 @@ export default function AchievementsScreen() {
     [catalog, unlocks],
   );
   const unlockedCount = rows.filter((r) => r.state === 'unlocked').length;
+  const [toast, setToast] = useState<string | null>(null);
 
   const handleEquip = useCallback(
     async (slug: string) => {
@@ -111,16 +112,27 @@ export default function AchievementsScreen() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) return;
-      const isEquipped = equippedBadge === slug;
-      const next = isEquipped ? null : slug;
-      setEquippedBadge(next);
+      const isEquipped = equippedBadges.includes(slug);
+      let next: string[];
+      if (isEquipped) {
+        // Remove from equipped
+        next = equippedBadges.filter((s) => s !== slug);
+      } else if (equippedBadges.length >= 3) {
+        // Max 3 badges — show toast notice
+        return 'Maximum 3 badges equipped — tap an equipped badge to remove it.';
+      } else {
+        // Add to equipped
+        next = [...equippedBadges, slug];
+      }
+      setEquippedBadges(next);
       const { error } = await supabase
         .from('profiles')
-        .update({ equipped_badge: next } as never)
+        .update({ equipped_badges: next } as never)
         .eq('id', user.id);
-      if (error) setEquippedBadge(equippedBadge);
+      if (error) setEquippedBadges(equippedBadges);
+      return null;
     },
-    [equippedBadge],
+    [equippedBadges],
   );
 
   return (
@@ -185,6 +197,11 @@ export default function AchievementsScreen() {
 
             {tab === 'badges' ? (
               <View style={styles.grid}>
+                {toast ? (
+                  <View style={styles.toast}>
+                    <Text style={styles.toastText}>{toast}</Text>
+                  </View>
+                ) : null}
                 {rows.map((row) => {
                   const isUnlocked = row.state === 'unlocked';
                   const rarity = rarityFor(row.slug, row.rarity ?? 'Common');
@@ -200,7 +217,8 @@ export default function AchievementsScreen() {
                         gapDays: null,
                       })
                     : null;
-                  const isEquipped = equippedBadge === row.slug;
+                  const equippedIndex = equippedBadges.indexOf(row.slug);
+                  const isEquipped = equippedIndex !== -1;
                   const art = achievementArt(row.slug);
                   return (
                     <TouchableOpacity
@@ -212,7 +230,13 @@ export default function AchievementsScreen() {
                         isEquipped && styles.gridCellEquipped,
                       ]}
                       onPress={withTapCue(() => {
-                        if (isUnlocked) void handleEquip(row.slug);
+                        if (isUnlocked) {
+                          const result = handleEquip(row.slug);
+                          if (typeof result === 'string' && result) {
+                            setToast(result);
+                            setTimeout(() => setToast(null), 3000);
+                          }
+                        }
                       })}
                       disabled={!isUnlocked}
                     >
@@ -245,7 +269,9 @@ export default function AchievementsScreen() {
                         {row.title}
                       </Text>
                       <Text style={styles.gridRarity}>{rarity}</Text>
-                      {isEquipped ? <Text style={styles.equippedLabel}>Equipped</Text> : null}
+                      {isEquipped ? (
+                        <Text style={styles.equippedLabel}>Slot {equippedIndex + 1}</Text>
+                      ) : null}
                       {!isUnlocked ? (
                         <View style={styles.lockOverlay}>
                           <Ionicons name="lock-closed" size={14} color={colors.textMuted} />
@@ -426,6 +452,19 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   equippedLabel: { color: colors.reward, fontFamily: fonts.bodyBold.family, fontSize: 11 },
+  toast: {
+    width: '100%',
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  toastText: {
+    color: colors.textMuted,
+    fontFamily: fonts.body.family,
+    fontSize: 13,
+    textAlign: 'center',
+  },
   lockOverlay: {
     position: 'absolute',
     top: 8,

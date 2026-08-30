@@ -290,6 +290,7 @@ export type Database = {
           display_name: string;
           equipped_background: string | null;
           equipped_badge: string | null;
+          equipped_badges: string[];
           equipped_frame: string | null;
           equipped_portrait: string | null;
           equipped_title: string | null;
@@ -310,6 +311,7 @@ export type Database = {
           display_name?: string;
           equipped_background?: string | null;
           equipped_badge?: string | null;
+          equipped_badges?: string[];
           equipped_frame?: string | null;
           equipped_portrait?: string | null;
           equipped_title?: string | null;
@@ -330,6 +332,7 @@ export type Database = {
           display_name?: string;
           equipped_background?: string | null;
           equipped_badge?: string | null;
+          equipped_badges?: string[];
           equipped_frame?: string | null;
           equipped_portrait?: string | null;
           equipped_title?: string | null;
