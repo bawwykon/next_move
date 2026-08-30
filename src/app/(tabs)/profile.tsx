@@ -95,7 +95,7 @@ export default function ProfileScreen() {
   const [mastery, setMastery] = useState<MasteryRow[]>([]);
   const [catalog, setCatalog] = useState<CosmeticRow[]>([]);
   const [owned, setOwned] = useState<ReadonlySet<string>>(new Set());
-  const [unlockedCount, setUnlockedCount] = useState(0);
+  const [earnedBadges, setEarnedBadges] = useState<string[]>([]);
   const [history, setHistory] = useState<CompletionHistoryRow[]>([]);
   const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
 
@@ -133,7 +133,7 @@ export default function ProfileScreen() {
     setMastery(masteryResult.data ?? []);
     setCatalog(catalogResult.data ?? []);
     setOwned(ownedBySlug(ownedResult.data ?? []));
-    setUnlockedCount(unlocksResult.data?.length ?? 0);
+    setEarnedBadges((unlocksResult.data ?? []).map((u) => u.slug));
     setHistory(historyResult.data ?? []);
     setStatus('ready');
   }, []);
@@ -214,8 +214,9 @@ export default function ProfileScreen() {
   const portraitArt = equippedSlug('portrait') ? cosmeticArt(equippedSlug('portrait')) : null;
   const frameSlug = equippedSlug('frame');
   const frameArt = frameSlug ? cosmeticArt(frameSlug) : null;
-  const nameplateSlug = profile?.equipped?.nameplate ?? null;
-  const hasNameplate = !!nameplateSlug && nameplateSlug !== 'nameplate-default';
+  const nameplateSlug = profile?.equipped?.nameplate ?? 'nameplate-default';
+  const nameplateSource = nameplateArt(nameplateSlug);
+  const hasNameplate = !!nameplateSource;
   const bar = useMemo(
     () => (profile ? xpBar(profile.totalXp, profile.level) : xpBar(0, 1)),
     [profile],
@@ -291,9 +292,9 @@ export default function ProfileScreen() {
               {/* PH3-01b — name frame + badge centered below name banner */}
               <View style={styles.nameFrameWrap}>
                 <View style={[styles.nameFrame, hasNameplate && styles.nameFramePremium]}>
-                  {hasNameplate && nameplateArt(nameplateSlug) ? (
+                  {hasNameplate ? (
                     <Image
-                      source={nameplateArt(nameplateSlug)!}
+                      source={nameplateSource!}
                       style={StyleSheet.absoluteFill}
                       contentFit="contain"
                     />
@@ -402,7 +403,7 @@ export default function ProfileScreen() {
               >
                 <Ionicons name="trophy-outline" size={22} color={colors.reward} />
                 <Text style={styles.entryLabel}>Achievements</Text>
-                <Text style={styles.entryCount}>{achievementsEntry(unlockedCount)}</Text>
+                <Text style={styles.entryCount}>{achievementsEntry(earnedBadges.length)}</Text>
                 <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
@@ -414,6 +415,7 @@ export default function ProfileScreen() {
               equipped={profile?.equipped ?? emptyEquipped}
               onEquip={handleEquip}
               onEquipBadges={handleEquipBadges}
+              earnedBadges={earnedBadges}
             />
 
             {/* Quest history — last-4 preview; the full paged list lives on

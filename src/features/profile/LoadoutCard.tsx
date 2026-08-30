@@ -27,6 +27,7 @@ export interface LoadoutCardProps {
   };
   onEquip: (slot: CosmeticSlot, itemId: string | null) => Promise<string | null>;
   onEquipBadges: (badges: string[]) => Promise<string | null>;
+  earnedBadges: string[];
 }
 
 function slotValue(
@@ -50,6 +51,7 @@ export function LoadoutCard({
   equipped,
   onEquip,
   onEquipBadges,
+  earnedBadges,
 }: LoadoutCardProps) {
   const [openSlot, setOpenSlot] = useState<CosmeticSlot | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -97,6 +99,18 @@ export function LoadoutCard({
     if (!saving) {
       setBadgeModalOpen(false);
     }
+  };
+
+  const toggleBadge = (slug: string) => {
+    setTempBadges((prev) => {
+      if (prev.includes(slug)) {
+        return prev.filter((s) => s !== slug);
+      }
+      if (prev.length >= 3) {
+        return prev;
+      }
+      return [...prev, slug];
+    });
   };
 
   const saveBadges = async () => {
@@ -245,31 +259,51 @@ export function LoadoutCard({
             <Text style={styles.sheetTitle}>Badges</Text>
             <Text style={styles.badgeHint}>Select up to 3 badges to display on your profile.</Text>
 
-            <View style={styles.badgeGrid}>
-              {equipped.badges.length === 0 && tempBadges.length === 0 ? null : (
-                <View style={styles.badgePreviewRow}>
-                  {[0, 1, 2].map((i) => {
-                    const slug = tempBadges[i];
-                    const art = slug ? achievementArt(slug) : null;
-                    return (
-                      <View
-                        key={i}
-                        style={[styles.badgePreviewSlot, slug && styles.badgePreviewActive]}
-                      >
-                        {art ? (
-                          <Image
-                            source={art}
-                            style={styles.badgePreviewImage}
-                            contentFit="contain"
-                          />
-                        ) : null}
-                      </View>
-                    );
-                  })}
-                </View>
-              )}
-              {tempBadges.length > 0 ? (
-                <Text style={styles.badgeCount}>{tempBadges.length} / 3 selected</Text>
+            <View style={styles.badgePreviewRow}>
+              {[0, 1, 2].map((i) => {
+                const slug = tempBadges[i];
+                const art = slug ? achievementArt(slug) : null;
+                return (
+                  <View
+                    key={i}
+                    style={[styles.badgePreviewSlot, slug && styles.badgePreviewActive]}
+                  >
+                    {art ? (
+                      <Image source={art} style={styles.badgePreviewImage} contentFit="contain" />
+                    ) : null}
+                  </View>
+                );
+              })}
+            </View>
+            {tempBadges.length > 0 ? (
+              <Text style={styles.badgeCount}>{tempBadges.length} / 3 selected</Text>
+            ) : null}
+
+            <View style={styles.badgeSelectGrid}>
+              {earnedBadges.map((slug) => {
+                const art = achievementArt(slug);
+                const isSelected = tempBadges.includes(slug);
+                const isFull = tempBadges.length >= 3 && !isSelected;
+                return (
+                  <TouchableOpacity
+                    key={slug}
+                    accessibilityRole="button"
+                    style={[
+                      styles.badgeSelectCell,
+                      isSelected && styles.badgeSelectCellActive,
+                      isFull && styles.badgeSelectCellDisabled,
+                    ]}
+                    disabled={isFull}
+                    onPress={withTapCue(() => toggleBadge(slug))}
+                  >
+                    {art ? (
+                      <Image source={art} style={styles.badgeSelectImage} contentFit="contain" />
+                    ) : null}
+                  </TouchableOpacity>
+                );
+              })}
+              {earnedBadges.length === 0 ? (
+                <Text style={styles.badgeEmptyText}>No badges earned yet.</Text>
               ) : null}
             </View>
 
@@ -450,9 +484,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginBottom: spacing.sm,
   },
-  badgeGrid: {
-    gap: spacing.sm,
-  },
   badgePreviewRow: {
     flexDirection: 'row',
     gap: spacing.sm,
@@ -481,5 +512,41 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body.family,
     fontSize: 12,
     textAlign: 'center',
+  },
+  badgeSelectGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+    justifyContent: 'center',
+  },
+  badgeSelectCell: {
+    width: 52,
+    height: 52,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surfaceElevated,
+    borderWidth: 2,
+    borderColor: colors.surfaceElevated,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  badgeSelectCellActive: {
+    borderColor: colors.reward,
+  },
+  badgeSelectCellDisabled: {
+    opacity: 0.35,
+  },
+  badgeSelectImage: {
+    width: 40,
+    height: 40,
+  },
+  badgeEmptyText: {
+    color: colors.textMuted,
+    fontFamily: fonts.body.family,
+    fontSize: 13,
+    textAlign: 'center',
+    paddingVertical: spacing.lg,
+    width: '100%',
   },
 });
