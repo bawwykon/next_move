@@ -4,7 +4,7 @@
  * guard refuses a mixed update that also touches `level` in the same
  * statement. Sequential by design (each step's assertions depend on the
  * previous). The demo's owned set is handled by the seed (frame-default,
- * title-adventurer, portrait-default); a `supabase db reset` restores it.
+ * nameplate-default, portrait-default); a `supabase db reset` restores it.
  * Run explicitly (excluded from CI):
  *   npx jest tests/integration --testPathIgnorePatterns=/node_modules/
  */
@@ -26,7 +26,7 @@ jest.mock('expo-secure-store', () => {
 const DEMO_EMAIL = 'demo@nextmove.app';
 const DEMO_PASSWORD = 'demo-pass-123';
 
-const nullState = { frame: null, title: null, background: null, portrait: null };
+const nullState = { frame: null, nameplate: null, portrait: null };
 
 describe('cosmetic equip data path (live local supabase)', () => {
   let board: typeof import('../../src/data/repositories/board');
@@ -62,8 +62,7 @@ describe('cosmetic equip data path (live local supabase)', () => {
 
   const readEquipped = async (): Promise<{
     frame: string | null;
-    title: string | null;
-    background: string | null;
+    nameplate: string | null;
     portrait: string | null;
   }> => (await board.fetchProfile(profileId)).data?.equipped ?? nullState;
 
@@ -71,11 +70,11 @@ describe('cosmetic equip data path (live local supabase)', () => {
     const rows = (await profileCosmetics.fetchProfileCosmetics(profileId)).data ?? [];
     expect(rows.map((row) => row.slug).sort()).toEqual([
       'frame-default',
+      'nameplate-default',
       'portrait-default',
-      'title-adventurer',
     ]);
     const owned = loadout.ownedBySlug(rows);
-    for (const slug of ['frame-default', 'title-adventurer', 'portrait-default']) {
+    for (const slug of ['frame-default', 'nameplate-default', 'portrait-default']) {
       expect(owned.has(slug)).toBe(true);
     }
   });
@@ -88,18 +87,22 @@ describe('cosmetic equip data path (live local supabase)', () => {
   });
 
   it('(2) swaps to another owned item', async () => {
-    const result = await board.equipCosmetic(profileId, 'title', catalogId('title-adventurer'));
+    const result = await board.equipCosmetic(
+      profileId,
+      'nameplate',
+      catalogId('nameplate-default'),
+    );
     expect(result.error).toBeNull();
     const equipped = await readEquipped();
-    expect(equipped.title).toBe(catalogId('title-adventurer'));
+    expect(equipped.nameplate).toBe(catalogId('nameplate-default'));
     expect(equipped.frame).toBe(catalogId('frame-default'));
   });
 
-  it('(3) unequips — equipped_title becomes null', async () => {
-    const result = await board.equipCosmetic(profileId, 'title', null);
+  it('(3) unequips — equipped_nameplate becomes default', async () => {
+    const result = await board.equipCosmetic(profileId, 'nameplate', null);
     expect(result.error).toBeNull();
     const equipped = await readEquipped();
-    expect(equipped.title).toBeNull();
+    expect(equipped.nameplate).toBeNull();
   });
 
   it('(4) unowned equip is rejected by the write path; state unchanged', async () => {

@@ -95,8 +95,15 @@ export const COSMETIC_ART: Record<string, number> = {
   'bg-chapter-06': require('@/assets/backgrounds/bg_chapter_06.jpg'),
 };
 
-// --- Premium nameplate (assets/nameplates/) ---
+// --- Nameplate cosmetics (assets/nameplates/) ---
 export const NAMEPLATE_ART: Record<string, number> = {
+  'nameplate-default': require('@/assets/nameplates/nameplate_default.png'),
+  'nameplate-level-05': require('@/assets/nameplates/nameplate_level_05.png'),
+  'nameplate-level-10': require('@/assets/nameplates/nameplate_level_10.png'),
+  'nameplate-level-25': require('@/assets/nameplates/nameplate_level_25.png'),
+  'nameplate-level-50': require('@/assets/nameplates/nameplate_level_50.png'),
+  'nameplate-level-100': require('@/assets/nameplates/nameplate_level_100.png'),
+  'premium-nameplate': require('@/assets/nameplates/premium_nameplate.png'),
   premium_nameplate: require('@/assets/nameplates/premium_nameplate.png'),
 };
 

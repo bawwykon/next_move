@@ -69,7 +69,7 @@ describe('profile data path (live local supabase)', () => {
     expect(Number.isInteger(profile.longestStreak)).toBe(true);
     expect(profile.longestStreak).toBeGreaterThanOrEqual(profile.currentStreak);
     expect(typeof profile.lastCompletedDay).toBe('string');
-    for (const slot of ['frame', 'title', 'background', 'portrait'] as const) {
+    for (const slot of ['frame', 'nameplate', 'portrait'] as const) {
       expect(profile.equipped[slot] === null || typeof profile.equipped[slot] === 'string').toBe(
         true,
       );
@@ -80,7 +80,7 @@ describe('profile data path (live local supabase)', () => {
     const catalog = (await cosmeticsRepo.fetchCosmeticCatalog()).data ?? [];
     const slots = format.loadoutSlots(profile.equipped, catalog);
     expect(slots[0]?.name).toBe('Classic Frame');
-    expect(slots[3]?.name).toBe('Classic Portrait');
+    expect(slots[2]?.name).toBe('Classic Portrait');
     console.log(
       `profile: level=${profile.level} xp=${profile.totalXp} streak=${profile.currentStreak}/${profile.longestStreak} last=${profile.lastCompletedDay}`,
     );

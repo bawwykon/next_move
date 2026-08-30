@@ -129,7 +129,7 @@ export function masteryRows(
 }
 
 export interface LoadoutSlot {
-  slot: 'Frame' | 'Title' | 'Background' | 'Portrait';
+  slot: 'Frame' | 'Nameplate' | 'Portrait';
   /** Display name of the currently equipped item, or null when none. */
   name: string | null;
 }
@@ -143,13 +143,12 @@ export interface CosmeticRef {
 
 const SLOT_LABELS: Record<CosmeticSlot, LoadoutSlot['slot']> = {
   frame: 'Frame',
-  title: 'Title',
-  background: 'Background',
+  nameplate: 'Nameplate',
   portrait: 'Portrait',
 };
 
 /**
- * FR-PROF-2 — the equipped loadout (display-only). Resolves the four
+ * FR-PROF-2 — the equipped loadout (display-only). Resolves the three
  * `equipped_*` profile uuids against the catalogue; an unset slot falls back
  * to the seeded defaults ('frame-default', 'portrait-default'); the others
  * render as empty. Delegates to the S8-02 domain resolver (single source).
@@ -157,8 +156,7 @@ const SLOT_LABELS: Record<CosmeticSlot, LoadoutSlot['slot']> = {
 export function loadoutSlots(
   equipped: {
     frame: string | null;
-    title: string | null;
-    background: string | null;
+    nameplate: string | null;
     portrait: string | null;
   },
   catalog: readonly CosmeticRef[],

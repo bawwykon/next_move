@@ -5,15 +5,14 @@ import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'reac
 
 import type { CosmeticRow } from '@/data/repositories/cosmetics';
 import { catalogBySlot, DEFAULT_SLOT_SLUGS, type CosmeticSlot } from '@/domain/cosmetics/loadout';
-import { cosmeticArt } from '@/features/assets/assetMap';
+import { achievementArt, cosmeticArt, nameplateArt } from '@/features/assets/assetMap';
 import { pickerRowStrings } from '@/features/profile/format';
 import { withTapCue } from '@/lib/sounds';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 
 const SLOT_LABELS: Record<CosmeticSlot, string> = {
   frame: 'Frame',
-  title: 'Title',
-  background: 'Background',
+  nameplate: 'Nameplate',
   portrait: 'Portrait',
 };
 
@@ -22,20 +21,16 @@ export interface LoadoutCardProps {
   owned: ReadonlySet<string>;
   equipped: {
     frame: string | null;
-    title: string | null;
-    background: string | null;
+    nameplate: string | null;
     portrait: string | null;
+    badges: string[];
   };
-  /**
-   * Applies an equip (itemId null re-equips the default). The parent owns the
-   * optimistic update + revert-on-error; resolves to the error message (or
-   * null on success).
-   */
   onEquip: (slot: CosmeticSlot, itemId: string | null) => Promise<string | null>;
+  onEquipBadges: (badges: string[]) => Promise<string | null>;
 }
 
 function slotValue(
-  equipped: LoadoutCardProps['equipped'],
+  equipped: { frame: string | null; nameplate: string | null; portrait: string | null },
   slot: CosmeticSlot,
   items: readonly CosmeticRow[],
 ): string {
@@ -49,17 +44,19 @@ function slotValue(
   return items.find((item) => item.id === id)?.name ?? 'Default';
 }
 
-/**
- * S8-02 — FR-COS-1/2 loadout picker. Tapping a slot opens the sheet: Owned
- * rows are selectable, unowned rows render as "?" (no rule text — the
- * ownership verdict is server-side); "Default" unequips. Save persists via the
- * parent's optimistic equip; the parent reverts on failure.
- */
-export function LoadoutCard({ catalog, owned, equipped, onEquip }: LoadoutCardProps) {
+export function LoadoutCard({
+  catalog,
+  owned,
+  equipped,
+  onEquip,
+  onEquipBadges,
+}: LoadoutCardProps) {
   const [openSlot, setOpenSlot] = useState<CosmeticSlot | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [badgeModalOpen, setBadgeModalOpen] = useState(false);
+  const [tempBadges, setTempBadges] = useState<string[]>(equipped.badges);
 
   const bySlot = catalogBySlot(catalog, owned);
 
@@ -90,6 +87,30 @@ export function LoadoutCard({ catalog, owned, equipped, onEquip }: LoadoutCardPr
     setOpenSlot(null);
   };
 
+  const openBadges = () => {
+    setTempBadges([...equipped.badges]);
+    setBadgeModalOpen(true);
+    setError(null);
+  };
+
+  const closeBadges = () => {
+    if (!saving) {
+      setBadgeModalOpen(false);
+    }
+  };
+
+  const saveBadges = async () => {
+    setSaving(true);
+    setError(null);
+    const message = await onEquipBadges(tempBadges);
+    setSaving(false);
+    if (message) {
+      setError(message);
+      return;
+    }
+    setBadgeModalOpen(false);
+  };
+
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
@@ -97,23 +118,32 @@ export function LoadoutCard({ catalog, owned, equipped, onEquip }: LoadoutCardPr
         <Text style={styles.cardHint}>Tap a slot to change it</Text>
       </View>
       <View style={styles.loadoutList}>
-        {Object.keys(SLOT_LABELS).map((slotName) => {
-          const slot = slotName as CosmeticSlot;
-          return (
-            <TouchableOpacity
-              key={slot}
-              accessibilityRole="button"
-              style={styles.loadoutRow}
-              onPress={withTapCue(() => open(slot))}
-            >
-              <Text style={styles.loadoutSlot}>{SLOT_LABELS[slot]}</Text>
-              <Text style={styles.loadoutName}>{slotValue(equipped, slot, catalog)}</Text>
-              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-            </TouchableOpacity>
-          );
-        })}
+        {(Object.keys(SLOT_LABELS) as CosmeticSlot[]).map((slot) => (
+          <TouchableOpacity
+            key={slot}
+            accessibilityRole="button"
+            style={styles.loadoutRow}
+            onPress={withTapCue(() => open(slot))}
+          >
+            <Text style={styles.loadoutSlot}>{SLOT_LABELS[slot]}</Text>
+            <Text style={styles.loadoutName}>{slotValue(equipped, slot, catalog)}</Text>
+            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+          </TouchableOpacity>
+        ))}
+        <TouchableOpacity
+          accessibilityRole="button"
+          style={styles.loadoutRow}
+          onPress={withTapCue(openBadges)}
+        >
+          <Text style={styles.loadoutSlot}>Badges</Text>
+          <Text style={styles.loadoutName}>
+            {equipped.badges.length > 0 ? `${equipped.badges.length} equipped` : 'None'}
+          </Text>
+          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+        </TouchableOpacity>
       </View>
 
+      {/* Nameplate / Frame / Portrait picker modal */}
       <Modal visible={openSlot !== null} transparent animationType="slide" onRequestClose={close}>
         {openSlot !== null ? (
           <View style={styles.sheetBackdrop}>
@@ -139,22 +169,19 @@ export function LoadoutCard({ catalog, owned, equipped, onEquip }: LoadoutCardPr
               {bySlot[openSlot].map((item) => {
                 const strings = pickerRowStrings(item);
                 const locked = !item.owned;
-                const art = cosmeticArt(item.slug);
+                const art =
+                  openSlot === 'nameplate' ? nameplateArt(item.slug) : cosmeticArt(item.slug);
                 return (
                   <TouchableOpacity
                     key={item.id}
                     accessibilityRole="button"
                     disabled={locked || saving}
                     style={styles.optionRow}
-                    onPress={withTapCue(() => {
-                      setSelected(item.id);
-                    })}
+                    onPress={withTapCue(() => setSelected(item.id))}
                   >
                     {locked ? (
                       <Text style={styles.lockEmblem}>{strings[0]}</Text>
                     ) : art !== null ? (
-                      // AT-01D — owned rows show the cosmetic thumbnail; the
-                      // selection ring marks the currently equipped one.
                       <Image
                         source={art}
                         style={[
@@ -203,6 +230,71 @@ export function LoadoutCard({ catalog, owned, equipped, onEquip }: LoadoutCardPr
             </View>
           </View>
         ) : null}
+      </Modal>
+
+      {/* Badge picker modal */}
+      <Modal
+        visible={badgeModalOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={closeBadges}
+      >
+        <View style={styles.sheetBackdrop}>
+          <Pressable style={styles.sheetDismissArea} onPress={withTapCue(closeBadges)} />
+          <View style={styles.sheet}>
+            <Text style={styles.sheetTitle}>Badges</Text>
+            <Text style={styles.badgeHint}>Select up to 3 badges to display on your profile.</Text>
+
+            <View style={styles.badgeGrid}>
+              {equipped.badges.length === 0 && tempBadges.length === 0 ? null : (
+                <View style={styles.badgePreviewRow}>
+                  {[0, 1, 2].map((i) => {
+                    const slug = tempBadges[i];
+                    const art = slug ? achievementArt(slug) : null;
+                    return (
+                      <View
+                        key={i}
+                        style={[styles.badgePreviewSlot, slug && styles.badgePreviewActive]}
+                      >
+                        {art ? (
+                          <Image
+                            source={art}
+                            style={styles.badgePreviewImage}
+                            contentFit="contain"
+                          />
+                        ) : null}
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
+              {tempBadges.length > 0 ? (
+                <Text style={styles.badgeCount}>{tempBadges.length} / 3 selected</Text>
+              ) : null}
+            </View>
+
+            {error ? <Text style={styles.errorLine}>{error}</Text> : null}
+
+            <View style={styles.sheetActions}>
+              <TouchableOpacity
+                accessibilityRole="button"
+                style={styles.cancelButton}
+                disabled={saving}
+                onPress={withTapCue(closeBadges)}
+              >
+                <Text style={styles.cancelLabel}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                accessibilityRole="button"
+                style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+                disabled={saving}
+                onPress={withTapCue(() => void saveBadges())}
+              >
+                <Text style={styles.saveLabel}>{saving ? 'Saving…' : 'Save'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       </Modal>
     </View>
   );
@@ -351,5 +443,43 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontFamily: fonts.bodyBold.family,
     fontSize: 15,
+  },
+  badgeHint: {
+    color: colors.textMuted,
+    fontFamily: fonts.body.family,
+    fontSize: 13,
+    marginBottom: spacing.sm,
+  },
+  badgeGrid: {
+    gap: spacing.sm,
+  },
+  badgePreviewRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    justifyContent: 'center',
+  },
+  badgePreviewSlot: {
+    width: 56,
+    height: 56,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surfaceElevated,
+    borderWidth: 2,
+    borderColor: colors.surfaceElevated,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  badgePreviewActive: {
+    borderColor: colors.reward,
+  },
+  badgePreviewImage: {
+    width: 44,
+    height: 44,
+  },
+  badgeCount: {
+    color: colors.textMuted,
+    fontFamily: fonts.body.family,
+    fontSize: 12,
+    textAlign: 'center',
   },
 });

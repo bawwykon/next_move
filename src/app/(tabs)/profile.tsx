@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Image, ImageBackground } from 'expo-image';
+import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -175,6 +175,28 @@ export default function ProfileScreen() {
     [profile, owned, catalog],
   );
 
+  const handleEquipBadges = useCallback(
+    async (badges: string[]): Promise<string | null> => {
+      if (!profile) return 'Not ready yet.';
+      const previous = profile.equipped.badges;
+      setProfile((current) =>
+        current ? { ...current, equipped: { ...current.equipped, badges } } : current,
+      );
+      const { error } = await supabase
+        .from('profiles')
+        .update({ equipped_badges: badges } as never)
+        .eq('id', profile.id);
+      if (error) {
+        setProfile((current) =>
+          current ? { ...current, equipped: { ...current.equipped, badges: previous } } : current,
+        );
+        return 'Could not save badges.';
+      }
+      return null;
+    },
+    [profile],
+  );
+
   const initials = email ? (email.split('@')[0] ?? '').slice(0, 2).toUpperCase() : 'A';
   const todayKey = dayKey(new Date());
   // AT-01D — resolve the equipped item ids to catalogue slugs for the art
@@ -192,8 +214,8 @@ export default function ProfileScreen() {
   const portraitArt = equippedSlug('portrait') ? cosmeticArt(equippedSlug('portrait')) : null;
   const frameSlug = equippedSlug('frame');
   const frameArt = frameSlug ? cosmeticArt(frameSlug) : null;
-  const backgroundArt = equippedSlug('background') ? cosmeticArt(equippedSlug('background')) : null;
-  const hasNameplate = !!nameplateArt('premium_nameplate');
+  const nameplateSlug = profile?.equipped?.nameplate ?? null;
+  const hasNameplate = !!nameplateSlug && nameplateSlug !== 'nameplate-default';
   const bar = useMemo(
     () => (profile ? xpBar(profile.totalXp, profile.level) : xpBar(0, 1)),
     [profile],
@@ -231,14 +253,6 @@ export default function ProfileScreen() {
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.header}>
-              {backgroundArt !== null ? (
-                <ImageBackground
-                  source={backgroundArt}
-                  style={styles.headerBg}
-                  contentFit="cover"
-                  accessibilityLabel="Character background"
-                />
-              ) : null}
               <TouchableOpacity
                 accessibilityRole="button"
                 accessibilityLabel="Open settings"
@@ -277,9 +291,9 @@ export default function ProfileScreen() {
               {/* PH3-01b — name frame + badge centered below name banner */}
               <View style={styles.nameFrameWrap}>
                 <View style={[styles.nameFrame, hasNameplate && styles.nameFramePremium]}>
-                  {nameplateArt('premium_nameplate') ? (
+                  {hasNameplate && nameplateArt(nameplateSlug) ? (
                     <Image
-                      source={nameplateArt('premium_nameplate')!}
+                      source={nameplateArt(nameplateSlug)!}
                       style={StyleSheet.absoluteFill}
                       contentFit="contain"
                     />
@@ -399,6 +413,7 @@ export default function ProfileScreen() {
               owned={owned}
               equipped={profile?.equipped ?? emptyEquipped}
               onEquip={handleEquip}
+              onEquipBadges={handleEquipBadges}
             />
 
             {/* Quest history — last-4 preview; the full paged list lives on
@@ -448,8 +463,7 @@ export default function ProfileScreen() {
 
 const emptyEquipped = {
   frame: null,
-  title: null,
-  background: null,
+  nameplate: null,
   portrait: null,
   badge: null,
   badges: [],

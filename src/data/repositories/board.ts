@@ -29,8 +29,7 @@ export interface CharacterProfile {
   lastCompletedDay: string | null;
   equipped: {
     frame: string | null;
-    title: string | null;
-    background: string | null;
+    nameplate: string | null;
     portrait: string | null;
     badge: string | null;
     badges: string[];
@@ -53,7 +52,7 @@ export async function fetchProfile(profileId: string): Promise<RepoResult<Charac
   const { data, error } = await supabase
     .from('profiles')
     .select(
-      'id, display_name, onboarded, journey_quests, current_chapter, total_xp, level, current_streak, longest_streak, last_completed_day, equipped_frame, equipped_title, equipped_background, equipped_portrait, equipped_badge, equipped_badges',
+      'id, display_name, onboarded, journey_quests, current_chapter, total_xp, level, current_streak, longest_streak, last_completed_day, equipped_frame, equipped_nameplate, equipped_portrait, equipped_badge, equipped_badges',
     )
     .eq('id', profileId)
     .maybeSingle();
@@ -77,8 +76,9 @@ export async function fetchProfile(profileId: string): Promise<RepoResult<Charac
     lastCompletedDay: data.last_completed_day,
     equipped: {
       frame: data.equipped_frame,
-      title: data.equipped_title,
-      background: data.equipped_background,
+      nameplate:
+        (data as unknown as { equipped_nameplate: string | null }).equipped_nameplate ??
+        'nameplate-default',
       portrait: data.equipped_portrait,
       badge: (data as unknown as { equipped_badge: string | null }).equipped_badge ?? null,
       badges: (data as unknown as { equipped_badges: string[] | null }).equipped_badges ?? [],
@@ -175,11 +175,9 @@ export async function equipCosmetic(
   const patch =
     column === 'equipped_frame'
       ? { equipped_frame: itemId }
-      : column === 'equipped_title'
-        ? { equipped_title: itemId }
-        : column === 'equipped_background'
-          ? { equipped_background: itemId }
-          : { equipped_portrait: itemId };
+      : column === 'equipped_nameplate'
+        ? { equipped_nameplate: itemId ?? 'nameplate-default' }
+        : { equipped_portrait: itemId };
   const { error } = await supabase.from('profiles').update(patch).eq('id', profileId);
 
   if (error) {

@@ -22,7 +22,7 @@ import { streakPillCopy } from '@/features/questBoard/earn';
 
 const CATALOG = [
   { id: 'c-frame', slug: 'frame-default', name: 'Classic Frame' },
-  { id: 'c-title', slug: 'title-adventurer', name: 'Adventurer' },
+  { id: 'c-nameplate', slug: 'nameplate-level-05', name: 'Bronze Nameplate' },
   { id: 'c-portrait', slug: 'portrait-default', name: 'Classic Portrait' },
 ];
 
@@ -115,31 +115,21 @@ describe('masteryRows', () => {
 
 describe('loadoutSlots (FR-PROF-2, defaults when unset)', () => {
   it('resolves equipped ids and falls back to seeded defaults', () => {
-    const slots = loadoutSlots(
-      { frame: 'c-frame', title: null, background: null, portrait: null },
-      CATALOG,
-    );
+    const slots = loadoutSlots({ frame: 'c-frame', nameplate: null, portrait: null }, CATALOG);
     expect(slots).toEqual([
       { slot: 'Frame', name: 'Classic Frame' },
-      { slot: 'Title', name: null },
-      { slot: 'Background', name: null },
+      { slot: 'Nameplate', name: null },
       { slot: 'Portrait', name: 'Classic Portrait' },
     ]);
   });
 
   it('uses the catalogue name for an equipped non-default item', () => {
-    const slots = loadoutSlots(
-      { frame: null, title: 'c-title', background: null, portrait: null },
-      CATALOG,
-    );
-    expect(slots[1]).toEqual({ slot: 'Title', name: 'Adventurer' });
+    const slots = loadoutSlots({ frame: null, nameplate: 'c-nameplate', portrait: null }, CATALOG);
+    expect(slots[1]).toEqual({ slot: 'Nameplate', name: 'Bronze Nameplate' });
   });
 
   it('unknown ids resolve to none', () => {
-    const slots = loadoutSlots(
-      { frame: 'ghost', title: null, background: null, portrait: null },
-      CATALOG,
-    );
+    const slots = loadoutSlots({ frame: 'ghost', nameplate: null, portrait: null }, CATALOG);
     expect(slots[0]).toEqual({ slot: 'Frame', name: null });
   });
 });

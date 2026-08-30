@@ -292,6 +292,7 @@ export type Database = {
           equipped_badge: string | null;
           equipped_badges: string[];
           equipped_frame: string | null;
+          equipped_nameplate: string;
           equipped_portrait: string | null;
           equipped_title: string | null;
           id: string;
@@ -313,6 +314,7 @@ export type Database = {
           equipped_badge?: string | null;
           equipped_badges?: string[];
           equipped_frame?: string | null;
+          equipped_nameplate?: string;
           equipped_portrait?: string | null;
           equipped_title?: string | null;
           id: string;
@@ -334,6 +336,7 @@ export type Database = {
           equipped_badge?: string | null;
           equipped_badges?: string[];
           equipped_frame?: string | null;
+          equipped_nameplate?: string;
           equipped_portrait?: string | null;
           equipped_title?: string | null;
           id?: string;

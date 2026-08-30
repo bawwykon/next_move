@@ -5,15 +5,14 @@
  * rows); the client only ever sees ids/slugs/names — never unlock rules.
  */
 
-export type CosmeticSlot = 'frame' | 'title' | 'background' | 'portrait';
+export type CosmeticSlot = 'frame' | 'nameplate' | 'portrait';
 
-export const COSMETIC_SLOTS: readonly CosmeticSlot[] = ['frame', 'title', 'background', 'portrait'];
+export const COSMETIC_SLOTS: readonly CosmeticSlot[] = ['frame', 'nameplate', 'portrait'];
 
 /** Slot → profiles table column (M0019 `equipped_*`). */
 export const SLOT_COLUMN: Record<CosmeticSlot, string> = {
   frame: 'equipped_frame',
-  title: 'equipped_title',
-  background: 'equipped_background',
+  nameplate: 'equipped_nameplate',
   portrait: 'equipped_portrait',
 };
 
@@ -25,6 +24,7 @@ export function slotColumn(slot: string): string | null {
 /** The seeded default item per slot, where one exists (display fallback). */
 export const DEFAULT_SLOT_SLUGS: Partial<Record<CosmeticSlot, string>> = {
   frame: 'frame-default',
+  nameplate: 'nameplate-default',
   portrait: 'portrait-default',
 };
 
@@ -54,8 +54,7 @@ export function catalogBySlot(
 ): Record<CosmeticSlot, OwnedCatalogItem[]> {
   const grouped: Record<CosmeticSlot, OwnedCatalogItem[]> = {
     frame: [],
-    title: [],
-    background: [],
+    nameplate: [],
     portrait: [],
   };
   for (const item of catalog) {
@@ -117,8 +116,7 @@ export interface EquippedSlot {
 export function resolveEquipped(
   equipped: {
     frame: string | null;
-    title: string | null;
-    background: string | null;
+    nameplate: string | null;
     portrait: string | null;
   },
   catalog: readonly { id: string; slug: string; name: string }[],
@@ -129,8 +127,6 @@ export function resolveEquipped(
     const item = id ? (byId.get(id) ?? null) : null;
     const defaultSlug = DEFAULT_SLOT_SLUGS[slot];
     const defaultName = defaultSlug ? (bySlug.get(defaultSlug) ?? null) : null;
-    // "using the default" means the slot is truly unset — a set-but-unresolvable
-    // id (catalogue drift) is not the default look, it's a broken reference.
     const usingDefault = id === null;
     return {
       slot,
@@ -141,8 +137,7 @@ export function resolveEquipped(
   };
   return {
     frame: resolveOne('frame', equipped.frame),
-    title: resolveOne('title', equipped.title),
-    background: resolveOne('background', equipped.background),
+    nameplate: resolveOne('nameplate', equipped.nameplate),
     portrait: resolveOne('portrait', equipped.portrait),
   };
 }

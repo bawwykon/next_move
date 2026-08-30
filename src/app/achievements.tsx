@@ -104,36 +104,6 @@ export default function AchievementsScreen() {
     [catalog, unlocks],
   );
   const unlockedCount = rows.filter((r) => r.state === 'unlocked').length;
-  const [toast, setToast] = useState<string | null>(null);
-
-  const handleEquip = useCallback(
-    async (slug: string) => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-      const isEquipped = equippedBadges.includes(slug);
-      let next: string[];
-      if (isEquipped) {
-        // Remove from equipped
-        next = equippedBadges.filter((s) => s !== slug);
-      } else if (equippedBadges.length >= 3) {
-        // Max 3 badges — show toast notice
-        return 'Maximum 3 badges equipped — tap an equipped badge to remove it.';
-      } else {
-        // Add to equipped
-        next = [...equippedBadges, slug];
-      }
-      setEquippedBadges(next);
-      const { error } = await supabase
-        .from('profiles')
-        .update({ equipped_badges: next } as never)
-        .eq('id', user.id);
-      if (error) setEquippedBadges(equippedBadges);
-      return null;
-    },
-    [equippedBadges],
-  );
 
   return (
     <Screen>
@@ -197,11 +167,6 @@ export default function AchievementsScreen() {
 
             {tab === 'badges' ? (
               <View style={styles.grid}>
-                {toast ? (
-                  <View style={styles.toast}>
-                    <Text style={styles.toastText}>{toast}</Text>
-                  </View>
-                ) : null}
                 {rows.map((row) => {
                   const isUnlocked = row.state === 'unlocked';
                   const rarity = rarityFor(row.slug, row.rarity ?? 'Common');
@@ -223,22 +188,12 @@ export default function AchievementsScreen() {
                   return (
                     <TouchableOpacity
                       key={row.slug}
-                      accessibilityRole="button"
                       style={[
                         styles.gridCell,
                         { borderColor },
                         isEquipped && styles.gridCellEquipped,
                       ]}
-                      onPress={withTapCue(() => {
-                        if (isUnlocked) {
-                          const result = handleEquip(row.slug);
-                          if (typeof result === 'string' && result) {
-                            setToast(result);
-                            setTimeout(() => setToast(null), 3000);
-                          }
-                        }
-                      })}
-                      disabled={!isUnlocked}
+                      disabled
                     >
                       <View style={styles.gridEmblem}>
                         {art ? (
@@ -452,19 +407,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   equippedLabel: { color: colors.reward, fontFamily: fonts.bodyBold.family, fontSize: 11 },
-  toast: {
-    width: '100%',
-    backgroundColor: colors.surfaceElevated,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  toastText: {
-    color: colors.textMuted,
-    fontFamily: fonts.body.family,
-    fontSize: 13,
-    textAlign: 'center',
-  },
   lockOverlay: {
     position: 'absolute',
     top: 8,
