@@ -281,10 +281,15 @@ export default function ProfileScreen() {
                     <Image
                       source={nameplateArt('premium_nameplate')!}
                       style={StyleSheet.absoluteFill}
-                      contentFit="cover"
+                      contentFit="contain"
                     />
                   ) : null}
-                  <Text style={[styles.name, { zIndex: 1 }]}>
+                  <Text
+                    numberOfLines={1}
+                    adjustsFontSizeToFit={true}
+                    minimumFontScale={0.7}
+                    style={[styles.name, hasNameplate && styles.namePremium, { zIndex: 1 }]}
+                  >
                     {(
                       profile?.displayName ?? (email ? `Signed in as ${email}` : 'Your journey')
                     ).toUpperCase()}
@@ -547,6 +552,20 @@ const styles = StyleSheet.create({
   nameFramePremium: {
     borderWidth: 0,
     backgroundColor: 'transparent',
+    aspectRatio: 2.75,
+    width: 240,
+    maxWidth: 260,
+    minWidth: 180,
+    paddingHorizontal: 24,
+    paddingVertical: 0,
+  },
+  namePremium: {
+    color: '#FFF8E7', // warm soft cream/gold
+    textShadowColor: 'rgba(0, 0, 0, 0.9)',
+    textShadowOffset: { width: 0, height: 1.5 },
+    textShadowRadius: 3,
+    letterSpacing: 1.2,
+    fontSize: 18,
   },
   badgeCentered: {
     alignSelf: 'center',
@@ -572,7 +591,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(0,0,0,0.25)',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.surfaceElevated,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 2,

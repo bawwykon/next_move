@@ -36,7 +36,7 @@ import { colors, fonts, radius, spacing } from '@/lib/theme';
 import { useSessionStore } from '@/state/sessionStore';
 
 const STEP_COUNT = ONBOARDING_STEPS.length;
-const NAME_MAX = 30;
+const NAME_MAX = 16;
 
 export default function OnboardingScreen() {
   const completeOnboarding = useSessionStore((state) => state.completeOnboarding);

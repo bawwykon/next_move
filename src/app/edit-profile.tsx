@@ -9,7 +9,7 @@ import { supabase } from '@/data/supabase';
 import { withTapCue } from '@/lib/sounds';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 
-const NAME_MAX = 30;
+const NAME_MAX = 16;
 
 /**
  * PH3-01a — dedicated profile editor. The name lives here now; future
