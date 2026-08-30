@@ -160,8 +160,15 @@ export default function ProfileScreen() {
         return 'This one is still locked for you.';
       }
       const previous = profile.equipped[slot];
+      // nameplate is stored as slug in DB; keep optimistic state as slug too so nameplateArt resolves
+      const optimisticValue =
+        slot === 'nameplate' && itemId
+          ? (catalog.find((c) => c.id === itemId)?.slug ?? itemId)
+          : itemId;
       setProfile((current) =>
-        current ? { ...current, equipped: { ...current.equipped, [slot]: itemId } } : current,
+        current
+          ? { ...current, equipped: { ...current.equipped, [slot]: optimisticValue } }
+          : current,
       );
       const result = await equipCosmetic(profile.id, slot, itemId);
       if (result.error) {
@@ -214,8 +221,15 @@ export default function ProfileScreen() {
   const portraitArt = equippedSlug('portrait') ? cosmeticArt(equippedSlug('portrait')) : null;
   const frameSlug = equippedSlug('frame');
   const frameArt = frameSlug ? cosmeticArt(frameSlug) : null;
-  const nameplateSlug = profile?.equipped?.nameplate ?? 'nameplate-default';
-  const nameplateSource = nameplateArt(nameplateSlug);
+  const rawNameplate = profile?.equipped?.nameplate ?? 'nameplate-default';
+  // DB was slug; legacy rows / optimistic state may still be UUID — resolve via catalog if needed
+  const nameplateSlug = (() => {
+    if (rawNameplate.length === 36 && rawNameplate.includes('-')) {
+      return catalog.find((c) => c.id === rawNameplate)?.slug ?? 'nameplate-default';
+    }
+    return rawNameplate;
+  })();
+  const nameplateSource = nameplateArt(nameplateSlug) ?? nameplateArt('nameplate-default');
   const hasNameplate = !!nameplateSource;
   const bar = useMemo(
     () => (profile ? xpBar(profile.totalXp, profile.level) : xpBar(0, 1)),
@@ -254,15 +268,6 @@ export default function ProfileScreen() {
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.header}>
-              <TouchableOpacity
-                accessibilityRole="button"
-                accessibilityLabel="Open settings"
-                style={styles.settingsGear}
-                onPress={withTapCue(() => router.push('/settings' as never))}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <Ionicons name="settings-outline" size={22} color={colors.text} />
-              </TouchableOpacity>
               <View style={styles.avatarWrap}>
                 {frameArt !== null ? (
                   // AT-01E — frame paints BEHIND the portrait; each frame
@@ -303,6 +308,9 @@ export default function ProfileScreen() {
                     numberOfLines={1}
                     adjustsFontSizeToFit={true}
                     minimumFontScale={0.7}
+                    // @ts-expect-error — Android: removes extra font padding that pushes text low in leather panel
+                    includeFontPadding={false}
+                    textAlign="center"
                     style={[styles.name, hasNameplate && styles.namePremium, { zIndex: 1 }]}
                   >
                     {(
@@ -604,6 +612,8 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
     fontSize: 18,
     textAlign: 'center',
+    width: '100%',
+    transform: [{ translateY: -8 }],
   },
   badgeCentered: {
     alignSelf: 'center',
@@ -642,20 +652,6 @@ const styles = StyleSheet.create({
   badgeSlotImage: {
     width: 28,
     height: 28,
-  },
-  settingsGear: {
-    position: 'absolute',
-    top: spacing.md,
-    right: spacing.md,
-    width: 36,
-    height: 36,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.surfaceElevated,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 2,
   },
   levelLine: {
     color: colors.textMuted,

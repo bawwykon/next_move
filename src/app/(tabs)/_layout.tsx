@@ -6,6 +6,7 @@ import { colors, spacing } from '@/lib/theme';
 export default function TabsLayout() {
   return (
     <Tabs
+      initialRouteName="quest-board"
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.reward,
@@ -48,6 +49,15 @@ export default function TabsLayout() {
           title: 'Profile',
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? 'person' : 'person-outline'} size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'settings' : 'settings-outline'} size={24} color={color} />
           ),
         }}
       />
