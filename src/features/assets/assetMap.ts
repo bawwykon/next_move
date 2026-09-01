@@ -132,6 +132,26 @@ export function nameplateAspect(slug: string | null | undefined): number {
   return slug ? (NAMEPLATE_ASPECT[slug] ?? 2.8) : 2.8;
 }
 
+// Per-nameplate vertical offset to center text in the brown leather panel
+// (image center != leather center due to varying drapes/emblems/transparent padding).
+// Value is (leatherCenter - imageCenter) / imageHeight as a fraction (negative = up).
+// Measured via pixel analysis of the 8 PNGs (see nameplate_debug overlays).
+export const NAMEPLATE_TEXT_OFFSET_PCT: Record<string, number> = {
+  'nameplate-default': -0.1128,
+  'nameplate-level-05': -0.1038,
+  'nameplate-level-10': -0.1061,
+  'nameplate-level-25': -0.0283,
+  'nameplate-level-50': -0.0324,
+  'nameplate-level-75': -0.0748,
+  'nameplate-level-100': -0.1041,
+  'premium-nameplate': -0.0359,
+  premium_nameplate: -0.0359,
+};
+
+export function nameplateTextOffsetPct(slug: string | null | undefined): number {
+  return slug ? (NAMEPLATE_TEXT_OFFSET_PCT[slug] ?? 0) : 0;
+}
+
 export function cosmeticArt(slug: string | null | undefined): number | null {
   return slug ? (COSMETIC_ART[slug] ?? null) : null;
 }

@@ -31,6 +31,7 @@ import {
   masteryArt,
   nameplateArt,
   nameplateAspect,
+  nameplateTextOffsetPct,
 } from '@/features/assets/assetMap';
 import { withTapCue } from '@/lib/sounds';
 import { LoadoutCard } from '@/features/profile/LoadoutCard';
@@ -253,6 +254,9 @@ export default function ProfileScreen() {
   })();
   const nameplateSource = nameplateArt(nameplateSlug) ?? nameplateArt('nameplate-default');
   const hasNameplate = !!nameplateSource;
+  const nameplateOffsetPct = nameplateTextOffsetPct(nameplateSlug);
+  const nameplateRenderedH = 240 / nameplateAspect(nameplateSlug);
+  const nameplateTextTranslateY = nameplateOffsetPct * nameplateRenderedH;
   const bar = useMemo(
     () => (profile ? xpBar(profile.totalXp, profile.level) : xpBar(0, 1)),
     [profile],
@@ -344,6 +348,7 @@ export default function ProfileScreen() {
                         right: 0,
                         bottom: 0,
                         textAlignVertical: 'center',
+                        transform: [{ translateY: hasNameplate ? nameplateTextTranslateY : 0 }],
                       },
                     ]}
                   >
