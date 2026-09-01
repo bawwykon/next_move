@@ -555,6 +555,8 @@ const styles = StyleSheet.create({
     height: 120,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+    borderRadius: radius.pill,
   },
   avatar: {
     width: 96,
