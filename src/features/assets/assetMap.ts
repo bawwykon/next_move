@@ -141,7 +141,7 @@ export const NAMEPLATE_TEXT_OFFSET_PCT: Record<string, number> = {
   'nameplate-level-05': -0.1038,
   'nameplate-level-10': -0.1061,
   'nameplate-level-25': -0.0283,
-  'nameplate-level-50': -0.045,
+  'nameplate-level-50': -0.065,
   'nameplate-level-75': -0.04,
   'nameplate-level-100': -0.1041,
   'premium-nameplate': -0.0359,
