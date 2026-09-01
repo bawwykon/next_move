@@ -25,7 +25,13 @@ import {
   DEFAULT_SLOT_SLUGS,
   type CosmeticSlot,
 } from '@/domain/cosmetics/loadout';
-import { achievementArt, cosmeticArt, masteryArt, nameplateArt } from '@/features/assets/assetMap';
+import {
+  achievementArt,
+  cosmeticArt,
+  masteryArt,
+  nameplateArt,
+  nameplateAspect,
+} from '@/features/assets/assetMap';
 import { withTapCue } from '@/lib/sounds';
 import { LoadoutCard } from '@/features/profile/LoadoutCard';
 import {
@@ -316,7 +322,7 @@ export default function ProfileScreen() {
                   {hasNameplate ? (
                     <Image
                       source={nameplateSource!}
-                      style={StyleSheet.absoluteFill}
+                      style={{ width: '100%', aspectRatio: nameplateAspect(nameplateSlug) }}
                       contentFit="contain"
                     />
                   ) : null}
@@ -327,7 +333,19 @@ export default function ProfileScreen() {
                     // @ts-expect-error — Android: removes extra font padding that pushes text low in leather panel
                     includeFontPadding={false}
                     textAlign="center"
-                    style={[styles.name, hasNameplate && styles.namePremium, { zIndex: 1 }]}
+                    style={[
+                      styles.name,
+                      hasNameplate && styles.namePremium,
+                      {
+                        zIndex: 1,
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        textAlignVertical: 'center',
+                      },
+                    ]}
                   >
                     {(
                       profile?.displayName ?? (email ? `Signed in as ${email}` : 'Your journey')
@@ -613,24 +631,20 @@ const styles = StyleSheet.create({
   nameFramePremium: {
     borderWidth: 0,
     backgroundColor: 'transparent',
-    aspectRatio: 2.75,
     width: 240,
     maxWidth: 260,
     minWidth: 180,
-    paddingHorizontal: 16,
-    paddingVertical: 0,
-    alignItems: 'stretch',
+    overflow: 'visible',
+    position: 'relative',
   },
   namePremium: {
-    color: '#FFF8E7', // warm soft cream/gold
+    color: '#FFF8E7',
     textShadowColor: 'rgba(0, 0, 0, 0.9)',
     textShadowOffset: { width: 0, height: 1.5 },
     textShadowRadius: 3,
     letterSpacing: 1.2,
     fontSize: 18,
     textAlign: 'center',
-    width: '100%',
-    transform: [{ translateY: -8 }],
   },
   badgeCentered: {
     alignSelf: 'center',

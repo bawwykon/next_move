@@ -42,7 +42,11 @@ function slotValue(
       ? (items.find((item) => item.slug === defaultSlug)?.name ?? 'Default')
       : 'Default';
   }
-  return items.find((item) => item.id === id)?.name ?? 'Default';
+  const byId = items.find((item) => item.id === id);
+  if (byId) return byId.name;
+  const bySlug = items.find((item) => item.slug === id);
+  if (bySlug) return bySlug.name;
+  return 'Default';
 }
 
 export function LoadoutCard({

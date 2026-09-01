@@ -116,6 +116,22 @@ export function nameplateArt(slug: string | null | undefined): number | null {
   return slug ? (NAMEPLATE_ART[slug] ?? null) : null;
 }
 
+export const NAMEPLATE_ASPECT: Record<string, number> = {
+  'nameplate-default': 2.801,
+  'nameplate-level-05': 2.75,
+  'nameplate-level-10': 2.801,
+  'nameplate-level-25': 2.598,
+  'nameplate-level-50': 2.75,
+  'nameplate-level-75': 2.801,
+  'nameplate-level-100': 2.695,
+  'premium-nameplate': 3.0,
+  premium_nameplate: 3.0,
+};
+
+export function nameplateAspect(slug: string | null | undefined): number {
+  return slug ? (NAMEPLATE_ASPECT[slug] ?? 2.8) : 2.8;
+}
+
 export function cosmeticArt(slug: string | null | undefined): number | null {
   return slug ? (COSMETIC_ART[slug] ?? null) : null;
 }

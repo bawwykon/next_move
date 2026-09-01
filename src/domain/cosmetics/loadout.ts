@@ -122,11 +122,11 @@ export function resolveEquipped(
   catalog: readonly { id: string; slug: string; name: string }[],
 ): Record<CosmeticSlot, EquippedSlot> {
   const byId = new Map(catalog.map((item) => [item.id, item]));
-  const bySlug = new Map(catalog.map((item) => [item.slug, item.name]));
+  const bySlug = new Map(catalog.map((item) => [item.slug, item]));
   const resolveOne = (slot: CosmeticSlot, id: string | null): EquippedSlot => {
-    const item = id ? (byId.get(id) ?? null) : null;
+    const item = id ? (byId.get(id) ?? bySlug.get(id) ?? null) : null;
     const defaultSlug = DEFAULT_SLOT_SLUGS[slot];
-    const defaultName = defaultSlug ? (bySlug.get(defaultSlug) ?? null) : null;
+    const defaultName = defaultSlug ? (bySlug.get(defaultSlug)?.name ?? null) : null;
     const usingDefault = id === null;
     return {
       slot,
