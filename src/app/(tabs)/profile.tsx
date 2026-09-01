@@ -542,6 +542,8 @@ const styles = StyleSheet.create({
     height: 120,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+    borderRadius: radius.pill,
   },
   avatar: {
     width: 96,
@@ -578,7 +580,7 @@ const styles = StyleSheet.create({
   },
   nameFrameWrap: {
     alignSelf: 'center',
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
     position: 'relative',
   },
   nameFrame: {
