@@ -555,8 +555,6 @@ const styles = StyleSheet.create({
     height: 120,
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
-    borderRadius: radius.pill,
   },
   avatar: {
     width: 96,
@@ -577,7 +575,7 @@ const styles = StyleSheet.create({
     maxWidth: 229.5,
     maxHeight: 229.5,
     aspectRatio: 1,
-    zIndex: 0,
+    zIndex: 2,
   },
   initials: {
     color: colors.reward,
