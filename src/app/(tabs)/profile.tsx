@@ -231,7 +231,8 @@ export default function ProfileScreen() {
   const frameArt = frameSlug ? cosmeticArt(frameSlug) : null;
   // Per-frame gap so the frame's bottom deco (bow / gold point) never eats the nameplate.
   // Orange circles (05/10/25/50) sit ~11px below avatarWrap; gold ornate (100) ~27px; default ~10px.
-  const nameFrameMarginTop =
+  // Now 10% tighter (move nameplate up 10%).
+  const _baseNameFrameMarginTop =
     frameSlug === 'frame-level-100' || frameSlug === 'premium_frame'
       ? spacing.xxl
       : frameSlug === 'frame-level-75'
@@ -244,6 +245,7 @@ export default function ProfileScreen() {
               frameSlug === 'frame-level-50'
             ? spacing.md
             : spacing.sm;
+  const nameFrameMarginTop = _baseNameFrameMarginTop * 0.9;
   const rawNameplate = profile?.equipped?.nameplate ?? 'nameplate-default';
   // DB was slug; legacy rows / optimistic state may still be UUID — resolve via catalog if needed
   const nameplateSlug = (() => {
