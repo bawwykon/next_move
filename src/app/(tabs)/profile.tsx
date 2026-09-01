@@ -619,6 +619,7 @@ const styles = StyleSheet.create({
     minWidth: 180,
     paddingHorizontal: 16,
     paddingVertical: 0,
+    alignItems: 'stretch',
   },
   namePremium: {
     color: '#FFF8E7', // warm soft cream/gold
