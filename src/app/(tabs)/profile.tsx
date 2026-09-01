@@ -222,6 +222,19 @@ export default function ProfileScreen() {
   const portraitArt = equippedSlug('portrait') ? cosmeticArt(equippedSlug('portrait')) : null;
   const frameSlug = equippedSlug('frame');
   const frameArt = frameSlug ? cosmeticArt(frameSlug) : null;
+  // Per-frame gap so the frame's bottom deco (bow / gold point) never eats the nameplate.
+  // Orange circles (05/10/25/50) sit ~11px below avatarWrap; gold ornate (100) ~27px; default ~10px.
+  const nameFrameMarginTop =
+    frameSlug === 'frame-level-100' || frameSlug === 'premium_frame'
+      ? spacing.xxl
+      : frameSlug === 'frame-default'
+        ? spacing.xl
+        : frameSlug === 'frame-level-05' ||
+            frameSlug === 'frame-level-10' ||
+            frameSlug === 'frame-level-25' ||
+            frameSlug === 'frame-level-50'
+          ? spacing.md
+          : spacing.sm;
   const rawNameplate = profile?.equipped?.nameplate ?? 'nameplate-default';
   // DB was slug; legacy rows / optimistic state may still be UUID — resolve via catalog if needed
   const nameplateSlug = (() => {
@@ -296,7 +309,7 @@ export default function ProfileScreen() {
                 </View>
               </View>
               {/* PH3-01b — name frame + badge centered below name banner */}
-              <View style={styles.nameFrameWrap}>
+              <View style={[styles.nameFrameWrap, { marginTop: nameFrameMarginTop }]}>
                 <View style={[styles.nameFrame, hasNameplate && styles.nameFramePremium]}>
                   {hasNameplate ? (
                     <Image
@@ -542,8 +555,6 @@ const styles = StyleSheet.create({
     height: 120,
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
-    borderRadius: radius.pill,
   },
   avatar: {
     width: 96,
