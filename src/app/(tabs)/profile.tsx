@@ -255,7 +255,7 @@ export default function ProfileScreen() {
   const nameplateSource = nameplateArt(nameplateSlug) ?? nameplateArt('nameplate-default');
   const hasNameplate = !!nameplateSource;
   const nameplateOffsetPct = nameplateTextOffsetPct(nameplateSlug);
-  const nameplateRenderedH = 240 / nameplateAspect(nameplateSlug);
+  const nameplateRenderedH = 276 / nameplateAspect(nameplateSlug);
   const nameplateTextTranslateY = nameplateOffsetPct * nameplateRenderedH;
   const bar = useMemo(
     () => (profile ? xpBar(profile.totalXp, profile.level) : xpBar(0, 1)),
@@ -636,9 +636,9 @@ const styles = StyleSheet.create({
   nameFramePremium: {
     borderWidth: 0,
     backgroundColor: 'transparent',
-    width: 240,
-    maxWidth: 260,
-    minWidth: 180,
+    width: 276,
+    maxWidth: 299,
+    minWidth: 207,
     overflow: 'visible',
     position: 'relative',
   },
