@@ -56,6 +56,7 @@ const FRAME_HOLE_CENTER: Record<string, { x: number; y: number; size: number }> 
   'frame-level-10': { x: 255.4, y: 258.86, size: 176 },
   'frame-level-25': { x: 232.3, y: 262.86, size: 176 },
   'frame-level-50': { x: 265.1, y: 265.86, size: 176 },
+  'frame-level-75': { x: 256, y: 256, size: 176 },
   'frame-level-100': { x: 277.6, y: 269.86, size: 176 },
   premium_frame: { x: 256, y: 256, size: 155.23 },
 };
