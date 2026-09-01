@@ -557,8 +557,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatar: {
-    width: 96,
-    height: 96,
+    width: 108,
+    height: 108,
     borderRadius: radius.pill,
     backgroundColor: colors.surfaceElevated,
     alignItems: 'center',
@@ -615,7 +615,7 @@ const styles = StyleSheet.create({
     width: 240,
     maxWidth: 260,
     minWidth: 180,
-    paddingHorizontal: 32,
+    paddingHorizontal: 16,
     paddingVertical: 0,
   },
   namePremium: {
