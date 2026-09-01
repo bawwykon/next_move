@@ -1,7 +1,11 @@
 -- 0034_nameplates_cosmetics.sql
 -- LOADOUT-01: Add equipped_nameplate column and seed nameplate cosmetics.
 
--- 1. Add the column
+-- 1. Allow nameplate type
+ALTER TABLE public.cosmetics DROP CONSTRAINT IF EXISTS cosmetics_type_check;
+ALTER TABLE public.cosmetics ADD CONSTRAINT cosmetics_type_check CHECK (type IN ('frame','title','background','portrait','nameplate'));
+
+-- 1b. Add the column
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS equipped_nameplate text NOT NULL DEFAULT 'nameplate-default';
 

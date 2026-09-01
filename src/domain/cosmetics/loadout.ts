@@ -44,9 +44,44 @@ export function ownedBySlug(rows: readonly { slug: string }[]): Set<string> {
   return new Set(rows.map((row) => row.slug));
 }
 
+const LEVEL_BY_SLUG: Record<string, number> = {
+  // frames
+  'frame-default': 0,
+  'frame-level-05': 5,
+  'frame-level-10': 10,
+  'frame-level-25': 25,
+  'frame-level-50': 50,
+  'frame-level-75': 75,
+  'frame-level-100': 100,
+  premium_frame: 999,
+  // nameplates
+  'nameplate-default': 1,
+  'nameplate-level-05': 5,
+  'nameplate-level-10': 10,
+  'nameplate-level-25': 25,
+  'nameplate-level-50': 50,
+  'nameplate-level-75': 75,
+  'nameplate-level-100': 100,
+  'premium-nameplate': 999,
+  premium_nameplate: 999,
+  // portraits — pure level ladder (0036)
+  'portrait-default': 0,
+  'portrait-phoenix': 25,
+  'portrait-pathfinder': 45,
+  'portrait-warden': 65,
+  'portrait-master': 100,
+  premium_portrait: 999,
+};
+
+function levelForSlug(slug: string): number {
+  return LEVEL_BY_SLUG[slug] ?? 9999;
+}
+
 /**
  * The picker rows grouped per slot, in catalogue order, with the ownership
  * flag. Only items whose kind matches the slot appear in that slot's rows.
+ * Sorted by level ascending (5→10→25→50→75→100→premium) so the picker
+ * reflects the progression ladder, not alphabetical slug order.
  */
 export function catalogBySlot(
   catalog: readonly CatalogItem[],
@@ -62,6 +97,9 @@ export function catalogBySlot(
     if (slot in grouped) {
       grouped[slot].push({ ...item, owned: owned.has(item.slug) });
     }
+  }
+  for (const slot of COSMETIC_SLOTS) {
+    grouped[slot].sort((a, b) => levelForSlug(a.slug) - levelForSlug(b.slug));
   }
   return grouped;
 }

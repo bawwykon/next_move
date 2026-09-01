@@ -16,6 +16,32 @@ const SLOT_LABELS: Record<CosmeticSlot, string> = {
   portrait: 'Portrait',
 };
 
+const LEVEL_LABEL_BY_SLUG: Record<string, string> = {
+  'frame-default': 'Always available',
+  'frame-level-05': 'Lv 5',
+  'frame-level-10': 'Lv 10',
+  'frame-level-25': 'Lv 25',
+  'frame-level-50': 'Lv 50',
+  'frame-level-75': 'Lv 75',
+  'frame-level-100': 'Lv 100',
+  premium_frame: 'Purchase',
+  'nameplate-default': 'Lv 1',
+  'nameplate-level-05': 'Lv 5',
+  'nameplate-level-10': 'Lv 10',
+  'nameplate-level-25': 'Lv 25',
+  'nameplate-level-50': 'Lv 50',
+  'nameplate-level-75': 'Lv 75',
+  'nameplate-level-100': 'Lv 100',
+  'premium-nameplate': 'Purchase',
+  premium_nameplate: 'Purchase',
+  'portrait-default': 'Always available',
+  'portrait-phoenix': 'Lv 25',
+  'portrait-pathfinder': 'Lv 45',
+  'portrait-warden': 'Lv 65',
+  'portrait-master': 'Lv 100',
+  premium_portrait: 'Purchase',
+};
+
 export interface LoadoutCardProps {
   catalog: readonly CosmeticRow[];
   owned: ReadonlySet<string>;
@@ -220,9 +246,13 @@ export function LoadoutCard({
                     <Text style={[styles.optionLabel, locked && styles.optionLocked]}>
                       {strings[strings.length - 1]}
                     </Text>
-                    {locked ? (
-                      <Text style={styles.optionMeta}>Locked — keep going to earn it</Text>
-                    ) : null}
+                    <Text style={styles.optionMeta}>
+                      {(() => {
+                        const lvl = LEVEL_LABEL_BY_SLUG[item.slug];
+                        if (!lvl) return locked ? 'Locked — keep going to earn it' : '';
+                        return locked ? `${lvl} • Locked` : lvl;
+                      })()}
+                    </Text>
                   </TouchableOpacity>
                 );
               })}
