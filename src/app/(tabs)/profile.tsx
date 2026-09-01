@@ -227,14 +227,16 @@ export default function ProfileScreen() {
   const nameFrameMarginTop =
     frameSlug === 'frame-level-100' || frameSlug === 'premium_frame'
       ? spacing.xxl
-      : frameSlug === 'frame-default'
+      : frameSlug === 'frame-level-75'
         ? spacing.xl
-        : frameSlug === 'frame-level-05' ||
-            frameSlug === 'frame-level-10' ||
-            frameSlug === 'frame-level-25' ||
-            frameSlug === 'frame-level-50'
-          ? spacing.md
-          : spacing.sm;
+        : frameSlug === 'frame-default'
+          ? spacing.lg
+          : frameSlug === 'frame-level-05' ||
+              frameSlug === 'frame-level-10' ||
+              frameSlug === 'frame-level-25' ||
+              frameSlug === 'frame-level-50'
+            ? spacing.md
+            : spacing.sm;
   const rawNameplate = profile?.equipped?.nameplate ?? 'nameplate-default';
   // DB was slug; legacy rows / optimistic state may still be UUID — resolve via catalog if needed
   const nameplateSlug = (() => {
