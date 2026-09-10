@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { AppTextField } from '@/components/ui/AppTextField';
@@ -105,65 +105,47 @@ export default function BuilderScreen() {
     }, [load]),
   );
 
-  const difficultyOf = useCallback(
-    (slug: string) => catalog?.find((exercise) => exercise.slug === slug)?.difficulty ?? null,
+  const difficultyMap = useMemo(
+    () => new Map(catalog?.map((e) => [e.slug, e.difficulty]) ?? []),
     [catalog],
+  );
+  const nameMap = useMemo(() => new Map(catalog?.map((e) => [e.slug, e.name]) ?? []), [catalog]);
+
+  const difficultyOf = useCallback(
+    (slug: string): ExerciseDifficulty | null => {
+      return difficultyMap.get(slug) ?? null;
+    },
+    [difficultyMap],
   );
   const nameOf = useCallback(
-    (slug: string) => catalog?.find((exercise) => exercise.slug === slug)?.name ?? slug,
-    [catalog],
+    (slug: string): string => {
+      return nameMap.get(slug) ?? slug;
+    },
+    [nameMap],
   );
 
-  const xp = projectedXp(segments, difficultyOf);
-  const totalSec = totalDurationSec(segments);
-  const violations = validateDraft(segments);
+  const xp = useMemo(() => projectedXp(segments, difficultyOf), [segments, difficultyOf]);
+  const totalSec = useMemo(() => totalDurationSec(segments), [segments]);
+  const violations = useMemo(() => validateDraft(segments), [segments]);
   const valid = violations.length === 0;
-  const overflow = isOverflow(xp);
+  const overflow = useMemo(() => isOverflow(xp), [xp]);
 
-  const addSegment = (slug: string) => {
-    if (segments.length >= MAX_SEGMENTS) {
-      return;
-    }
-    setSegments((current) => [
-      ...current,
-      { kind: 'exercise' as const, exerciseSlug: slug, durationSec: 45 },
-    ]);
+  const addSegment = useCallback((slug: string) => {
+    setSegments((current) => {
+      if (current.length >= MAX_SEGMENTS) return current;
+      return [...current, { kind: 'exercise' as const, exerciseSlug: slug, durationSec: 45 }];
+    });
     void track('custom_segment_added', {});
-  };
+  }, []);
 
   // WK ruling — rest blocks: 0 points, but they fill time and the block cap.
-  const addRest = () => {
-    if (segments.length >= MAX_SEGMENTS) {
-      return;
-    }
-    setSegments((current) => [...current, { kind: 'rest' as const, durationSec: 30 }]);
-    void track('custom_segment_added', { kind: 'rest' });
-  };
-
-  const removeAt = (index: number) => {
-    setSegments((current) => current.filter((_, i) => i !== index));
-    void track('custom_segment_removed', {});
-  };
-
-  const setDuration = (index: number, durationSec: number) => {
-    setSegments((current) =>
-      current.map((segment, i) => (i === index ? { ...segment, durationSec } : segment)),
-    );
-  };
-
-  const move = (index: number, delta: -1 | 1) => {
+  const addRest = useCallback(() => {
     setSegments((current) => {
-      const target = index + delta;
-      if (target < 0 || target >= current.length) {
-        return current;
-      }
-      const next = [...current];
-      const row = next[index];
-      next[index] = next[target]!;
-      next[target] = row!;
-      return next;
+      if (current.length >= MAX_SEGMENTS) return current;
+      return [...current, { kind: 'rest' as const, durationSec: 30 }];
     });
-  };
+    void track('custom_segment_added', { kind: 'rest' });
+  }, []);
 
   const persist = async (): Promise<string | null> => {
     if (!valid || saving) {
@@ -206,6 +188,29 @@ export default function BuilderScreen() {
       params: { id, title: name.trim() || DEFAULT_WORKOUT_NAME, source: 'custom' },
     });
   };
+
+  const handleDuration = useCallback((index: number, durationSec: number) => {
+    setSegments((current) =>
+      current.map((segment, i) => (i === index ? { ...segment, durationSec } : segment)),
+    );
+  }, []);
+
+  const handleMove = useCallback((index: number, delta: -1 | 1) => {
+    setSegments((current) => {
+      const target = index + delta;
+      if (target < 0 || target >= current.length) return current;
+      const next = [...current];
+      const row = next[index];
+      next[index] = next[target]!;
+      next[target] = row!;
+      return next;
+    });
+  }, []);
+
+  const handleRemove = useCallback((index: number) => {
+    setSegments((current) => current.filter((_, i) => i !== index));
+    void track('custom_segment_removed', {});
+  }, []);
 
   const hint = guardrailHint(violations, totalSec);
 
@@ -274,9 +279,9 @@ export default function BuilderScreen() {
                       difficulty={
                         segment.kind === 'exercise' ? difficultyOf(segment.exerciseSlug) : null
                       }
-                      onDuration={(durationSec) => setDuration(index, durationSec)}
-                      onMove={(delta) => move(index, delta)}
-                      onRemove={() => removeAt(index)}
+                      onDuration={(durationSec) => handleDuration(index, durationSec)}
+                      onMove={(delta) => handleMove(index, delta)}
+                      onRemove={() => handleRemove(index)}
                     />
                   ))
                 )}
@@ -399,7 +404,7 @@ function guardrailHint(violations: GuardrailViolation[], totalSec: number): stri
   return null;
 }
 
-function BuildRow({
+const BuildRow = memo(function BuildRow({
   index,
   count,
   segment,
@@ -504,14 +509,13 @@ function BuildRow({
       </View>
     </View>
   );
-}
-
+});
 /**
  * BYQ-03 spec item 4 — code-drawn live meter. Zone marks sit at their natural
  * positions on the calibration scale (270 XP ceiling fills the bar); past the
  * Hard mark the fill turns reward-strong and the track gains an amber ring.
  */
-export function XpMeter({ xp, overflow }: { xp: number; overflow: boolean }) {
+export const XpMeter = memo(function XpMeter({ xp, overflow }: { xp: number; overflow: boolean }) {
   const zone = zoneForXp(xp);
   return (
     <View style={styles.meterWrap}>
@@ -549,7 +553,7 @@ export function XpMeter({ xp, overflow }: { xp: number; overflow: boolean }) {
       </View>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   screen: {
