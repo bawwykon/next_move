@@ -126,7 +126,7 @@ export default function BuilderScreen() {
     }
     setSegments((current) => [
       ...current,
-      { kind: 'exercise' as const, exerciseSlug: slug, durationSec: 30 },
+      { kind: 'exercise' as const, exerciseSlug: slug, durationSec: 45 },
     ]);
     void track('custom_segment_added', {});
   };
@@ -344,7 +344,7 @@ export default function BuilderScreen() {
                     accessibilityLabel="Rest"
                   />
                   <Text style={styles.pickName}>Rest</Text>
-                  <Text style={styles.restChipHint}>15/30/45/60s · no XP</Text>
+                  <Text style={styles.restChipHint}>30s · no XP</Text>
                 </TouchableOpacity>
               </View>
             </ScrollView>

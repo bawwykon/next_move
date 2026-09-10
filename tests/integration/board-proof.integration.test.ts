@@ -119,7 +119,7 @@ describe('board data path (local supabase)', () => {
     expect(completions.some((completion) => completion.dayKey === yesterday)).toBe(true);
     for (const completion of completions) {
       expect(completion.completedAt).toBeTruthy();
-      expect(completion.xpAwarded).toBe(50);
+      expect(completion.xpAwarded).toBe(100);
     }
     console.log(
       'completions:',

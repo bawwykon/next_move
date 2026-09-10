@@ -21,9 +21,9 @@ export type CustomSegment =
   | { kind: 'rest'; durationSec: number };
 
 /** Duration chips for exercise rows. */
-export const SEGMENT_DURATION_PRESETS = [30, 45, 60, 90] as const;
-/** Duration chips for rest rows (ruling: 15/30/45/60s). */
-export const REST_DURATION_PRESETS = [15, 30, 45, 60] as const;
+export const SEGMENT_DURATION_PRESETS = [30, 45, 60] as const;
+/** Duration chips for rest rows (fixed at 30s). */
+export const REST_DURATION_PRESETS = [30] as const;
 
 export const MIN_SEGMENTS = 1;
 export const MAX_SEGMENTS = 12;
@@ -32,10 +32,10 @@ export const MAX_TOTAL_SEC = 900;
 export const NAME_MAX_CHARS = 60;
 export const DEFAULT_WORKOUT_NAME = 'Custom Quest';
 
-/** Meter scale: the calibration ceiling fills the bar; Hard's mark sits at 200. */
-export const METER_SCALE_XP = 270;
-/** Zone marks on the meter, mirroring quest tiers (easy 50 / normal 100 / hard 200). */
-export const ZONE_MARKS = { easy: 50, normal: 100, hard: 200 } as const;
+/** Meter scale: ceiling at 400 XP. */
+export const METER_SCALE_XP = 400;
+/** Zone marks on the meter, mirroring quest tiers (easy 100 / normal 200 / hard 400). */
+export const ZONE_MARKS = { easy: 100, normal: 200, hard: 400 } as const;
 
 const BLOCK_SEC = 30;
 
@@ -76,12 +76,43 @@ export function roundHalfUp(value: number): number {
   return Math.floor(value + 0.5);
 }
 
+export const HARD_EXERCISE_SLUGS = new Set(['burpees', 'mountain-climber', 'bicycle-crunch']);
+export const MIN_HARD_SEC_FOR_HARD_TIER = 45;
+export const MIN_NORMAL_COUNT_FOR_NORMAL_TIER = 2;
+
+export function classifyWorkout(
+  segments: readonly CustomSegment[],
+  difficultyOf: DifficultyResolver,
+): { xp: number; tier: MeterZone } {
+  let hardSec = 0;
+  let normalCount = 0;
+
+  for (const seg of segments) {
+    if (seg.kind === 'exercise') {
+      const diff = difficultyOf(seg.exerciseSlug);
+      if (diff === 'advanced' || HARD_EXERCISE_SLUGS.has(seg.exerciseSlug)) {
+        hardSec += seg.durationSec;
+      } else if (diff === 'intermediate') {
+        normalCount += 1;
+      }
+    }
+  }
+
+  if (hardSec >= MIN_HARD_SEC_FOR_HARD_TIER) {
+    return { xp: 400, tier: 'hard' };
+  }
+  if (normalCount >= MIN_NORMAL_COUNT_FOR_NORMAL_TIER && hardSec === 0) {
+    return { xp: 200, tier: 'normal' };
+  }
+  return { xp: 100, tier: 'easy' };
+}
+
 /** Projected base XP — the number the meter shows. */
 export function projectedXp(
   segments: readonly CustomSegment[],
   difficultyOf: DifficultyResolver,
 ): number {
-  return roundHalfUp(projectedPoints(segments, difficultyOf) * 3);
+  return classifyWorkout(segments, difficultyOf).xp;
 }
 
 export type MeterZone = 'easy' | 'normal' | 'hard';

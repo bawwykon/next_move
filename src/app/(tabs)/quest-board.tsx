@@ -39,16 +39,19 @@ import {
 } from '@/domain/customWorkout/model';
 import { WEEKLY_TARGET, dayWindow, weeklyWindow } from '@/domain/board/window';
 import { dailyMessageFor } from '@/domain/journal/dailyMessages';
-import { DAILY_QUEST_ART, WEEKLY_CHALLENGE_ART, difficultyArt } from '@/features/assets/assetMap';
+import {
+  DAILY_QUEST_ART,
+  WEEKLY_CHALLENGE_ART,
+  difficultyArt,
+  masteryArt,
+} from '@/features/assets/assetMap';
 import { DIFFICULTY_DESCRIPTORS, difficultyBadge } from '@/features/questBoard/badges';
 import { isCompletedToday } from '@/features/questBoard/completedToday';
 import {
   WEEKLY_BONUS_XP,
   dailyCellCopy,
   dailyChallengeProgress,
-  daysUntilNextMonday,
   streakPillCopy,
-  weeklyEarnCopy,
 } from '@/features/questBoard/earn';
 import { formatDuration } from '@/features/questBoard/format';
 import { greetingForHour } from '@/features/questBoard/greeting';
@@ -62,7 +65,7 @@ const CATEGORY_LABELS: Record<QuestCategory, string> = {
   strength: 'Strength',
   endurance: 'Endurance',
   mobility: 'Mobility',
-  discipline: 'Focus',
+  discipline: 'Discipline',
 };
 
 // recommendQuest accepts onboarding for parity with Ref 06; its rules do not
@@ -167,11 +170,6 @@ export default function QuestBoardScreen() {
     [completions, todayKey],
   );
   const dailyCell = dailyCellCopy(daily.done);
-  const weeklyEarn = weeklyEarnCopy(
-    weekly.completionsInWindow,
-    WEEKLY_TARGET,
-    daysUntilNextMonday(new Date()),
-  );
 
   const recommendation = useMemo(() => {
     if (!catalog || catalog.length === 0 || !completions) {
@@ -377,7 +375,6 @@ export default function QuestBoardScreen() {
                       <Ionicons name="checkmark-circle" size={20} color={colors.success} />
                     ) : null}
                   </View>
-                  <Text style={styles.dailyMessage}>{dailyCell.message}</Text>
                   <View style={styles.progressTrack}>
                     <View
                       style={[
@@ -406,7 +403,7 @@ export default function QuestBoardScreen() {
                     <Text style={styles.weeklyGoal}>
                       {weekly.challengeState === 'complete'
                         ? 'Weekly challenge complete!'
-                        : `Complete ${WEEKLY_TARGET} quests this week`}
+                        : 'Weekly Challenge'}
                     </Text>
                     {weekly.challengeState === 'complete' ? (
                       <Ionicons name="checkmark-circle" size={20} color={colors.success} />
@@ -432,9 +429,6 @@ export default function QuestBoardScreen() {
                     </Text>
                     <Text style={styles.weeklyReward}>+{WEEKLY_BONUS_XP} XP</Text>
                   </View>
-                  {/* S9-01 — next-earn line: remaining quests to the bonus, or
-                      the Monday rollover once it has paid. */}
-                  <Text style={styles.weeklyEarnLine}>{weeklyEarn}</Text>
                 </View>
               </View>
 
@@ -521,11 +515,17 @@ function BadgePill({ difficulty }: { difficulty: QuestDifficulty }) {
 function CategoryChips({ categories }: { categories: QuestCategory[] }) {
   return (
     <View style={styles.chipRow}>
-      {categories.map((category) => (
-        <View key={category} style={styles.chip}>
-          <Text style={styles.chipLabel}>{CATEGORY_LABELS[category]}</Text>
-        </View>
-      ))}
+      {categories.map((category) => {
+        const icon = masteryArt(category);
+        return (
+          <View key={category} style={styles.chip}>
+            {icon !== null ? (
+              <Image source={icon} style={styles.chipIcon} contentFit="contain" />
+            ) : null}
+            <Text style={styles.chipLabel}>{CATEGORY_LABELS[category]}</Text>
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -554,9 +554,6 @@ function QuestCard({
         {formatDuration(quest.durationSec)} · {quest.xpReward} XP
       </Text>
       <CategoryChips categories={quest.categories} />
-      <Text style={styles.masteryLine}>
-        Masteries: {quest.categories.map((c) => CATEGORY_LABELS[c]).join(' + ')}
-      </Text>
       {completedToday ? (
         <View style={styles.donePill}>
           <Ionicons name="checkmark-circle" size={16} color={colors.success} />
@@ -848,21 +845,23 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body.family,
     fontSize: 13,
   },
-  masteryLine: {
-    color: colors.textMuted,
-    fontFamily: fonts.body.family,
-    fontSize: 12,
-  },
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
   },
   chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
     backgroundColor: colors.surfaceElevated,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
     paddingVertical: 6,
+  },
+  chipIcon: {
+    width: 30,
+    height: 30,
   },
   chipLabel: {
     color: colors.text,
@@ -924,16 +923,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodyBold.family,
     fontSize: 15,
     flexShrink: 1,
-  },
-  dailyMessage: {
-    color: colors.textMuted,
-    fontFamily: fonts.body.family,
-    fontSize: 13,
-  },
-  weeklyEarnLine: {
-    color: colors.textMuted,
-    fontFamily: fonts.body.family,
-    fontSize: 13,
   },
   progressTrack: {
     height: 8,

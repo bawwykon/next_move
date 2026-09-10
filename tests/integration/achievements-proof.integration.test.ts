@@ -48,7 +48,7 @@ describe('achievements data path (live local supabase)', () => {
     const result = await achievementsRepo.fetchAchievementCatalog();
     expect(result.error).toBeNull();
     const catalog = result.data!;
-    expect(catalog).toHaveLength(13);
+    expect(catalog).toHaveLength(14);
     for (const row of catalog) {
       expect(row.slug).toBeTruthy();
       expect(row.title).toBeTruthy();
@@ -56,7 +56,7 @@ describe('achievements data path (live local supabase)', () => {
       expect(row.hint).toBeTruthy();
       expect(['beginner', 'progress', 'consistency', 'special']).toContain(row.category);
     }
-    expect(new Set(catalog.map((row) => row.slug)).size).toBe(13);
+    expect(new Set(catalog.map((row) => row.slug)).size).toBe(14);
     console.log('catalog:', catalog.map((row) => row.slug).join(' | '));
   });
 
@@ -88,7 +88,7 @@ describe('achievements data path (live local supabase)', () => {
     }
 
     const locked = catalog.filter((row) => !slugs.has(row.slug)).length;
-    expect(locked).toBe(13 - unlocks.length);
+    expect(locked).toBe(14 - unlocks.length);
     console.log(
       `demo: unlocked=${unlocks.length} locked=${locked} -> ${unlocks.map((u) => u.slug).join(' | ')}`,
     );

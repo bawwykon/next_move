@@ -11,17 +11,12 @@ import {
   View,
 } from 'react-native';
 
-import { planSummaryLines } from '@/domain/recommendation/plan';
 import { AppButton } from '@/components/ui/AppButton';
 import { Screen } from '@/components/ui/Screen';
 import { onboardingArt } from '@/features/assets/assetMap';
+import { CharacterSummaryScreen } from '@/features/onboarding/CharacterSummaryScreen';
 import { withTapCue } from '@/lib/sounds';
-import {
-  ONBOARDING_STEPS,
-  optionLabel,
-  type Goal,
-  type OnboardingOption,
-} from '@/features/onboarding/steps';
+import { ONBOARDING_STEPS, type Goal, type OnboardingOption } from '@/features/onboarding/steps';
 import {
   advance,
   canAdvance,
@@ -100,46 +95,14 @@ export default function OnboardingScreen() {
   };
 
   if (wizard.done) {
-    const payload = completedAnswers(wizard);
-    const plan = planSummaryLines(payload);
     return (
-      <Screen>
-        <View style={styles.hero}>
-          <Text style={styles.title}>Your plan is ready</Text>
-          <View style={styles.echo}>
-            <Text style={styles.echoLine}>{plan.focusLine}</Text>
-            <Text style={styles.echoLine}>{plan.difficultyLine}</Text>
-            <Text style={styles.echoLine}>{plan.rhythmLine}</Text>
-          </View>
-          <View style={styles.echo}>
-            <Text style={styles.echoLine}>
-              <Text style={styles.echoKey}>Activity:</Text>{' '}
-              {optionLabel('activity_level', payload.activity_level)}
-            </Text>
-            <Text style={styles.echoLine}>
-              <Text style={styles.echoKey}>Experience:</Text>{' '}
-              {optionLabel('experience', payload.experience)}
-            </Text>
-            <Text style={styles.echoLine}>
-              <Text style={styles.echoKey}>Goals:</Text>{' '}
-              {payload.goals.length > 0
-                ? payload.goals.map((goal) => optionLabel('goals', goal)).join(', ')
-                : 'A fresh start'}
-            </Text>
-            <Text style={styles.echoLine}>
-              <Text style={styles.echoKey}>Preferred time:</Text>{' '}
-              {optionLabel('workout_time', payload.workout_time)}
-            </Text>
-            {payload.display_name ? (
-              <Text style={styles.echoLine}>
-                <Text style={styles.echoKey}>Name:</Text> {payload.display_name}
-              </Text>
-            ) : null}
-          </View>
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-          <AppButton label="Go to my quest board" onPress={handleComplete} loading={saving} />
-        </View>
-      </Screen>
+      <CharacterSummaryScreen
+        payload={completedAnswers(wizard)}
+        saving={saving}
+        error={error}
+        onClaim={handleComplete}
+        onEdit={() => setWizard(initialWizardState())}
+      />
     );
   }
 
@@ -369,31 +332,5 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodyBold.family,
     fontSize: 15,
     textDecorationLine: 'underline',
-  },
-  hero: {
-    flex: 1,
-    justifyContent: 'center',
-    gap: spacing.md,
-  },
-  echo: {
-    gap: spacing.sm,
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    padding: spacing.lg,
-    marginVertical: spacing.xl,
-  },
-  echoLine: {
-    color: colors.text,
-    fontFamily: fonts.body.family,
-    fontSize: 15,
-  },
-  echoKey: {
-    color: colors.reward,
-    fontFamily: fonts.bodyBold.family,
-  },
-  error: {
-    color: colors.danger,
-    fontFamily: fonts.body.family,
-    fontSize: 14,
   },
 });

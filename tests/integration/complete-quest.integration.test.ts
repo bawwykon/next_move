@@ -244,7 +244,8 @@ describe('complete_quest RPC (live local supabase)', () => {
     });
     expect(payload.streak).toEqual({ current: 1, longest: 1 });
     // S5-02: the first completion unlocks first-quest and, chained to it, the
-    // title-adventurer cosmetic — exactly once.
+    // title-adventurer cosmetic — exactly once. The default nameplate
+    // (level-1 rule, LOADOUT-01) is also granted on the first completion.
     expect(payload.achievements).toHaveLength(1);
     expect(payload.achievements[0]).toMatchObject({
       slug: 'first-quest',
@@ -252,12 +253,11 @@ describe('complete_quest RPC (live local supabase)', () => {
       category: 'beginner',
     });
     expect(typeof payload.achievements[0]!.unlocked_at).toBe('string');
-    expect(payload.cosmetics).toHaveLength(1);
-    expect(payload.cosmetics[0]).toMatchObject({
-      slug: 'title-adventurer',
-      type: 'title',
-      name: 'Adventurer',
-    });
+    expect(payload.cosmetics).toHaveLength(2);
+    expect(payload.cosmetics.map((c) => c.slug).sort()).toEqual([
+      'nameplate-default',
+      'title-adventurer',
+    ]);
 
     const mobility = payload.mastery.find((m) => m.track === 'mobility');
     const discipline = payload.mastery.find((m) => m.track === 'discipline');
@@ -715,13 +715,18 @@ describe('complete_quest RPC (live local supabase)', () => {
     expect(await ownedByAchievementRows('first-week')).toHaveLength(1);
   }, 30000);
 
-  it('phoenix: an 8-day gap return unlocks phoenix + portrait-phoenix', async () => {
+  it('phoenix: reaching level 25 unlocks phoenix + portrait-phoenix', async () => {
     await resetProgression();
-    // Day -1 then a completion 9 days later => v_day - v_last_day = 9 >= 8.
-    const d0 = day(85);
-    await callOk(easyEvent(d0, 'phoenix-before', 8));
-    const d1 = day(94);
-    const r = await callOk(easyEvent(d1, 'phoenix-return', 8));
+    // Level 25 needs 50*25*24 = 30000 XP; hard quest grants 200 on top.
+    const setProfile = await admin
+      .from('profiles')
+      .update({ total_xp: 30000 - 200, level: 24, journey_quests: 0 })
+      .eq('id', profileId);
+    expect(setProfile.error).toBeNull();
+    const d = day(115);
+    await seedSameDayCompletion(d); // avoid first-of-day bonus so the total is exact
+    const r = await callOk(hardEvent(d, 'phoenix-25', 8));
+    expect(r.level.after).toBe(25);
     expect(r.achievements.map((a) => a.slug)).toContain('phoenix');
     expect(r.cosmetics.map((c) => c.slug)).toContain('portrait-phoenix');
     expect(await ownedByAchievementRows('phoenix')).toHaveLength(1);

@@ -66,15 +66,21 @@ describe('cosmetic equip data path (live local supabase)', () => {
     portrait: string | null;
   }> => (await board.fetchProfile(profileId)).data?.equipped ?? nullState;
 
-  it('the demo owns exactly the seed-granted items (3 of 18)', async () => {
+  it('the demo owns exactly the seed-granted items', async () => {
     const rows = (await profileCosmetics.fetchProfileCosmetics(profileId)).data ?? [];
     expect(rows.map((row) => row.slug).sort()).toEqual([
       'frame-default',
       'nameplate-default',
       'portrait-default',
+      'title-adventurer',
     ]);
     const owned = loadout.ownedBySlug(rows);
-    for (const slug of ['frame-default', 'nameplate-default', 'portrait-default']) {
+    for (const slug of [
+      'frame-default',
+      'nameplate-default',
+      'portrait-default',
+      'title-adventurer',
+    ]) {
       expect(owned.has(slug)).toBe(true);
     }
   });

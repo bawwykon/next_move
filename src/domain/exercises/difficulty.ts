@@ -15,7 +15,6 @@ export const EXERCISE_DIFFICULTY: Readonly<Record<string, ExerciseDifficulty>> =
   'cat-cow': 'beginner',
   'seated-hamstring-stretch': 'beginner',
   'standing-quad-stretch': 'beginner',
-  'gentle-hops': 'beginner',
   'glute-bridge': 'beginner',
   'seated-leg-raise': 'beginner',
   'bird-dog': 'beginner',
@@ -25,6 +24,7 @@ export const EXERCISE_DIFFICULTY: Readonly<Record<string, ExerciseDifficulty>> =
   'push-up': 'intermediate',
   lunges: 'intermediate',
   plank: 'intermediate',
+  'gentle-hops': 'intermediate',
   // TUNE-01 — the isometric burn is real; matches exercise_library.difficulty
   // (migration 0028) so builder projections weight it like the RPC does.
   'wall-sit': 'intermediate',

@@ -100,9 +100,9 @@ describe('profile data path (live local supabase)', () => {
     const result = await cosmeticsRepo.fetchCosmeticCatalog();
     expect(result.error).toBeNull();
     const catalog = result.data ?? [];
-    expect(catalog).toHaveLength(18);
+    expect(catalog).toHaveLength(31);
     const slugs = new Set(catalog.map((row) => row.slug));
-    expect(slugs.size).toBe(18);
+    expect(slugs.size).toBe(31);
     for (const row of catalog) {
       expect(Object.keys(row).sort()).toEqual(['id', 'kind', 'name', 'slug']);
     }

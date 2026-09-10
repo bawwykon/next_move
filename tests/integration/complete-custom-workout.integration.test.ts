@@ -192,45 +192,81 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
     );
     const payload = (await call(wid, event(d, 'calib-beg', 480))).payload!;
     // 16 blocks x weight 1 = 16 pts -> round-half-up(48) = 48.
-    expect(payload.xp.quest).toBe(48);
-    expect(payload.xp.daily).toBe(75);
-    expect(payload.xp.total).toBe(123);
+    expect(payload.xp.quest).toBe(100); // beginner workout now yields Easy / 100 XP
+    expect(payload.xp.daily).toBe(150);
+    expect(payload.xp.total).toBe(250);
   });
 
-  it('calibration pin: 900s advanced = 270 XP', async () => {
+  it('classification: all beginner exercises = Easy / 100 XP', async () => {
     await resetProgression();
     const d = day(1);
-    const wid = await createWorkout(
-      'calib-900-adv',
-      Array.from({ length: 10 }, () => seg('burpees', 90)),
-    );
-    const payload = (await call(wid, event(d, 'calib-adv', 900))).payload!;
-    // 30 blocks x weight 3 = 90 pts -> round-half-up(270) = 270.
-    expect(payload.xp.quest).toBe(270);
+    const wid = await createWorkout('easy-w', [seg('wall-push-up', 60), seg('wall-push-up', 60)]);
+    const payload = (await call(wid, event(d, 'easy-e', 120))).payload!;
+    expect(payload.xp.quest).toBe(100);
   });
 
-  it('half-block rounding: 45s+45s+30s beginner = 4 pts -> 12 XP', async () => {
+  it('classification: 2+ Normal exercises (and 0 Hard) = Normal / 200 XP', async () => {
     await resetProgression();
     const d = day(2);
-    const wid = await createWorkout('calib-rounding', [
-      seg('wall-push-up', 45),
-      seg('wall-push-up', 45),
-      seg('wall-push-up', 30),
-    ]);
-    const payload = (await call(wid, event(d, 'calib-round', 120))).payload!;
-    expect(payload.xp.quest).toBe(12);
+    const wid = await createWorkout('normal-w', [seg('squat', 60), seg('push-up', 60)]);
+    const payload = (await call(wid, event(d, 'normal-n', 120))).payload!;
+    expect(payload.xp.quest).toBe(200);
   });
 
-  it('weights scale with difficulty inside one workout (beginner+advanced mix)', async () => {
+  it('classification: >= 45s Hard exercises = Hard / 400 XP', async () => {
     await resetProgression();
     const d = day(3);
-    // 60s wall-push-up (w1) + 60s burpees (w3): 2 + 6 = 8 pts -> 24 XP.
-    const wid = await createWorkout('mix', [seg('wall-push-up', 60), seg('burpees', 60)]);
-    const payload = (await call(wid, event(d, 'mix-w', 120))).payload!;
-    expect(payload.xp.quest).toBe(24);
-    // Categories union from exercises feeds mastery tracks.
-    const tracks = payload.mastery.map((m) => m.track).sort();
-    expect(tracks).toContain('discipline');
+    const wid = await createWorkout('hard-w', [seg('squat', 60), seg('burpees', 45)]);
+    const payload = (await call(wid, event(d, 'hard-h', 105))).payload!;
+    expect(payload.xp.quest).toBe(400);
+  });
+
+  it('classification: 3+ Hard exercises has no cap = Hard / 400 XP', async () => {
+    await resetProgression();
+    const d = day(4);
+    const wid = await createWorkout('hard-multi', [
+      seg('burpees', 60),
+      seg('mountain-climber', 60),
+      seg('bicycle-crunch', 60),
+    ]);
+    const payload = (await call(wid, event(d, 'hard-m', 180))).payload!;
+    expect(payload.xp.quest).toBe(400);
+  });
+
+  it('classification: insufficient Hard time (< 45s) does not qualify as Hard', async () => {
+    await resetProgression();
+    const d = day(5);
+    const wid = await createWorkout('insufficient-hard', [
+      seg('wall-push-up', 60),
+      seg('burpees', 30),
+    ]);
+    const payload = (await call(wid, event(d, 'ins-h', 90))).payload!;
+    expect(payload.xp.quest).toBe(100);
+  });
+
+  it('farm guard: 90s exercise duration rejected (bad_duration)', async () => {
+    await resetProgression();
+    const d = day(6);
+    const wid = await createWorkout('bad-dur-90', [
+      seg('wall-push-up', 90),
+      seg('wall-push-up', 60),
+    ]);
+    const { payload, error } = await call(wid, event(d, 'bad-90', 150));
+    expect(payload).toBeNull();
+    expect(error!.message).toContain('complete_custom_workout.bad_duration');
+  });
+
+  it('farm guard: non-30s rest duration rejected (bad_duration)', async () => {
+    await resetProgression();
+    const d = day(7);
+    const wid = await createWorkout('bad-rest', [
+      seg('wall-push-up', 60),
+      restSeg(60),
+      seg('wall-push-up', 60),
+    ]);
+    const { payload, error } = await call(wid, event(d, 'bad-r', 180));
+    expect(payload).toBeNull();
+    expect(error!.message).toContain('complete_custom_workout.bad_duration');
   });
 
   it('rest blocks add zero XP while filling the clock (0029)', async () => {
@@ -253,7 +289,7 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
         day_key: d,
       })
     ).payload!;
-    expect(payload.xp.quest).toBe(24);
+    expect(payload.xp.quest).toBe(400);
     expect(payload.xp.total).toBe(payload.xp.quest + payload.xp.daily);
     const row = await admin
       .from('quest_completions')
@@ -479,7 +515,7 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
     ]);
     const { payload, error } = await call(wid, event(d, 'sentinel-key', 120));
     expect(error).toBeNull();
-    expect(payload!.xp.quest).toBe(12); // 4 blocks x weight 1 = 4 pts -> 12
+    expect(payload!.xp.quest).toBe(100); // 4 blocks x weight 1 = 4 pts -> 12
     const { data: rows, error: fetchError } = await admin
       .from('quest_completions')
       .select('quest_id:quests(slug), duration_sec')
@@ -509,9 +545,8 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
     const result = await submitCompletion(user, ev);
     expect(result.error).toBeNull();
     expect(result.data).not.toBeNull();
-    // wall-sit + plank are both intermediate (TUNE-01) at w2, 60s each:
-    // 2 blocks x 2 + 2 blocks x 2 = 8 pts -> 24 XP base.
-    expect(result.data!.xp.quest).toBe(24);
+    // wall-sit + plank are both intermediate (TUNE-01), 2 intermediate exercises, 0 hard -> Normal / 200 XP.
+    expect(result.data!.xp.quest).toBe(200);
 
     // Deleted definition -> workout_invalid, not 'unknown' or timer_mismatch.
     const { error: delErr } = await admin.from('custom_workouts').delete().eq('id', wid);

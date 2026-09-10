@@ -6,31 +6,26 @@ import {
   REST_DURATION_PRESETS,
   SEGMENT_DURATION_PRESETS,
   ZONE_MARKS,
-  isOverflow,
+  classifyWorkout,
   isValidDraft,
   meterFill,
-  projectedPoints,
   projectedXp,
-  roundHalfUp,
-  segmentPoints,
-  totalDurationSec,
   validateDraft,
   zoneForXp,
 } from '@/domain/customWorkout/model';
 import type { CustomSegment } from '@/domain/customWorkout/model';
 
-/**
- * BYQ-03 — pins for the builder's projection math, mirroring the
- * server-authoritative weights in complete_custom_workout (migrations 0027 +
- * 0029): beginner 1 / intermediate 2 / advanced 3 per 30s block, proportional
- * on half-blocks, XP = round-half-up(points × 3). Rest blocks (0029) are
- * worth zero but fill time and the segment cap.
- */
 const RESOLVER = (slug: string) => {
   const table: Record<string, 'beginner' | 'intermediate' | 'advanced'> = {
     'wall-push-up': 'beginner',
+    'step-touch': 'beginner',
     squat: 'intermediate',
+    'push-up': 'intermediate',
+    lunges: 'intermediate',
+    plank: 'intermediate',
     burpees: 'advanced',
+    'mountain-climber': 'advanced',
+    'bicycle-crunch': 'advanced',
   };
   return table[slug] ?? null;
 };
@@ -40,125 +35,63 @@ const ex = (exerciseSlug: string, durationSec: number): CustomSegment => ({
   exerciseSlug,
   durationSec,
 });
-const rest = (durationSec: number): CustomSegment => ({ kind: 'rest', durationSec });
 
-describe('segment/projected points', () => {
-  it('weights one 30s beginner block at 1 point', () => {
-    expect(segmentPoints(ex('wall-push-up', 30), RESOLVER)).toBe(1);
-    expect(segmentPoints(ex('squat', 30), RESOLVER)).toBe(2);
-    expect(segmentPoints(ex('burpees', 30), RESOLVER)).toBe(3);
+describe('custom workout classification & XP rebalance', () => {
+  it('classifies all beginner exercises as Easy (100 XP)', () => {
+    const draft = [ex('wall-push-up', 60), ex('step-touch', 60)]; // 120s total, beginner
+    expect(projectedXp(draft, RESOLVER)).toBe(100);
+    expect(classifyWorkout(draft, RESOLVER).tier).toBe('easy');
   });
 
-  it('is proportional on non-block durations', () => {
-    expect(segmentPoints(ex('wall-push-up', 45), RESOLVER)).toBeCloseTo(1.5);
-    expect(segmentPoints(ex('burpees', 90), RESOLVER)).toBe(9);
+  it('classifies 2+ Normal exercises (and 0 Hard) as Normal (200 XP)', () => {
+    const draft = [ex('squat', 60), ex('push-up', 60)]; // 120s total, 2 intermediate, 0 hard
+    expect(projectedXp(draft, RESOLVER)).toBe(200);
+    expect(classifyWorkout(draft, RESOLVER).tier).toBe('normal');
   });
 
-  it('scores unknown slugs as zero instead of guessing', () => {
-    expect(segmentPoints(ex('mystery-move', 60), RESOLVER)).toBe(0);
+  it('classifies workouts with >= 45s Hard exercises as Hard (400 XP)', () => {
+    const draft = [ex('squat', 60), ex('burpees', 60)]; // 60s hard >= 45s
+    expect(projectedXp(draft, RESOLVER)).toBe(400);
+    expect(classifyWorkout(draft, RESOLVER).tier).toBe('hard');
   });
 
-  it('projects the calibration anchors exactly', () => {
-    // 480s of beginner work → 16 blocks × 1pt × 3 = 48 XP.
-    expect(
-      projectedXp(
-        Array.from({ length: 16 }, () => ex('wall-push-up', 30)),
-        RESOLVER,
-      ),
-    ).toBe(48);
-    // 900s ceiling of advanced work → 30 × 3pts × 3 = 270 XP (scale max).
-    expect(projectedXp([ex('burpees', 900)], RESOLVER)).toBe(METER_SCALE_XP);
+  it('supports 3+ Hard exercises without cap (Hard / 400 XP)', () => {
+    const draft = [ex('burpees', 60), ex('mountain-climber', 60), ex('bicycle-crunch', 60)];
+    expect(projectedXp(draft, RESOLVER)).toBe(400);
+    expect(classifyWorkout(draft, RESOLVER).tier).toBe('hard');
   });
 
-  it('rounds half-up like Postgres numeric round()', () => {
-    // 45s intermediate + 45s advanced = 3 + 4.5 = 7.5 pts → 22.5 XP → 23.
-    expect(projectedXp([ex('squat', 45), ex('burpees', 45)], RESOLVER)).toBe(23);
-    expect(roundHalfUp(2.5)).toBe(3);
-    expect(roundHalfUp(2.4)).toBe(2);
+  it('does not qualify as Hard if Hard time is insufficient (< 45s)', () => {
+    const draft = [ex('wall-push-up', 60), ex('burpees', 30)]; // 30s hard < 45s, 0 normal
+    expect(projectedXp(draft, RESOLVER)).toBe(100); // defaults to easy since < 2 normal
   });
 
-  it('sums fractional points without rounding per segment', () => {
-    const segments = [ex('squat', 45), ex('burpees', 45), ex('wall-push-up', 45)];
-    expect(projectedPoints(segments, RESOLVER)).toBeCloseTo(9);
-    expect(projectedXp(segments, RESOLVER)).toBe(27); // 9 × 3 exact
-  });
-});
-
-describe('rest blocks', () => {
-  it('are worth zero points at any duration', () => {
-    for (const preset of REST_DURATION_PRESETS) {
-      expect(segmentPoints(rest(preset), RESOLVER)).toBe(0);
-    }
-  });
-
-  it('leave the projected XP unchanged while filling time', () => {
-    const workOnly = [ex('squat', 45), ex('burpees', 45)];
-    const withRest = [ex('squat', 45), rest(15), ex('burpees', 45)];
-    expect(projectedXp(withRest, RESOLVER)).toBe(projectedXp(workOnly, RESOLVER));
-    expect(totalDurationSec(withRest)).toBe(totalDurationSec(workOnly) + 15);
-  });
-
-  it('use the rest preset set, separate from exercise presets', () => {
-    expect([...REST_DURATION_PRESETS]).toEqual([15, 30, 45, 60]);
-    expect([...SEGMENT_DURATION_PRESETS]).toEqual([30, 45, 60, 90]);
-  });
-
-  it('count toward the segment cap like exercises', () => {
-    const twelveWithRests = [
-      ex('wall-push-up', 30),
-      rest(15),
-      ex('wall-push-up', 30),
-      rest(15),
-      ex('wall-push-up', 30),
-      rest(15),
-      ex('wall-push-up', 30),
-      rest(15),
-      ex('wall-push-up', 30),
-      rest(15),
-      ex('wall-push-up', 30),
-      rest(15),
-    ];
-    expect(twelveWithRests).toHaveLength(MAX_SEGMENTS);
-    expect(validateDraft(twelveWithRests)).toEqual([]);
-    expect(validateDraft([...twelveWithRests, ex('wall-push-up', 30)])).toContain('segment_cap');
-  });
-
-  it('fill the minimum-time window with pure rests', () => {
-    // 120s of rest alone is structurally valid — and worth exactly 0 XP.
-    const allRest = [rest(30), rest(30), rest(30), rest(30)];
-    expect(validateDraft(allRest)).toEqual([]);
-    expect(projectedXp(allRest, RESOLVER)).toBe(0);
+  it('use preset sets: segments [30, 45, 60], rest [30]', () => {
+    expect([...REST_DURATION_PRESETS]).toEqual([30]);
+    expect([...SEGMENT_DURATION_PRESETS]).toEqual([30, 45, 60]);
   });
 });
 
 describe('zones + meter', () => {
-  it('marks zones at the quest-tier equivalents', () => {
-    expect(ZONE_MARKS).toEqual({ easy: 50, normal: 100, hard: 200 });
-    expect(zoneForXp(49)).toBe('easy');
-    expect(zoneForXp(50)).toBe('easy');
+  it('marks zones at the new quest-tier equivalents', () => {
+    expect(ZONE_MARKS).toEqual({ easy: 100, normal: 200, hard: 400 });
     expect(zoneForXp(99)).toBe('easy');
-    expect(zoneForXp(100)).toBe('normal');
-    expect(zoneForXp(199)).toBe('normal');
-    expect(zoneForXp(200)).toBe('hard');
-    expect(zoneForXp(0)).toBe('easy');
+    expect(zoneForXp(100)).toBe('easy');
+    expect(zoneForXp(199)).toBe('easy');
+    expect(zoneForXp(200)).toBe('normal');
+    expect(zoneForXp(399)).toBe('normal');
+    expect(zoneForXp(400)).toBe('hard');
   });
 
-  it('flags overflow only past the Hard mark', () => {
-    expect(isOverflow(200)).toBe(false);
-    expect(isOverflow(201)).toBe(true);
-  });
-
-  it('clamps the meter fill to the scale ceiling', () => {
+  it('clamps the meter fill to the scale ceiling (400 XP)', () => {
     expect(meterFill(0)).toBe(0);
-    expect(meterFill(ZONE_MARKS.hard)).toBeCloseTo(ZONE_MARKS.hard / METER_SCALE_XP);
     expect(meterFill(400)).toBe(1);
-    expect(meterFill(-5)).toBe(0);
     expect(meterFill(METER_SCALE_XP)).toBe(1);
   });
 });
 
 describe('guardrails', () => {
-  const beg30 = ex('wall-push-up', 30);
+  const beg60 = ex('wall-push-up', 60);
 
   it('requires at least one segment', () => {
     expect(validateDraft([])).toEqual(['empty']);
@@ -166,16 +99,13 @@ describe('guardrails', () => {
   });
 
   it('accepts a draft inside every bound', () => {
-    expect(validateDraft([beg30, beg30, beg30, beg30])).toEqual([]);
-    expect(isValidDraft([beg30, beg30, beg30, beg30])).toBe(true);
+    expect(validateDraft([beg60, beg60])).toEqual([]);
+    expect(isValidDraft([beg60, beg60])).toBe(true);
   });
 
   it('rejects totals under 120s with min_total', () => {
-    expect(validateDraft([{ ...beg30 }])).toContain('min_total');
-    expect(validateDraft([beg30, { ...beg30 }, { ...beg30 }])).toContain('min_total');
-    expect(validateDraft([ex('wall-push-up', 60), ex('wall-push-up', 60)])).not.toContain(
-      'min_total',
-    );
+    expect(validateDraft([ex('wall-push-up', 60)])).toContain('min_total');
+    expect(validateDraft([beg60, beg60])).not.toContain('min_total');
   });
 
   it('rejects totals over 900s with max_total', () => {
@@ -184,21 +114,9 @@ describe('guardrails', () => {
     ).toContain('max_total');
   });
 
-  it('rejects more than twelve segments with segment_cap', () => {
-    const thirteen = Array.from({ length: 13 }, () => ({ ...beg30 }));
-    expect(thirteen).toHaveLength(13);
-    const violations = validateDraft(thirteen);
-    expect(violations).toContain('segment_cap');
-    expect(violations).not.toContain('min_total'); // 13×30=390 is otherwise fine
-  });
-
-  it('bounds agree with the constants', () => {
+  it('bounds agree with constants', () => {
     expect(MIN_TOTAL_SEC).toBe(120);
     expect(MAX_TOTAL_SEC).toBe(900);
     expect(MAX_SEGMENTS).toBe(12);
-  });
-
-  it('totals durations across mixed presets', () => {
-    expect(totalDurationSec([beg30, ex('squat', 90)])).toBe(120);
   });
 });

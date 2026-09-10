@@ -12,7 +12,12 @@ import {
   difficultyLabel,
   exerciseDifficulty,
 } from '@/domain/exercises/difficulty';
-import { difficultyArt, exerciseArt, REST_DETAILED_ART } from '@/features/assets/assetMap';
+import {
+  difficultyArt,
+  exerciseArt,
+  masteryArt,
+  REST_DETAILED_ART,
+} from '@/features/assets/assetMap';
 import { difficultyBadge } from '@/features/questBoard/badges';
 import { isCompletedToday } from '@/features/questBoard/completedToday';
 import { formatDuration } from '@/features/questBoard/format';
@@ -27,7 +32,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   strength: 'Strength',
   endurance: 'Endurance',
   mobility: 'Mobility',
-  discipline: 'Focus',
+  discipline: 'Discipline',
 };
 
 export default function QuestDetailScreen() {
@@ -119,11 +124,19 @@ export default function QuestDetailScreen() {
                   {formatDuration(detail.durationSec)} · +{detail.xpReward} XP
                 </Text>
                 <View style={styles.chipRow}>
-                  {detail.categories.map((category) => (
-                    <View key={category} style={styles.chip}>
-                      <Text style={styles.chipLabel}>{CATEGORY_LABELS[category] ?? category}</Text>
-                    </View>
-                  ))}
+                  {detail.categories.map((category) => {
+                    const icon = masteryArt(category);
+                    return (
+                      <View key={category} style={styles.chip}>
+                        {icon !== null ? (
+                          <Image source={icon} style={styles.chipIcon} contentFit="contain" />
+                        ) : null}
+                        <Text style={styles.chipLabel}>
+                          {CATEGORY_LABELS[category] ?? category}
+                        </Text>
+                      </View>
+                    );
+                  })}
                 </View>
                 {completedToday ? (
                   <View style={styles.donePill}>
@@ -299,10 +312,17 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
     backgroundColor: colors.surface,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
+  },
+  chipIcon: {
+    width: 16,
+    height: 16,
   },
   chipLabel: {
     color: colors.text,

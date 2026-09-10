@@ -201,7 +201,7 @@ describe('outbox → complete_quest sync (live local supabase)', () => {
     const profile = await profileRow();
     expect(profile.total_xp).toBe(payload.xp.total);
     expect(profile.journey_quests).toBe(payload.journey.quests);
-    expect(payload.xp.quest).toBe(50); // seeded morning-stretch
+    expect(payload.xp.quest).toBe(100); // seeded morning-stretch
   });
 
   it('exactly-once: an ack-lost commit still syncs as a no-op without double unlock', async () => {
@@ -313,14 +313,14 @@ describe('outbox → complete_quest sync (live local supabase)', () => {
     expect(reconciled.synced).toBe(true);
 
     const xp = reconciled.result!.xp;
-    expect(xp.quest).toBe(50);
-    expect(xp.daily).toBe(75);
-    expect(xp.total).toBe(125);
+    expect(xp.quest).toBe(100);
+    expect(xp.daily).toBe(150);
+    expect(xp.total).toBe(250);
 
     // FR-XP-6 — the visible breakdown rows always add up to the authoritative
     // total, and zero stages (weekly/streak here) are simply not rendered.
     const rows = xpBreakdownRows(xp);
-    expect(rows.map((row) => row.xp)).toEqual([50, 75]);
+    expect(rows.map((row) => row.xp)).toEqual([100, 150]);
     expect(breakdownRowSum(rows)).toBe(xp.total);
   });
 });

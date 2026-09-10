@@ -71,6 +71,25 @@ export function chapterArt(chapterId: number): number | null {
   return CHAPTER_ART[chapterId] ?? null;
 }
 
+// --- Real Journey Map Assets (assets/journey/ — optimized for mobile) ---
+export const JOURNEY_MAP_BG = require('@/assets/journey/map_background.jpg') as number;
+export const PLAYER_MAP_TOKEN = require('@/assets/journey/player_map_token.opt.png') as number;
+export const PATH_NODE_GLOWING = require('@/assets/journey/path_node_glowing.opt.png') as number;
+
+export const CHAPTER_BADGE_ART: Record<number, number> = {
+  1: require('@/assets/journey/chapter_badge_1.opt.png'),
+  2: require('@/assets/journey/chapter_badge_2.opt.png'),
+  3: require('@/assets/journey/chapter_badge_3.opt.png'),
+  4: require('@/assets/journey/chapter_badge_4.opt.png'),
+  5: require('@/assets/journey/chapter_badge_5.opt.png'),
+  6: require('@/assets/journey/chapter_badge_6.opt.png'),
+  7: require('@/assets/journey/chapter_badge_7.opt.png'),
+};
+
+export function chapterBadgeArt(chapterId: number): number | null {
+  return CHAPTER_BADGE_ART[chapterId] ?? null;
+}
+
 // --- Cosmetics (assets/{frames,titles,portraits,backgrounds}/, keyed by cosmetics.slug) ---
 export const COSMETIC_ART: Record<string, number> = {
   'frame-default': require('@/assets/frames/frame_default.png'),

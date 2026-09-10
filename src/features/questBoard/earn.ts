@@ -10,10 +10,10 @@
 import { streakMilestoneLine } from '@/features/profile/format';
 
 /** Mirror of `v_daily` — paid on the first completion of the local day. */
-export const DAILY_BONUS_XP = 75;
+export const DAILY_BONUS_XP = 150;
 
 /** Mirror of the weekly bonus paid on the 3rd completion of the Mon–Sun week. */
-export const WEEKLY_BONUS_XP = 500;
+export const WEEKLY_BONUS_XP = 1000;
 
 export interface DailyProgress {
   /** Any completion whose local day key equals today. */

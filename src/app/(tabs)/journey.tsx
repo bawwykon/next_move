@@ -1,38 +1,12 @@
-import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
-import { useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { Screen } from '@/components/ui/Screen';
-import { CHAPTERS, chapterForQuests } from '@/domain/journey/chapter';
-import { chapterArt } from '@/features/assets/assetMap';
-import { artForChapterId } from '@/features/journey/art';
-import { goalLine, journeyNodes, milestoneLine, type ChapterNode } from '@/features/journey/format';
+import { RealJourneyMap } from '@/features/journey/RealJourneyMap';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 import { withTapCue } from '@/lib/sounds';
 import { useCharacterStore } from '@/state/characterStore';
-
-/**
- * S7-01 — Journey Map (FR-JOURNEY-1..8). Read-only: no CTA, no gating beyond
- * pull-to-refresh; encouragement copy only (FR-JOURNEY-8). The feed is the
- * character snapshot's server-authoritative journey_quests/current_chapter
- * (M0019) refreshed on focus, exactly like the quest board.
- */
-
-// Each 512x512 emblem PNG carries transparent padding, so the visible art
-// occupies only ~42-68% of the canvas. EMBLEM_BOX scales the render box per
-// chapter so the visible emblem fills ~75% of the 72px node, centered, without
-// cropping or stretching the artwork.
-const EMBLEM_BOX: Record<number, number> = {
-  1: 130,
-  2: 120,
-  3: 117,
-  4: 125,
-  5: 90,
-  6: 88,
-  7: 79,
-};
+import { useFocusEffect } from 'expo-router';
 
 export default function JourneyScreen() {
   const { profile, status, refresh } = useCharacterStore();
@@ -44,13 +18,10 @@ export default function JourneyScreen() {
   );
 
   const quests = profile?.journeyQuestCount ?? 0;
-  const progress = chapterForQuests(quests);
-  const nodes = journeyNodes(quests);
-  const milestone = profile ? milestoneLine(quests, progress.current) : null;
 
-  return (
-    <Screen>
-      {status === 'error' ? (
+  if (status === 'error') {
+    return (
+      <Screen>
         <View style={styles.center}>
           <Text style={styles.errorTitle}>Your path is taking a breather.</Text>
           <Text style={styles.errorLine}>Could not load your journey. Try again in a moment.</Text>
@@ -62,104 +33,26 @@ export default function JourneyScreen() {
             <Text style={styles.retryLabel}>Retry</Text>
           </TouchableOpacity>
         </View>
-      ) : (
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.content}
-          refreshControl={
-            <RefreshControl
-              refreshing={status === 'loading'}
-              onRefresh={() => void refresh()}
-              tintColor={colors.rewardStrong}
-            />
-          }
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.header}>
-            <Text style={styles.title}>Your Journey</Text>
-            <Text style={styles.milestone}>{milestone ?? 'Walking your path — loading…'}</Text>
-          </View>
+      </Screen>
+    );
+  }
 
-          <View style={styles.timeline}>
-            {nodes.map((node, index) => (
-              <JourneyNode key={node.id} node={node} index={index} />
-            ))}
-          </View>
-        </ScrollView>
-      )}
-    </Screen>
-  );
-}
-
-function JourneyNode({ node, index }: { node: ChapterNode; index: number }) {
-  const art = artForChapterId(node.id);
-  const emblem = chapterArt(node.id);
-  const isCurrent = node.state === 'current';
-  const isDone = node.state === 'completed';
-  const isLocked = node.state === 'locked';
-
+  // Edge-to-edge container: no padding, fills entire screen area above tab bar
   return (
-    <View style={styles.nodeRow}>
-      <View style={styles.rail}>
-        {emblem !== null ? (
-          // AT-01D — journey emblems; locked chapters render desaturated via opacity on the asset directly.
-          <View style={styles.blob}>
-            <Image
-              source={emblem}
-              style={[
-                styles.emblem,
-                { width: EMBLEM_BOX[node.id], height: EMBLEM_BOX[node.id] },
-                isLocked && styles.emblemLocked,
-              ]}
-              contentFit="contain"
-            />
-          </View>
-        ) : (
-          <View style={[styles.blob, { backgroundColor: art?.blobColor }]}>
-            <Ionicons
-              name={art?.icon ?? 'map-outline'}
-              size={22}
-              color={isLocked ? colors.textMuted : art?.iconColor}
-            />
-          </View>
-        )}
-        {index < CHAPTERS.length - 1 ? <View style={styles.railLine} /> : null}
-      </View>
-
-      <View style={styles.nodeBody}>
-        <View style={styles.nodeHeader}>
-          <Text style={[styles.nodeName, isLocked && styles.nodeNameLocked]}>{node.name}</Text>
-          {isDone ? (
-            <Ionicons name="checkmark-circle" size={20} color={colors.success} />
-          ) : isCurrent ? (
-            <Ionicons name="checkmark-circle" size={20} color={colors.reward} />
-          ) : (
-            <Ionicons name="ellipse-outline" size={20} color={colors.textMuted} />
-          )}
-        </View>
-        <Text style={styles.nodeGoal}>{goalLine(CHAPTERS[index]!)}</Text>
-        <View style={styles.barTrack}>
-          <View
-            style={[
-              styles.barFill,
-              { width: `${Math.round(node.fraction * 100)}%` },
-              isCurrent ? styles.barFillCurrent : null,
-            ]}
-          />
-        </View>
-        {node.meta ? <Text style={styles.nodeMeta}>{node.meta}</Text> : null}
-      </View>
+    <View style={styles.fullscreenContainer}>
+      <RealJourneyMap
+        journeyQuestCount={quests}
+        refreshing={status === 'loading'}
+        onRefresh={() => void refresh()}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: {
+  fullscreenContainer: {
     flex: 1,
-  },
-  content: {
-    paddingBottom: spacing.xxxl,
-    gap: spacing.xl,
+    backgroundColor: '#0F1216',
   },
   center: {
     flex: 1,
@@ -192,94 +85,5 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontFamily: fonts.bodyBold.family,
     fontSize: 15,
-  },
-  header: {
-    gap: spacing.xs,
-  },
-  title: {
-    color: colors.text,
-    fontFamily: fonts.display.family,
-    fontSize: 26,
-  },
-  milestone: {
-    color: colors.textMuted,
-    fontFamily: fonts.body.family,
-    fontSize: 15,
-  },
-  timeline: {
-    gap: spacing.lg,
-  },
-  nodeRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  rail: {
-    width: 80,
-    alignItems: 'center',
-  },
-  blob: {
-    width: 72,
-    height: 72,
-    borderRadius: radius.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1,
-  },
-  emblem: {
-    borderRadius: radius.lg,
-  },
-  emblemLocked: {
-    opacity: 0.45,
-  },
-  railLine: {
-    position: 'absolute',
-    top: 64,
-    bottom: -spacing.xl,
-    width: 2,
-    backgroundColor: colors.surfaceElevated,
-  },
-  nodeBody: {
-    flex: 1,
-    paddingTop: spacing.xs,
-    gap: spacing.xs,
-  },
-  nodeHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.md,
-  },
-  nodeName: {
-    color: colors.text,
-    fontFamily: fonts.bodyBold.family,
-    fontSize: 16,
-    flexShrink: 1,
-  },
-  nodeNameLocked: {
-    color: colors.textMuted,
-  },
-  nodeGoal: {
-    color: colors.textMuted,
-    fontFamily: fonts.body.family,
-    fontSize: 13,
-  },
-  barTrack: {
-    height: 8,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surfaceElevated,
-    overflow: 'hidden',
-  },
-  barFill: {
-    height: '100%',
-    borderRadius: radius.pill,
-    backgroundColor: colors.calm,
-  },
-  barFillCurrent: {
-    backgroundColor: colors.reward,
-  },
-  nodeMeta: {
-    color: colors.calmStrong,
-    fontFamily: fonts.bodyBold.family,
-    fontSize: 13,
   },
 });

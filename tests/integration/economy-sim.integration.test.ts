@@ -7,7 +7,7 @@
  *  - level curve boundaries, incl. the 100 â†’ 101 transition (10,000 XP span)
  *  - mastery +30/+15 per touched track (250-point levels; AT-02H)
  *  - achievement triggers at their exact boundaries: quests 50/100, streak 7,
- *    phoenix (gap >= 8 days: rule days=7 -> days+1), early-bird (UTC hour < 10)
+ *    phoenix (level 25: rule level=25), early-bird (UTC hour < 10)
  *  - INVARIANT: a simulated long session (101 consecutive days) is recomputed
  *    from raw quest_completions rows alone, and the recompute must equal the
  *    profiles/mastery snapshot the RPC wrote; replayed idempotency keys
@@ -40,8 +40,8 @@ type Payload = {
 };
 
 // Server contract mirrors (0020_complete_quest + seed.sql).
-const DAILY_XP = 75;
-const WEEKLY_XP = 500;
+const DAILY_XP = 150;
+const WEEKLY_XP = 1000;
 const MILESTONES: readonly { days: number; xp: number }[] = [
   { days: 3, xp: 50 },
   { days: 7, xp: 150 },
@@ -152,7 +152,7 @@ describe('economy simulation sweep (live supabase)', () => {
           started_at: `${d}T${h}:00:00.000Z`,
           completed_at: `${d}T${eh}:${em}:${es}.000Z`,
           duration_sec: questMorning.duration_sec,
-          xp_awarded: 50,
+          xp_awarded: 100,
           bonus_breakdown: {},
           mastered: [],
           day_key: d,
@@ -413,31 +413,37 @@ describe('economy simulation sweep (live supabase)', () => {
     expect(last!.level.after).toBe(101);
     expect(last!.level.title).toBe('Legend');
     const prof = await profileRow();
-    // 504000 + 5*200 quest + 5*75 daily + 500 weekly (3rd of the window) + 50 (streak-3 rung).
-    expect(prof.total_xp).toBe(504_000 + 5 * 200 + 5 * DAILY_XP + WEEKLY_XP + 50);
+    // 504000 + 5*400 quest + 5*150 daily + 1000 weekly (3rd of the window) + 50 (streak-3 rung).
+    expect(prof.total_xp).toBe(504_000 + 5 * 400 + 5 * DAILY_XP + WEEKLY_XP + 50);
     expect(prof.level).toBe(101);
     expect(await ownedCount('master-adventurer')).toBe(1);
   }, 60000);
 
   // -----------------------------------------------------------------------
-  // 3. Phoenix boundary: gaps 6 and 7 stay locked, gap 8 unlocks.
+  // 3. Phoenix boundary: level 24 stays locked, level 25 unlocks.
   // -----------------------------------------------------------------------
-  it('phoenix needs at least an 8-day gap (rule days=7 -> days+1)', async () => {
+  it('phoenix unlocks at level 25 (rule level=25), not at 24', async () => {
     await resetProgression();
-    await completeViaRpc(morning(0, 9, 'ph-a'));
-    const gap6 = await completeViaRpc(morning(6, 9, 'ph-6'));
-    expect(gap6.achievements.some((a) => a.slug === 'phoenix')).toBe(false);
-
-    await resetProgression();
-    await completeViaRpc(morning(1, 9, 'ph-b'));
-    const gap7 = await completeViaRpc(morning(8, 9, 'ph-7'));
-    expect(gap7.achievements.some((a) => a.slug === 'phoenix')).toBe(false);
-
-    await resetProgression();
-    await completeViaRpc(morning(2, 9, 'ph-c'));
-    const gap8 = await completeViaRpc(morning(10, 9, 'ph-8'));
-    expect(gap8.achievements.some((a) => a.slug === 'phoenix')).toBe(true);
-    expect(gap8.cosmetics.some((c) => c.slug === 'portrait-phoenix')).toBe(true);
+    // Park just below the boundary: 30000 XP is level 25 (50*25*24).
+    const park = await admin
+      .from('profiles')
+      .update({ total_xp: LEVEL_XP_FOR(25) - 200, level: 24 })
+      .eq('id', profileId);
+    expect(park.error).toBeNull();
+    expect(await ownedCount('phoenix')).toBe(0);
+    // Seed today's completion so the crossing quest pays exactly +200 (no daily bonus).
+    await seedCompletions([{ atDay: 0, startHour: 9 }]);
+    const cross = await completeViaRpc({
+      questId: questHard.id,
+      atDay: 0,
+      startHour: 12,
+      startMinute: 0,
+      questDurationSec: questHard.duration_sec,
+      idem: 'ph-25',
+    });
+    expect(cross.level.after).toBe(25);
+    expect(cross.achievements.some((a) => a.slug === 'phoenix')).toBe(true);
+    expect(cross.cosmetics.some((c) => c.slug === 'portrait-phoenix')).toBe(true);
     expect(await ownedCount('phoenix')).toBe(1);
   }, 120000);
 

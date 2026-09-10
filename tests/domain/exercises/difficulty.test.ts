@@ -20,7 +20,6 @@ describe('exercise difficulty map', () => {
       'cat-cow',
       'seated-hamstring-stretch',
       'standing-quad-stretch',
-      'gentle-hops',
       'glute-bridge',
       'seated-leg-raise',
       'bird-dog',
@@ -35,6 +34,7 @@ describe('exercise difficulty map', () => {
     expect(exerciseDifficulty('push-up')).toBe('intermediate');
     expect(exerciseDifficulty('lunges')).toBe('intermediate');
     expect(exerciseDifficulty('plank')).toBe('intermediate');
+    expect(exerciseDifficulty('gentle-hops')).toBe('intermediate');
     // TUNE-01 — isometric hold reclassified (mirrors migration 0028).
     expect(exerciseDifficulty('wall-sit')).toBe('intermediate');
   });

@@ -7,7 +7,7 @@ import { AppButton } from '@/components/ui/AppButton';
 import { Screen } from '@/components/ui/Screen';
 import { track } from '@/data/analytics';
 import { celebrateStep, initialCelebrationState } from '@/features/victory/celebration';
-import { ChapterOverlay } from '@/features/victory/chapter';
+import { ChapterUnlockCelebration } from '@/features/journey/ChapterUnlockCelebration';
 import { ConfettiBurst } from '@/features/victory/confetti';
 import { BreakdownCard } from '@/features/victory/breakdown';
 import { JourneyCard } from '@/features/victory/journey';
@@ -143,6 +143,13 @@ export default function VictoryScreen() {
     dispatchCelebration('skip');
   }, []);
 
+  // JOURNEY-02 — the celebration overlay (auto-dismiss 2s / tap-early) feeds
+  // the same 'hide' event as the fallback timer above; the reducer no-ops it
+  // outside the chapter stage, so a double-dismiss is harmless.
+  const handleChapterDismiss = useCallback(() => {
+    dispatchCelebration('hide');
+  }, []);
+
   const handleSkipPress = () => {
     playCue('click');
     skipCelebration();
@@ -218,9 +225,10 @@ export default function VictoryScreen() {
         level={result?.level.after ?? 1}
         title={result?.level.title ?? ''}
       />
-      <ChapterOverlay
+      <ChapterUnlockCelebration
         visible={celebration.chapterOverlayVisible}
         chapterId={result?.journey.chapter_after ?? 1}
+        onDismiss={handleChapterDismiss}
       />
     </Screen>
   );

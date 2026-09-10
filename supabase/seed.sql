@@ -151,25 +151,25 @@ insert into public.exercise_library (slug, name, instruction, safety_note, categ
   ('burpees', 'Burpees', 'From standing, squat down, step or jump back to a plank, return to the squat, then jump up.', 'Land softly with bent knees on the jump.', '{"endurance","strength"}', 'Step back instead of jumping; walk hands in and out.')
 on conflict (slug) do nothing;
 
--- quest definitions (AT-02I — three difficulty tiers; interval-peak is hard @200)
+-- quest definitions (AT-02I — three difficulty tiers)
 insert into public.quests (slug, title, description, difficulty, xp_reward, duration_sec, categories) values
-  ('morning-stretch', 'Morning Stretch', 'Wake up your whole body with a gentle stretch routine that eases you into the day.', 'easy', 50, 480, '{"mobility"}'),
-  ('first-steps', 'First Steps', 'A friendly introduction to daily movement with easy marching and walking steps.', 'easy', 50, 480, '{"endurance"}'),
-  ('desk-break', 'Desk Break', 'Quick, desk-friendly moves to refresh your body between tasks.', 'easy', 50, 480, '{"mobility"}'),
-  ('home-circuit', 'Home Circuit', 'A beginner-friendly bodyweight circuit you can complete in your living room.', 'easy', 50, 600, '{"strength"}'),
-  ('steady-flow', 'Steady Flow', 'Slow, controlled movements and steady breathing to build focus and calm.', 'easy', 50, 480, '{"discipline"}'),
-  ('power-walk', 'Power Walk', 'Brisk walking intervals that build your stamina step by step.', 'normal', 100, 600, '{"endurance"}'),
-  ('core-basics', 'Core Basics', 'Foundation moves that strengthen your middle from the ground up.', 'normal', 100, 570, '{"strength"}'),
-  ('full-body-flow', 'Full Body Flow', 'A flowing sequence that gently moves every major joint.', 'normal', 100, 600, '{"mobility"}'),
-  ('interval-boost', 'Interval Boost', 'Structured work and rest intervals that lift your conditioning.', 'hard', 200, 600, '{"endurance"}'),
-  ('strength-builder', 'Strength Builder', 'A structured circuit that builds whole-body strength safely.', 'hard', 200, 615, '{"strength"}'),
-  ('interval-peak', 'Interval Peak', 'Three rounds of intervals, each a little harder than the last — the toughest endurance climb.', 'hard', 200, 690, '{"endurance"}')
+  ('morning-stretch', 'Morning Stretch', 'Wake up your whole body with a gentle stretch routine that eases you into the day.', 'easy', 100, 480, '{"mobility"}'),
+  ('first-steps', 'First Steps', 'A friendly introduction to daily movement with easy marching and walking steps.', 'easy', 100, 480, '{"endurance"}'),
+  ('desk-break', 'Desk Break', 'Quick, desk-friendly moves to refresh your body between tasks.', 'easy', 100, 480, '{"mobility"}'),
+  ('home-circuit', 'Home Circuit', 'A beginner-friendly bodyweight circuit you can complete in your living room.', 'easy', 100, 600, '{"strength"}'),
+  ('steady-flow', 'Steady Flow', 'Slow, controlled movements and steady breathing to build focus and calm.', 'easy', 100, 480, '{"discipline"}'),
+  ('power-walk', 'Power Walk', 'Brisk walking intervals that build your stamina step by step.', 'normal', 200, 600, '{"endurance"}'),
+  ('core-basics', 'Core Basics', 'Foundation moves that strengthen your middle from the ground up.', 'normal', 200, 570, '{"strength"}'),
+  ('full-body-flow', 'Full Body Flow', 'A flowing sequence that gently moves every major joint.', 'normal', 200, 600, '{"mobility"}'),
+  ('interval-boost', 'Interval Boost', 'Structured work and rest intervals that lift your conditioning.', 'hard', 400, 600, '{"endurance"}'),
+  ('strength-builder', 'Strength Builder', 'A structured circuit that builds whole-body strength safely.', 'hard', 400, 615, '{"strength"}'),
+  ('interval-peak', 'Interval Peak', 'Three rounds of intervals, each a little harder than the last — the toughest endurance climb.', 'hard', 400, 690, '{"endurance"}')
 on conflict (slug) do nothing;
 
 -- BYQ-02: inactive sentinel quest anchoring custom-workout completions
 -- (never listed on the board; complete_custom_workout resolves it by slug).
 insert into public.quests (slug, title, description, difficulty, xp_reward, duration_sec, categories, active)
-values ('custom-workout', 'Custom Workout', 'Player-built workout completion record.', 'easy', 50, 480, '{}'::text[], false)
+values ('custom-workout', 'Custom Workout', 'Player-built workout completion record.', 'easy', 100, 480, '{}'::text[], false)
 on conflict (slug) do nothing;
 
 -- quest segments (position 1-based, first warmup, last cooldown, sum = quest duration)

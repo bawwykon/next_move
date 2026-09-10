@@ -2,7 +2,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 import { AppButton } from '@/components/ui/AppButton';
 import { Screen } from '@/components/ui/Screen';
@@ -64,7 +71,7 @@ const FRAME_HOLE_CENTER: Record<string, { x: number; y: number; size: number }> 
   'frame-level-25': { x: 232.3, y: 262.86, size: 176 },
   'frame-level-50': { x: 265.1, y: 265.86, size: 176 },
   'frame-level-75': { x: 256, y: 246.4, size: 176 },
-  'frame-level-100': { x: 277.6, y: 269.86, size: 176 },
+  'frame-level-100': { x: 256, y: 257, size: 176 },
   premium_frame: { x: 256, y: 256, size: 155.23 },
 };
 const DEFAULT_HOLE_CENTER = { x: 256, y: 256, size: 176 };
@@ -214,13 +221,18 @@ export default function ProfileScreen() {
 
   const initials = email ? (email.split('@')[0] ?? '').slice(0, 2).toUpperCase() : 'A';
   const todayKey = dayKey(new Date());
-  // AT-01D — resolve the equipped item ids to catalogue slugs for the art
-  // lookup (a null id falls back to the slot's default slug when it has one).
+  // AT-01D — resolve the equipped item ids/slugs to catalogue slugs for the art
+  // lookup. Nameplates are stored as slugs; frames/portraits as UUIDs.
+  // A null id falls back to the slot's default slug when one exists.
   const equippedSlug = useCallback(
     (slot: CosmeticSlot): string | null => {
-      const id = profile?.equipped?.[slot] ?? null;
-      if (id) {
-        return catalog.find((item) => item.id === id)?.slug ?? null;
+      const raw = profile?.equipped?.[slot] ?? null;
+      if (raw) {
+        const byId = catalog.find((item) => item.id === raw)?.slug;
+        if (byId) return byId;
+        const bySlug = catalog.find((item) => item.slug === raw)?.slug;
+        if (bySlug) return bySlug;
+        return null;
       }
       return DEFAULT_SLOT_SLUGS[slot] ?? null;
     },
@@ -288,6 +300,10 @@ export default function ProfileScreen() {
             >
               <Text style={styles.retryLabel}>Retry</Text>
             </TouchableOpacity>
+          </View>
+        ) : status !== 'ready' ? (
+          <View style={styles.center}>
+            <ActivityIndicator size="large" color={colors.reward} />
           </View>
         ) : (
           <ScrollView
@@ -632,7 +648,7 @@ const styles = StyleSheet.create({
     minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
+    overflow: 'visible',
     position: 'relative',
   },
   nameFramePremium: {

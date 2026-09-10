@@ -91,7 +91,7 @@ describe('xpBreakdownRows', () => {
       streak: 0,
       total: DAILY_BONUS_XP,
     });
-    expect(daily).toEqual([{ label: 'Daily bonus', xp: 75 }]);
+    expect(daily).toEqual([{ label: 'Daily bonus', xp: DAILY_BONUS_XP }]);
     expect(daily[0]?.xp).toBe(DAILY_BONUS_XP);
 
     const weekly = xpBreakdownRows({
@@ -101,7 +101,7 @@ describe('xpBreakdownRows', () => {
       streak: 0,
       total: WEEKLY_BONUS_XP,
     });
-    expect(weekly).toEqual([{ label: 'Weekly bonus', xp: 500 }]);
+    expect(weekly).toEqual([{ label: 'Weekly bonus', xp: WEEKLY_BONUS_XP }]);
     expect(weekly[0]?.xp).toBe(WEEKLY_BONUS_XP);
   });
 
