@@ -273,15 +273,16 @@ export default function BuilderScreen() {
                     <BuildRow
                       key={`${segment.kind}-${segment.kind === 'rest' ? 'rest' : segment.exerciseSlug}-${index}`}
                       index={index}
-                      count={segments.length}
+                      isFirst={index === 0}
+                      isLast={index === segments.length - 1}
                       segment={segment}
                       name={segment.kind === 'rest' ? 'Rest' : nameOf(segment.exerciseSlug)}
                       difficulty={
                         segment.kind === 'exercise' ? difficultyOf(segment.exerciseSlug) : null
                       }
-                      onDuration={(durationSec) => handleDuration(index, durationSec)}
-                      onMove={(delta) => handleMove(index, delta)}
-                      onRemove={() => handleRemove(index)}
+                      onDuration={handleDuration}
+                      onMove={handleMove}
+                      onRemove={handleRemove}
                     />
                   ))
                 )}
@@ -298,38 +299,14 @@ export default function BuilderScreen() {
                   Tap to add — duplicates are allowed, order is up to you.
                 </Text>
                 <View style={styles.pickerWrap}>
-                  {catalog.map((exercise) => {
-                    const full = segments.length >= MAX_SEGMENTS;
-                    const icon = difficultyArt(DIFFICULTY_ART_KEY[exercise.difficulty]);
-                    return (
-                      <TouchableOpacity
-                        key={exercise.slug}
-                        accessibilityRole="button"
-                        style={[styles.pickChip, full ? styles.pickChipDisabled : null]}
-                        disabled={full}
-                        onPress={withTapCue(() => addSegment(exercise.slug))}
-                      >
-                        {exerciseArt(exercise.slug) !== null ? (
-                          <Image
-                            source={exerciseArt(exercise.slug)}
-                            style={styles.pickThumb}
-                            contentFit="contain"
-                          />
-                        ) : null}
-                        <Text style={styles.pickName} numberOfLines={1}>
-                          {exercise.name}
-                        </Text>
-                        {icon !== null ? (
-                          <Image
-                            source={icon}
-                            style={styles.pickIcon}
-                            contentFit="contain"
-                            accessibilityLabel={`${difficultyLabel(exercise.difficulty)} difficulty`}
-                          />
-                        ) : null}
-                      </TouchableOpacity>
-                    );
-                  })}
+                  {catalog.map((exercise) => (
+                    <CatalogChip
+                      key={exercise.slug}
+                      exercise={exercise}
+                      disabled={segments.length >= MAX_SEGMENTS}
+                      onAdd={addSegment}
+                    />
+                  ))}
                 </View>
                 {/* Rest blocks — 0 XP on the meter, but they fill time and
                 count toward the 12-block cap (WK ruling). */}
@@ -404,9 +381,46 @@ function guardrailHint(violations: GuardrailViolation[], totalSec: number): stri
   return null;
 }
 
+const CatalogChip = memo(function CatalogChip({
+  exercise,
+  disabled,
+  onAdd,
+}: {
+  exercise: CatalogExercise;
+  disabled: boolean;
+  onAdd: (slug: string) => void;
+}) {
+  const icon = difficultyArt(DIFFICULTY_ART_KEY[exercise.difficulty]);
+  const thumb = exerciseArt(exercise.slug);
+  return (
+    <TouchableOpacity
+      accessibilityRole="button"
+      style={[styles.pickChip, disabled ? styles.pickChipDisabled : null]}
+      disabled={disabled}
+      onPress={withTapCue(() => onAdd(exercise.slug))}
+    >
+      {thumb !== null ? (
+        <Image source={thumb} style={styles.pickThumb} contentFit="contain" />
+      ) : null}
+      <Text style={styles.pickName} numberOfLines={1}>
+        {exercise.name}
+      </Text>
+      {icon !== null ? (
+        <Image
+          source={icon}
+          style={styles.pickIcon}
+          contentFit="contain"
+          accessibilityLabel={`${difficultyLabel(exercise.difficulty)} difficulty`}
+        />
+      ) : null}
+    </TouchableOpacity>
+  );
+});
+
 const BuildRow = memo(function BuildRow({
   index,
-  count,
+  isFirst,
+  isLast,
   segment,
   name,
   difficulty,
@@ -415,13 +429,14 @@ const BuildRow = memo(function BuildRow({
   onRemove,
 }: {
   index: number;
-  count: number;
+  isFirst: boolean;
+  isLast: boolean;
   segment: CustomSegment;
   name: string;
   difficulty: ExerciseDifficulty | null;
-  onDuration: (durationSec: number) => void;
-  onMove: (delta: -1 | 1) => void;
-  onRemove: () => void;
+  onDuration: (index: number, durationSec: number) => void;
+  onMove: (index: number, delta: -1 | 1) => void;
+  onRemove: (index: number) => void;
 }) {
   const isRest = segment.kind === 'rest';
   const thumb = isRest ? null : exerciseArt(segment.exerciseSlug);
@@ -449,7 +464,7 @@ const BuildRow = memo(function BuildRow({
                   styles.durationChip,
                   segment.durationSec === preset ? styles.durationChipActive : null,
                 ]}
-                onPress={withTapCue(() => onDuration(preset))}
+                onPress={withTapCue(() => onDuration(index, preset))}
               >
                 <Text
                   style={[
@@ -478,31 +493,31 @@ const BuildRow = memo(function BuildRow({
         <TouchableOpacity
           accessibilityRole="button"
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          disabled={index === 0}
-          onPress={withTapCue(() => onMove(-1))}
+          disabled={isFirst}
+          onPress={withTapCue(() => onMove(index, -1))}
         >
           <Ionicons
             name="arrow-up-circle-outline"
             size={22}
-            color={index === 0 ? colors.surfaceElevated : colors.textMuted}
+            color={isFirst ? colors.surfaceElevated : colors.textMuted}
           />
         </TouchableOpacity>
         <TouchableOpacity
           accessibilityRole="button"
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          disabled={index === count - 1}
-          onPress={withTapCue(() => onMove(1))}
+          disabled={isLast}
+          onPress={withTapCue(() => onMove(index, 1))}
         >
           <Ionicons
             name="arrow-down-circle-outline"
             size={22}
-            color={index === count - 1 ? colors.surfaceElevated : colors.textMuted}
+            color={isLast ? colors.surfaceElevated : colors.textMuted}
           />
         </TouchableOpacity>
         <TouchableOpacity
           accessibilityRole="button"
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          onPress={withTapCue(onRemove)}
+          onPress={withTapCue(() => onRemove(index))}
         >
           <Ionicons name="close-circle-outline" size={22} color={colors.danger} />
         </TouchableOpacity>
