@@ -22,7 +22,7 @@ import {
   pushRemoteSettings,
 } from '@/data/repositories/settings';
 import { DEFAULT_SETTINGS, type AppSettings } from '@/domain/settings/model';
-import { withTapCue } from '@/lib/sounds';
+import { withTapCue, setSoundFxEnabled } from '@/lib/sounds';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 import { useSessionStore } from '@/state/sessionStore';
 import { useCharacterStore } from '@/state/characterStore';
@@ -55,6 +55,9 @@ export default function SettingsScreen() {
       const next = { ...settings, [key]: value };
       setSettings(next);
       await saveLocalSettings(next);
+      if (key === 'soundFx') {
+        setSoundFxEnabled(value);
+      }
       if (key === 'soundFx' || key === 'haptics' || key === 'showExerciseArt') {
         const {
           data: { user },

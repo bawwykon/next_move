@@ -80,7 +80,7 @@ describe('board data path (local supabase)', () => {
     expect(slugs.slice(0, 5)).toEqual(slugs.slice(0, 5).sort());
     expect(slugs.slice(5, 8)).toEqual(slugs.slice(5, 8).sort());
     expect(slugs.slice(8, 11)).toEqual(slugs.slice(8, 11).sort());
-    expect(slugs[10]).toBe('interval-peak');
+    expect(slugs[10]).toBe('strength-builder'); // hard tier sorts by slug: boost, peak, builder
 
     const morningStretch = quests.find((quest) => quest.slug === 'morning-stretch')!;
     expect(morningStretch.segmentCount).toBe(8);

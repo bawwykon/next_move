@@ -245,7 +245,7 @@ describe('outbox → complete_quest sync (live local supabase)', () => {
         slug: `queue-test-inactive-${Date.now().toString(36)}`,
         title: 'Queue test inactive',
         difficulty: 'easy',
-        xp_reward: 50,
+        xp_reward: 100,
         duration_sec: 480,
         categories: ['mobility'],
         active: false,
@@ -299,8 +299,8 @@ describe('outbox → complete_quest sync (live local supabase)', () => {
   it('victory payload: the second completion is what victory reconciles to, and its breakdown rows sum to its total', async () => {
     await resetProgression();
     // Two consecutive days in the same ISO week (2026-07-06 is a Monday):
-    //   day 1 → quest 50 + daily 75 (+75 first completion of the day)
-    //   day 2 → quest 50 + daily 75, streak climbs to 2 (no milestone bonus)
+    //   day 1 → quest 100 + daily 150 (+150 first completion of the day)
+    //   day 2 → quest 100 + daily 150, streak climbs to 2 (no milestone bonus)
     const synced = await runQueueSync([eventFor(day(1), 'vic-1'), eventFor(day(2), 'vic-2')]);
     expect(synced).toHaveLength(2);
 

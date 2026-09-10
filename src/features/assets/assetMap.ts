@@ -33,6 +33,36 @@ export function exerciseArt(slug: string | null | undefined): number | null {
   return slug ? (EXERCISE_ART[slug] ?? null) : null;
 }
 
+// --- Exercise thumbnails (assets/exercises/thumbs/, 256px) for small slots
+// (catalog chips, build rows, quest segment rows). Full EXERCISE_ART stays
+// for heroes (quest detail, workout). See scripts/gen-exercise-thumbs.mjs.
+export const EXERCISE_THUMBS: Record<string, number> = {
+  'wall-push-up': require('@/assets/exercises/thumbs/wall_push_up.png'),
+  'glute-bridge': require('@/assets/exercises/thumbs/glute_bridge.png'),
+  'bird-dog': require('@/assets/exercises/thumbs/bird_dog.png'),
+  'seated-leg-raise': require('@/assets/exercises/thumbs/seated_leg_raise.png'),
+  'wall-sit': require('@/assets/exercises/thumbs/wall_sit.png'),
+  'march-in-place': require('@/assets/exercises/thumbs/march_in_place.png'),
+  'step-touch': require('@/assets/exercises/thumbs/step_touch.png'),
+  'gentle-hops': require('@/assets/exercises/thumbs/gentle_hops.png'),
+  'seated-march': require('@/assets/exercises/thumbs/seated_march.png'),
+  'neck-shoulder-rolls': require('@/assets/exercises/thumbs/neck_shoulder_rolls.png'),
+  'cat-cow': require('@/assets/exercises/thumbs/cat_cow.png'),
+  'seated-hamstring-stretch': require('@/assets/exercises/thumbs/seated_hamstring_stretch.png'),
+  'standing-quad-stretch': require('@/assets/exercises/thumbs/standing_quad_stretch.png'),
+  squat: require('@/assets/exercises/thumbs/squat.png'),
+  'push-up': require('@/assets/exercises/thumbs/push_up.png'),
+  lunges: require('@/assets/exercises/thumbs/lunges.png'),
+  plank: require('@/assets/exercises/thumbs/plank.png'),
+  'bicycle-crunch': require('@/assets/exercises/thumbs/bicycle_crunch.png'),
+  'mountain-climber': require('@/assets/exercises/thumbs/mountain_climber.png'),
+  burpees: require('@/assets/exercises/thumbs/burpees.png'),
+};
+
+export function exerciseThumb(slug: string | null | undefined): number | null {
+  return slug ? (EXERCISE_THUMBS[slug] ?? exerciseArt(slug)) : null;
+}
+
 // --- Achievement badges (assets/badges/, keyed by achievements.slug) ---
 export const ACHIEVEMENT_ART: Record<string, number> = {
   'first-quest': require('@/assets/badges/badge_first_quest.png'),

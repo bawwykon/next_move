@@ -4,9 +4,9 @@
  *   npx jest tests/integration --testPathIgnorePatterns=/node_modules/
  *
  * A dedicated throwaway user drives the RPC; service role prepares fixtures.
- * The math is validated against the SAVED custom_workouts row: calibration
- * pins (480s beginner = 48 XP, 900s advanced = 270 XP), the half-block
- * rounding edge, journey-freeze semantics, farm-guards and idempotent replay.
+ * Classification pins (0038: Easy 100 / Normal 200 / Hard 400 from preset
+ * 30/45/60s blocks + 30s rests, 480-900s window, 12-segment cap), farm
+ * guards, journey-freeze semantics, and idempotent replay.
  *
  * Calendar note mirrors complete-quest.integration: fixed day keys; 2026-07-06
  * is a Monday. Timer windows are +/-15% around the saved total duration.
@@ -183,7 +183,7 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
     await admin.from('quest_completions').delete().eq('profile_id', profileId);
   });
 
-  it('calibration pin: 480s beginner = 48 XP (+75 first-of-day daily through the shared pipeline)', async () => {
+  it('calibration pin: 480s beginner = 100 XP Easy (+150 first-of-day daily through the shared pipeline)', async () => {
     await resetProgression();
     const d = day(0); // Monday
     const wid = await createWorkout(
@@ -200,7 +200,10 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
   it('classification: all beginner exercises = Easy / 100 XP', async () => {
     await resetProgression();
     const d = day(1);
-    const wid = await createWorkout('easy-w', [seg('wall-push-up', 240), seg('wall-push-up', 240)]);
+    const wid = await createWorkout(
+      'easy-w',
+      Array.from({ length: 8 }, () => seg('wall-push-up', 60)),
+    );
     const payload = (await call(wid, event(d, 'easy-e', 480))).payload!;
     expect(payload.xp.quest).toBe(100);
   });
@@ -208,7 +211,11 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
   it('classification: 2+ Normal exercises (and 0 Hard) = Normal / 200 XP', async () => {
     await resetProgression();
     const d = day(2);
-    const wid = await createWorkout('normal-w', [seg('squat', 240), seg('push-up', 240)]);
+    const wid = await createWorkout('normal-w', [
+      seg('squat', 60),
+      seg('push-up', 60),
+      ...Array.from({ length: 6 }, () => seg('step-touch', 60)),
+    ]);
     const payload = (await call(wid, event(d, 'normal-n', 480))).payload!;
     expect(payload.xp.quest).toBe(200);
   });
@@ -216,7 +223,10 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
   it('classification: >= 45s Hard exercises = Hard / 400 XP', async () => {
     await resetProgression();
     const d = day(3);
-    const wid = await createWorkout('hard-w', [seg('squat', 240), seg('burpees', 240)]);
+    const wid = await createWorkout('hard-w', [
+      seg('burpees', 60),
+      ...Array.from({ length: 7 }, () => seg('step-touch', 60)),
+    ]);
     const payload = (await call(wid, event(d, 'hard-h', 480))).payload!;
     expect(payload.xp.quest).toBe(400);
   });
@@ -225,11 +235,12 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
     await resetProgression();
     const d = day(4);
     const wid = await createWorkout('hard-multi', [
-      seg('burpees', 240),
-      seg('mountain-climber', 240),
-      seg('bicycle-crunch', 240),
+      seg('burpees', 60),
+      seg('mountain-climber', 60),
+      seg('bicycle-crunch', 60),
+      ...Array.from({ length: 5 }, () => seg('step-touch', 60)),
     ]);
-    const payload = (await call(wid, event(d, 'hard-m', 720))).payload!;
+    const payload = (await call(wid, event(d, 'hard-m', 480))).payload!;
     expect(payload.xp.quest).toBe(400);
   });
 
@@ -237,11 +248,11 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
     await resetProgression();
     const d = day(5);
     const wid = await createWorkout('insufficient-hard', [
-      seg('wall-push-up', 240),
       seg('burpees', 30),
-      seg('step-touch', 240),
+      ...Array.from({ length: 7 }, () => seg('wall-push-up', 60)),
+      restSeg(30),
     ]);
-    const payload = (await call(wid, event(d, 'ins-h', 510))).payload!;
+    const payload = (await call(wid, event(d, 'ins-h', 480))).payload!;
     expect(payload.xp.quest).toBe(100);
   });
 
@@ -249,11 +260,12 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
     await resetProgression();
     const d = day(5);
     const wid = await createWorkout('normal-to-hard', [
-      seg('squat', 96),
-      seg('push-up', 96),
-      seg('lunges', 96),
-      seg('plank', 96),
-      seg('wall-sit', 96),
+      seg('squat', 60),
+      seg('push-up', 60),
+      seg('lunges', 60),
+      seg('plank', 60),
+      seg('wall-sit', 60),
+      ...Array.from({ length: 3 }, () => seg('step-touch', 60)),
     ]);
     const payload = (await call(wid, event(d, 'normal-h', 480))).payload!;
     expect(payload.xp.quest).toBe(400);
@@ -275,11 +287,10 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
     await resetProgression();
     const d = day(7);
     const wid = await createWorkout('bad-rest', [
-      seg('wall-push-up', 240),
-      restSeg(30),
-      seg('wall-push-up', 240),
+      ...Array.from({ length: 7 }, () => seg('wall-push-up', 60)),
+      restSeg(45),
     ]);
-    const { payload, error } = await call(wid, event(d, 'bad-r', 510));
+    const { payload, error } = await call(wid, event(d, 'bad-r', 465));
     expect(payload).toBeNull();
     expect(error!.message).toContain('complete_custom_workout.bad_duration');
   });
@@ -288,18 +299,12 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
     await resetProgression();
     const d = day(3);
     const wid = await createWorkout('rest-mix', [
-      seg('wall-push-up', 240),
+      ...Array.from({ length: 6 }, () => seg('wall-push-up', 60)),
       restSeg(30),
-      seg('burpees', 240),
+      seg('burpees', 60),
+      restSeg(30),
     ]);
-    const payload = (
-      await call(wid, {
-        idempotency_key: idemUuid('rest-mix-w'),
-        started_at: iso(d, 7),
-        completed_at: `${d}T07:08:30.000Z`,
-        day_key: d,
-      })
-    ).payload!;
+    const payload = (await call(wid, event(d, 'rest-mix-w', 480))).payload!;
     expect(payload.xp.quest).toBe(400);
     expect(payload.xp.total).toBe(payload.xp.quest + payload.xp.daily);
     const row = await admin
@@ -308,7 +313,7 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
       .eq('profile_id', profileId)
       .eq('idempotency_key', idemUuid('rest-mix-w'))
       .single();
-    expect(row.data!.duration_sec).toBe(510);
+    expect(row.data!.duration_sec).toBe(480);
   });
 
   it('farm guard: rest block carrying an exercise slug rejected (segment_invalid)', async () => {
@@ -323,11 +328,14 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
     expect(error!.message).toContain('complete_custom_workout.segment_invalid');
   });
 
-  it('farm guard: rest block outside 15/30/45/60 rejected (bad_duration)', async () => {
+  it('farm guard: rest block outside the 30s preset rejected (bad_duration)', async () => {
     await resetProgression();
     const d = day(5);
-    const wid = await createWorkout('rest-duration', [seg('wall-push-up', 240), restSeg(30)]);
-    const { payload, error } = await call(wid, event(d, 'g-rest-dur', 510));
+    const wid = await createWorkout('rest-duration', [
+      ...Array.from({ length: 7 }, () => seg('wall-push-up', 60)),
+      restSeg(15),
+    ]);
+    const { payload, error } = await call(wid, event(d, 'g-rest-dur', 435));
     expect(payload).toBeNull();
     expect(error!.message).toContain('complete_custom_workout.bad_duration');
   });
@@ -336,12 +344,12 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
     await resetProgression();
     const d = day(5);
     const wid = await createWorkout('all-rest', [
-      restSeg(120),
-      restSeg(120),
-      restSeg(120),
-      restSeg(120),
-    ]); // 480s passes the length window but has zero exercises
-    const { payload, error } = await call(wid, event(d, 'g-all-rest', 480));
+      restSeg(30),
+      restSeg(30),
+      restSeg(30),
+      restSeg(30),
+    ]); // zero exercises -> no_exercise fires before the length window is checked
+    const { payload, error } = await call(wid, event(d, 'g-all-rest', 120));
     expect(payload).toBeNull();
     expect(error!.message).toContain('complete_custom_workout.no_exercise');
   });
@@ -377,10 +385,10 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
     await resetProgression();
     const d = day(5);
     const wid = await createWorkout('guard-slug', [
-      seg('not-a-real-move', 240),
-      seg('wall-push-up', 240),
+      seg('not-a-real-move', 60),
+      seg('wall-push-up', 60),
     ]);
-    const { payload, error } = await call(wid, event(d, 'g-slug', 480));
+    const { payload, error } = await call(wid, event(d, 'g-slug', 120));
     expect(payload).toBeNull();
     expect(error!.message).toContain('complete_custom_workout.unknown_exercise');
   });
@@ -397,35 +405,41 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
     expect(error!.message).toContain('complete_custom_workout.bad_duration');
   });
 
-  it('farm guard: over 12 segments rejected (segment_cap)', async () => {
+  it('farm guard: over 16 segments rejected (segment_cap)', async () => {
     await resetProgression();
     const d = day(5);
     const wid = await createWorkout(
       'guard-cap',
-      Array.from({ length: 13 }, () => seg('wall-push-up', 40)),
+      Array.from({ length: 17 }, () => seg('wall-push-up', 40)),
     );
     const { payload, error } = await call(wid, event(d, 'g-cap', 520));
     expect(payload).toBeNull();
     expect(error!.message).toContain('complete_custom_workout.segment_cap');
   });
 
-  it('farm guard: over-length workout rejected (length_bounds)', async () => {
+  it('length ceiling: the max-constructible 16x60s workout (960s) is accepted, not length-bounded', async () => {
+    // With the 16-segment cap and 60s max blocks, no constructible workout
+    // can exceed the 1200s ceiling (16x60 = 960) — the ceiling guards direct
+    // API abuse, and this pins that the biggest legal build still passes it.
     await resetProgression();
     const d = day(5);
-    const wid = await createWorkout('guard-length', [
-      ...Array.from({ length: 9 }, () => seg('burpees', 90)),
-      ...Array.from({ length: 2 }, () => seg('plank', 60)),
-    ]); // 930s > 900s ceiling
-    const { payload, error } = await call(wid, event(d, 'g-len', 930));
-    expect(payload).toBeNull();
-    expect(error!.message).toContain('complete_custom_workout.length_bounds');
+    const wid = await createWorkout(
+      'guard-length',
+      Array.from({ length: 16 }, () => seg('burpees', 60)),
+    ); // 960s < 1200s ceiling
+    const { payload, error } = await call(wid, event(d, 'g-len', 960));
+    expect(error).toBeNull();
+    expect(payload!.xp.quest).toBe(400);
   });
 
   it('farm guard: under-length workout rejected (length_bounds)', async () => {
     await resetProgression();
     const d = day(5);
-    const wid = await createWorkout('guard-short', [seg('wall-push-up', 300)]); // 300s < 480s floor
-    const { payload, error } = await call(wid, event(d, 'g-short', 300));
+    const wid = await createWorkout('guard-short', [
+      seg('wall-push-up', 60),
+      seg('wall-push-up', 60),
+    ]); // 120s < 480s floor
+    const { payload, error } = await call(wid, event(d, 'g-short', 120));
     expect(payload).toBeNull();
     expect(error!.message).toContain('complete_custom_workout.length_bounds');
   });
@@ -433,10 +447,10 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
   it('farm guard: timer mismatch rejected like the quest path (timer_mismatch)', async () => {
     await resetProgression();
     const d = day(5);
-    const wid = await createWorkout('guard-timer', [
-      seg('wall-push-up', 240),
-      seg('wall-push-up', 240),
-    ]);
+    const wid = await createWorkout(
+      'guard-timer',
+      Array.from({ length: 8 }, () => seg('wall-push-up', 60)),
+    );
     const ev = {
       idempotency_key: idemUuid('g-timer'),
       started_at: iso(d, 7),
@@ -451,7 +465,10 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
   it("farm guard: another account cannot complete someone else's workout (workout_invalid)", async () => {
     await resetProgression();
     const d = day(5);
-    const wid = await createWorkout('owned', [seg('wall-push-up', 240), seg('wall-push-up', 240)]);
+    const wid = await createWorkout(
+      'owned',
+      Array.from({ length: 8 }, () => seg('wall-push-up', 60)),
+    );
     // Second identity tries to spend the first account's workout definition.
     const intruder = createClient(LOCAL_URL, ANON_KEY, { auth: { persistSession: false } });
     const intruderEmail = 'custom-intruder@nextmove.app';
@@ -508,12 +525,10 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
   it('replay survives workout deletion (stored payload wins)', async () => {
     await resetProgression();
     const d = day(6);
-    const wid = await createWorkout('deleted-after', [
-      seg('burpees', 120),
-      seg('burpees', 120),
-      seg('burpees', 120),
-      seg('burpees', 120),
-    ]);
+    const wid = await createWorkout(
+      'deleted-after',
+      Array.from({ length: 8 }, () => seg('burpees', 60)),
+    );
     const ev = event(d, 'survive-key', 480);
     const first = (await call(wid, ev)).payload!;
     const { error: delErr } = await admin.from('custom_workouts').delete().eq('id', wid);
@@ -525,15 +540,13 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
   it('completions land in quest_completions via the inactive sentinel quest', async () => {
     await resetProgression();
     const d = day(6);
-    const wid = await createWorkout('sentinel-anchor', [
-      seg('glute-bridge', 120),
-      seg('glute-bridge', 120),
-      seg('glute-bridge', 120),
-      seg('glute-bridge', 120),
-    ]);
+    const wid = await createWorkout(
+      'sentinel-anchor',
+      Array.from({ length: 8 }, () => seg('glute-bridge', 60)),
+    );
     const { payload, error } = await call(wid, event(d, 'sentinel-key', 480));
     expect(error).toBeNull();
-    expect(payload!.xp.quest).toBe(100); // 16 blocks x weight 1 = 16 pts -> round-half-up(48) = 48
+    expect(payload!.xp.quest).toBe(100); // all-beginner -> Easy / 100 XP
     const { data: rows, error: fetchError } = await admin
       .from('quest_completions')
       .select('quest_id:quests(slug), duration_sec')
@@ -553,10 +566,11 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
     await resetProgression();
     const d = day(6);
     const wid = await createWorkout('client-router', [
-      seg('wall-sit', 120),
-      seg('plank', 120),
-      seg('wall-sit', 120),
-      seg('plank', 120),
+      seg('wall-sit', 60),
+      seg('plank', 60),
+      seg('wall-sit', 60),
+      seg('plank', 60),
+      ...Array.from({ length: 4 }, () => seg('step-touch', 60)),
     ]);
     const ev: CompletionEvent = {
       workout_id: wid,

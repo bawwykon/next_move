@@ -121,7 +121,7 @@ describe('guardrails', () => {
     expect(validateDraft([beg240, beg240])).not.toContain('min_total');
   });
 
-  it('rejects totals over 900s with max_total', () => {
+  it('rejects totals over 1200s with max_total', () => {
     expect(
       validateDraft(Array.from({ length: MAX_SEGMENTS }, () => ex('wall-push-up', 90))),
     ).toContain('max_total');
@@ -129,7 +129,7 @@ describe('guardrails', () => {
 
   it('bounds agree with constants', () => {
     expect(MIN_TOTAL_SEC).toBe(480);
-    expect(MAX_TOTAL_SEC).toBe(900);
-    expect(MAX_SEGMENTS).toBe(12);
+    expect(MAX_TOTAL_SEC).toBe(1200);
+    expect(MAX_SEGMENTS).toBe(16);
   });
 });

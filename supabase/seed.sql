@@ -159,11 +159,11 @@ insert into public.quests (slug, title, description, difficulty, xp_reward, dura
   ('home-circuit', 'Home Circuit', 'A beginner-friendly bodyweight circuit you can complete in your living room.', 'easy', 100, 600, '{"strength"}'),
   ('steady-flow', 'Steady Flow', 'Slow, controlled movements and steady breathing to build focus and calm.', 'easy', 100, 480, '{"discipline"}'),
   ('power-walk', 'Power Walk', 'Brisk walking intervals that build your stamina step by step.', 'normal', 200, 600, '{"endurance"}'),
-  ('core-basics', 'Core Basics', 'Foundation moves that strengthen your middle from the ground up.', 'normal', 200, 570, '{"strength"}'),
-  ('full-body-flow', 'Full Body Flow', 'A flowing sequence that gently moves every major joint.', 'normal', 200, 600, '{"mobility"}'),
+  ('core-basics', 'Core Basics', 'Foundation moves that strengthen your middle from the ground up.', 'normal', 200, 450, '{"strength"}'),
+  ('full-body-flow', 'Full Body Flow', 'A flowing sequence that gently moves every major joint.', 'normal', 200, 540, '{"mobility"}'),
   ('interval-boost', 'Interval Boost', 'Structured work and rest intervals that lift your conditioning.', 'hard', 400, 600, '{"endurance"}'),
   ('strength-builder', 'Strength Builder', 'A structured circuit that builds whole-body strength safely.', 'hard', 400, 615, '{"strength"}'),
-  ('interval-peak', 'Interval Peak', 'Three rounds of intervals, each a little harder than the last — the toughest endurance climb.', 'hard', 400, 690, '{"endurance"}')
+  ('interval-peak', 'Interval Peak', 'Three rounds of intervals, each a little harder than the last — the toughest endurance climb.', 'hard', 400, 660, '{"endurance"}')
 on conflict (slug) do nothing;
 
 -- BYQ-02: inactive sentinel quest anchoring custom-workout completions
@@ -396,10 +396,10 @@ select
   s.started,
   s.completed,
   q.duration_sec,
-  50,
+  100,
   to_char(s.started, 'YYYY-MM-DD'),
   '{}',
-  jsonb_build_object('xp', jsonb_build_object('total', 50))
+  jsonb_build_object('xp', jsonb_build_object('total', 100))
 from public.quests q
 join (
   values
@@ -427,13 +427,16 @@ on conflict (profile_id, achievement_id) do nothing;
 
 -- S8-02 — demo fixture: the demo owns exactly the loadout items its honest
 -- facts grant — frame-default & portrait-default (unlock rule {} — owned by
--- every player) and title-adventurer (rule: own the first-quest achievement,
--- which the demo does). The other 15 stay unowned so the picker proofs cover
--- both states. Replays are idempotent.
+-- every player), nameplate-default (rule level:1 — every profile with a
+-- completion owns it; 0034 auto-grants only pre-existing profiles, and the
+-- demo profile is created by this seed afterwards), and title-adventurer
+-- (rule: own the first-quest achievement, which the demo does). The other
+-- items stay unowned so the picker proofs cover both states. Replays are
+-- idempotent.
 insert into public.profile_cosmetics (profile_id, cosmetic_id, unlocked_at)
 select '3f8a2c1e-6f5b-4a7d-9c2e-1b4d6f8a0c3e', id, now()
 from public.cosmetics
-where slug in ('frame-default', 'title-adventurer', 'portrait-default')
+where slug in ('frame-default', 'title-adventurer', 'portrait-default', 'nameplate-default')
 on conflict (profile_id, cosmetic_id) do nothing;
 
 -- S7-01 / S8-01 — keep the demo fixture truthful to the server invariants

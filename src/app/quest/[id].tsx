@@ -14,7 +14,7 @@ import {
 } from '@/domain/exercises/difficulty';
 import {
   difficultyArt,
-  exerciseArt,
+  exerciseThumb,
   masteryArt,
   REST_DETAILED_ART,
 } from '@/features/assets/assetMap';
@@ -196,7 +196,7 @@ function SegmentRow({ segment }: { segment: QuestSegment }) {
   const isRest = segment.kind === 'rest';
   const isEdge = segment.kind === 'warmup' || segment.kind === 'cooldown';
   const labelColor = isRest ? colors.textMuted : isEdge ? colors.calm : colors.text;
-  const thumb = isRest ? REST_DETAILED_ART : exerciseArt(segment.exerciseSlug);
+  const thumb = isRest ? REST_DETAILED_ART : exerciseThumb(segment.exerciseSlug);
   // AT-02E amendment — the difficulty badge owns a FIXED slot at the row's
   // end (before the duration): it can no longer shift with title length or
   // drop below wrapped text.

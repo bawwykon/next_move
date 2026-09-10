@@ -3,9 +3,12 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { LogBox } from 'react-native';
+import { setAudioModeAsync } from 'expo-audio';
 
 import { useLoadedFonts } from '@/lib/fonts';
 import { track } from '@/data/analytics';
+import { loadLocalSettings } from '@/data/repositories/settings';
+import { setSoundFxEnabled } from '@/lib/sounds';
 import { captureTabPath } from '@/lib/intended-route';
 import { useAppForeground } from '@/hooks/useAppForeground';
 import { useDayChange } from '@/hooks/useDayChange';
@@ -74,6 +77,15 @@ export default function RootLayout() {
   useEffect(() => {
     if (ready) {
       SplashScreen.hideAsync();
+      // Coexist with background music (Spotify etc.): our cues are short
+      // UI/effect sounds, so request no exclusive focus — mix instead of
+      // pausing whatever the user is listening to. Without this, every tap
+      // cue forces an audio-focus transaction that both stops music and can
+      // stutter rapid taps (builder add-taps) on some devices.
+      void setAudioModeAsync({ interruptionMode: 'mixWithOthers' }).catch(() => undefined);
+      void loadLocalSettings()
+        .then((saved) => setSoundFxEnabled(saved.soundFx))
+        .catch(() => undefined);
     }
   }, [ready]);
 

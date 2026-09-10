@@ -100,7 +100,9 @@ describe('cosmetic equip data path (live local supabase)', () => {
     );
     expect(result.error).toBeNull();
     const equipped = await readEquipped();
-    expect(equipped.nameplate).toBe(catalogId('nameplate-default'));
+    // Nameplates persist as slugs by design (0034 default is the slug string),
+    // unlike frame/portrait which persist as catalogue uuids.
+    expect(equipped.nameplate).toBe('nameplate-default');
     expect(equipped.frame).toBe(catalogId('frame-default'));
   });
 
@@ -108,7 +110,7 @@ describe('cosmetic equip data path (live local supabase)', () => {
     const result = await board.equipCosmetic(profileId, 'nameplate', null);
     expect(result.error).toBeNull();
     const equipped = await readEquipped();
-    expect(equipped.nameplate).toBeNull();
+    expect(equipped.nameplate).toBe('nameplate-default');
   });
 
   it('(4) unowned equip is rejected by the write path; state unchanged', async () => {

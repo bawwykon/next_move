@@ -26,9 +26,9 @@ export const SEGMENT_DURATION_PRESETS = [30, 45, 60] as const;
 export const REST_DURATION_PRESETS = [30] as const;
 
 export const MIN_SEGMENTS = 1;
-export const MAX_SEGMENTS = 12;
+export const MAX_SEGMENTS = 16;
 export const MIN_TOTAL_SEC = 480;
-export const MAX_TOTAL_SEC = 900;
+export const MAX_TOTAL_SEC = 1200;
 export const NAME_MAX_CHARS = 60;
 export const DEFAULT_WORKOUT_NAME = 'Custom Quest';
 
@@ -148,8 +148,8 @@ export function meterFill(xp: number): number {
 export type GuardrailViolation = 'empty' | 'segment_cap' | 'min_total' | 'max_total';
 
 /**
- * Structural checks mirroring complete_custom_workout (0027): ≥1 and ≤12
- * segments, total 120–900s. Durations outside the preset set cannot be
+ * Structural checks mirroring complete_custom_workout (0038): ≥1 and ≤16
+ * segments, total 480–1200s. Durations outside the preset set cannot be
  * produced by the builder UI (chips only), so they are not re-checked here.
  */
 export function validateDraft(segments: readonly CustomSegment[]): GuardrailViolation[] {

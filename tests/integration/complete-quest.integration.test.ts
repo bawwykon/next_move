@@ -106,8 +106,9 @@ describe('complete_quest RPC (live local supabase)', () => {
 
   const easyEvent = (dayKey: string, idem: string, hour: number, minute = 0) =>
     event(questMorning.id, dayKey, idem, iso(dayKey, hour), iso(dayKey, hour, minute + 8));
+  // strength-builder is 615s: a 10-min elapsed lands at 97.6% (inside ±15%).
   const hardEvent = (dayKey: string, idem: string, hour: number, minute = 0) =>
-    event(questStrength.id, dayKey, idem, iso(dayKey, hour), iso(dayKey, hour, minute + 15));
+    event(questStrength.id, dayKey, idem, iso(dayKey, hour), iso(dayKey, hour, minute + 10));
 
   const resetProgression = async () => {
     await admin.from('quest_completions').delete().eq('profile_id', profileId);
@@ -221,10 +222,10 @@ describe('complete_quest RPC (live local supabase)', () => {
       xp_reward: strength.xp_reward,
       duration_sec: strength.duration_sec,
     };
-    expect(strength.xp_reward).toBe(200);
+    expect(strength.xp_reward).toBe(400);
   });
 
-  it('golden: fresh progression, first-of-day excluded -> 50/50 xp, mastery +30/+15 (AT-02H)', async () => {
+  it('golden: fresh progression, first-of-day excluded -> 100/100 xp, mastery +30/+15 (AT-02H)', async () => {
     await resetProgression();
     const d = day(0); // Monday 2026-07-06
     await seedSameDayCompletion(d); // makes this not the first completion of that day
@@ -234,8 +235,8 @@ describe('complete_quest RPC (live local supabase)', () => {
     const payload = result.payload!;
     console.log('GOLDEN payload:', JSON.stringify(payload));
 
-    expect(payload.xp).toEqual({ quest: 50, daily: 0, weekly: 0, streak: 0, total: 50 });
-    expect(payload.level).toEqual({ before: 1, after: 1, title: 'Beginner' });
+    expect(payload.xp).toEqual({ quest: 100, daily: 0, weekly: 0, streak: 0, total: 100 });
+    expect(payload.level).toEqual({ before: 1, after: 2, title: 'Beginner' });
     expect(payload.journey).toEqual({
       quests: 1,
       chapter_before: 1,
@@ -246,8 +247,10 @@ describe('complete_quest RPC (live local supabase)', () => {
     // S5-02: the first completion unlocks first-quest and, chained to it, the
     // title-adventurer cosmetic — exactly once. The default nameplate
     // (level-1 rule, LOADOUT-01) is also granted on the first completion.
-    expect(payload.achievements).toHaveLength(1);
-    expect(payload.achievements[0]).toMatchObject({
+    // At 100 XP the maiden quest also lands level 2, unlocking first-level.
+    expect(payload.achievements).toHaveLength(2);
+    expect(payload.achievements.map((a) => a.slug).sort()).toEqual(['first-level', 'first-quest']);
+    expect(payload.achievements.find((a) => a.slug === 'first-quest')).toMatchObject({
       slug: 'first-quest',
       title: 'First Quest',
       category: 'beginner',
@@ -282,8 +285,8 @@ describe('complete_quest RPC (live local supabase)', () => {
     const golden = completions![completions!.length - 1];
     expect(completions!.length).toBe(2); // the seed + this completion
     expect(golden.day_key).toBe(d);
-    expect(golden.xp_awarded).toBe(50);
-    expect((golden.bonus_breakdown as { xp: { total: number } }).xp.total).toBe(50);
+    expect(golden.xp_awarded).toBe(100);
+    expect((golden.bonus_breakdown as { xp: { total: number } }).xp.total).toBe(100);
     expect(golden.mastered).toEqual(['mobility', 'discipline']);
 
     const { data: mastery } = await admin
@@ -296,8 +299,8 @@ describe('complete_quest RPC (live local supabase)', () => {
     expect(byTrack).toEqual({ mobility: 30, discipline: 15 });
 
     const profile = await profileRow();
-    expect(profile.total_xp).toBe(50);
-    expect(profile.level).toBe(1);
+    expect(profile.total_xp).toBe(100);
+    expect(profile.level).toBe(2);
     expect(profile.journey_quests).toBe(1);
     expect(profile.current_chapter).toBe(1);
     expect(profile.last_completed_day).toBe(d);
@@ -321,22 +324,22 @@ describe('complete_quest RPC (live local supabase)', () => {
     expect(rows!.length).toBe(1);
   });
 
-  it('daily bonus: +75 on the first completion of a day, 0 on the second, +75 again the next day', async () => {
+  it('daily bonus: +150 on the first completion of a day, 0 on the second, +150 again the next day', async () => {
     await resetProgression();
     const d1 = day(12);
     const d2 = day(13);
     const one = await callOk(easyEvent(d1, 'daily-1', 8));
     const two = await callOk(easyEvent(d1, 'daily-2', 9));
     const three = await callOk(easyEvent(d2, 'daily-3', 8));
-    expect(one.xp.daily).toBe(75);
+    expect(one.xp.daily).toBe(150);
     expect(two.xp.daily).toBe(0);
-    expect(three.xp.daily).toBe(75);
-    expect(two.xp.quest).toBe(50);
-    expect(one.xp.total).toBe(125);
+    expect(three.xp.daily).toBe(150);
+    expect(two.xp.quest).toBe(100);
+    expect(one.xp.total).toBe(250);
     console.log('DAILY:', JSON.stringify([one.xp, two.xp, three.xp]));
   });
 
-  it('weekly bonus: +500 exactly on the 3rd completion within a Mon-Sun week', async () => {
+  it('weekly bonus: +1000 exactly on the 3rd completion within a Mon-Sun week', async () => {
     await resetProgression();
     const mon = day(7); // 2026-07-13 (Monday)
     const tue = day(8);
@@ -346,7 +349,7 @@ describe('complete_quest RPC (live local supabase)', () => {
     const c2 = await callOk(easyEvent(tue, 'week-2', 8));
     const c3 = await callOk(easyEvent(wed, 'week-3', 8));
     const c4 = await callOk(easyEvent(thu, 'week-4', 8));
-    expect([c1, c2, c3, c4].map((c) => c.xp.weekly)).toEqual([0, 0, 500, 0]);
+    expect([c1, c2, c3, c4].map((c) => c.xp.weekly)).toEqual([0, 0, 1000, 0]);
     console.log('WEEKLY:', [c1, c2, c3, c4].map((c) => c.xp.weekly).join(','));
   });
 
@@ -382,15 +385,15 @@ describe('complete_quest RPC (live local supabase)', () => {
     );
   });
 
-  it('level curve: crossing 100 XP lands on level 2 with title Beginner and exact totals', async () => {
+  it('level curve: easy quest lands level 2 with title Beginner and exact totals', async () => {
     await resetProgression();
     const d = day(30);
-    const r = await callOk(hardEvent(d, 'lvl-1', 8));
+    const r = await callOk(easyEvent(d, 'lvl-1', 8));
     expect(r.level.after).toBe(2);
     expect(r.level.title).toBe('Beginner');
     expect(r.level.before).toBe(1);
-    expect(r.xp.quest).toBe(200);
-    expect(r.xp.total).toBe(200 + r.xp.daily);
+    expect(r.xp.quest).toBe(100);
+    expect(r.xp.total).toBe(100 + r.xp.daily);
     console.log('LEVEL:', JSON.stringify(r.level), 'total', r.xp.total);
 
     const profile = await profileRow();
@@ -449,7 +452,7 @@ describe('complete_quest RPC (live local supabase)', () => {
         slug: `rpc-test-inactive-${Date.now().toString(36)}`,
         title: 'RPC test inactive',
         difficulty: 'easy',
-        xp_reward: 50,
+        xp_reward: 100,
         duration_sec: 480,
         categories: ['mobility'],
         active: false,
@@ -602,7 +605,7 @@ describe('complete_quest RPC (live local supabase)', () => {
 
     await resetProgression();
     // End-to-end: seed total_xp so the completed quest lands the level exactly
-    // on a title boundary (level 5 = 1000 XP; hard quest grants 200 XP). The
+    // on a title boundary (level 5 = 1000 XP; hard quest grants 400 XP). The
     // profile level column must also be the level for the seeded XP so the
     // RPC's 'before' reflects the pre-completion state.
     const setXp = await admin
@@ -613,13 +616,13 @@ describe('complete_quest RPC (live local supabase)', () => {
     const d = day(48);
     await seedSameDayCompletion(d); // avoid the first-of-day bonus skewing the total
     const r = await callOk(hardEvent(d, 'ttl-5', 8));
-    expect(r.xp.quest).toBe(200);
+    expect(r.xp.quest).toBe(400);
     expect(r.xp.daily).toBe(0);
     expect(r.level.before).toBe(4);
     expect(r.level.after).toBe(5);
     expect(r.level.title).toBe('Apprentice');
     const profile = await profileRow();
-    expect(profile.total_xp).toBe(1000);
+    expect(profile.total_xp).toBe(1200);
     expect(profile.level).toBe(5);
   });
 
@@ -646,7 +649,7 @@ describe('complete_quest RPC (live local supabase)', () => {
   it('first-quest: unlocks on completion #1, never again (replay + follow-up)', async () => {
     await resetProgression();
     const d = day(80);
-    await seedSameDayCompletion(d); // keep the payoff to 50/50 so first-quest is the only unlock
+    await seedSameDayCompletion(d); // keep the payoff to 100/100 so first-quest is the only unlock
     const ev = event(questMorning.id, d, 's52-fq-1', iso(d, 7), iso(d, 7, 8));
     const first = await callOk(ev);
     expect(first.achievements.map((a) => a.slug)).toContain('first-quest');
@@ -667,13 +670,13 @@ describe('complete_quest RPC (live local supabase)', () => {
   it('first-level: crossing level 2 unlocks first-level exactly once', async () => {
     await resetProgression();
     const d = day(52);
-    const r = await callOk(hardEvent(d, 'first-level-1', 8));
+    const r = await callOk(easyEvent(d, 'first-level-1', 8));
     expect(r.level.before).toBe(1);
     expect(r.level.after).toBe(2);
     expect(r.achievements.map((a) => a.slug)).toContain('first-level');
     expect(await ownedByAchievementRows('first-level')).toHaveLength(1);
     const d2 = day(53);
-    const next = await callOk(hardEvent(d2, 'first-level-2', 8));
+    const next = await callOk(easyEvent(d2, 'first-level-2', 8));
     expect(next.achievements.map((a) => a.slug)).not.toContain('first-level');
   }, 30000);
 
@@ -717,10 +720,10 @@ describe('complete_quest RPC (live local supabase)', () => {
 
   it('phoenix: reaching level 25 unlocks phoenix + portrait-phoenix', async () => {
     await resetProgression();
-    // Level 25 needs 50*25*24 = 30000 XP; hard quest grants 200 on top.
+    // Level 25 needs 50*25*24 = 30000 XP; hard quest grants 400 on top.
     const setProfile = await admin
       .from('profiles')
-      .update({ total_xp: 30000 - 200, level: 24, journey_quests: 0 })
+      .update({ total_xp: 30000 - 400, level: 24, journey_quests: 0 })
       .eq('id', profileId);
     expect(setProfile.error).toBeNull();
     const d = day(115);
@@ -734,10 +737,10 @@ describe('complete_quest RPC (live local supabase)', () => {
 
   it('master-adventurer: reaching level 100 unlocks it + frame-le-100 + portrait-master', async () => {
     await resetProgression();
-    // Level 100 needs 50*100*99 = 495000 XP; hard quest grants 200 on top.
+    // Level 100 needs 50*100*99 = 495000 XP; hard quest grants 400 on top.
     const setProfile = await admin
       .from('profiles')
-      .update({ total_xp: 495000 - 200, level: 99, journey_quests: 0 })
+      .update({ total_xp: 495000 - 400, level: 99, journey_quests: 0 })
       .eq('id', profileId);
     expect(setProfile.error).toBeNull();
     const d = day(105);
@@ -758,7 +761,7 @@ describe('complete_quest RPC (live local supabase)', () => {
       .eq('id', profileId);
     expect(adminUpdate.error).toBeNull();
     const d = day(108);
-    await seedSameDayCompletion(d); // 800 + 200 = 1000 -> level 5 exactly
+    await seedSameDayCompletion(d); // 800 + 400 = 1200 -> level 5
     const r = await callOk(hardEvent(d, 'frame-5', 8));
     expect(r.level.after).toBe(5);
     expect(r.cosmetics.map((c) => c.slug)).toContain('frame-level-05');

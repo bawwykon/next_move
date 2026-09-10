@@ -164,7 +164,7 @@ export default function QuestBoardScreen() {
   }, [completions, todayKey, today.startMs]);
 
   // S9-01 — the daily cell derives from the same completions snapshot: any
-  // completion whose local day key is today means the +75 XP bonus has paid.
+  // completion whose local day key is today means the +150 XP bonus has paid.
   const daily = useMemo(
     () => dailyChallengeProgress(completions ?? [], todayKey),
     [completions, todayKey],

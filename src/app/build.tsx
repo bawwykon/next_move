@@ -38,7 +38,7 @@ import {
   difficultyLabel,
   type ExerciseDifficulty,
 } from '@/domain/exercises/difficulty';
-import { difficultyArt, exerciseArt, REST_DETAILED_ART } from '@/features/assets/assetMap';
+import { difficultyArt, exerciseThumb, REST_DETAILED_ART } from '@/features/assets/assetMap';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 import { withTapCue } from '@/lib/sounds';
 
@@ -309,7 +309,7 @@ export default function BuilderScreen() {
                   ))}
                 </View>
                 {/* Rest blocks — 0 XP on the meter, but they fill time and
-                count toward the 12-block cap (WK ruling). */}
+                count toward the 16-block cap (WK ruling). */}
                 <TouchableOpacity
                   accessibilityRole="button"
                   style={[
@@ -391,7 +391,7 @@ const CatalogChip = memo(function CatalogChip({
   onAdd: (slug: string) => void;
 }) {
   const icon = difficultyArt(DIFFICULTY_ART_KEY[exercise.difficulty]);
-  const thumb = exerciseArt(exercise.slug);
+  const thumb = exerciseThumb(exercise.slug);
   return (
     <TouchableOpacity
       accessibilityRole="button"
@@ -439,7 +439,7 @@ const BuildRow = memo(function BuildRow({
   onRemove: (index: number) => void;
 }) {
   const isRest = segment.kind === 'rest';
-  const thumb = isRest ? null : exerciseArt(segment.exerciseSlug);
+  const thumb = isRest ? null : exerciseThumb(segment.exerciseSlug);
   const diffIcon =
     !isRest && difficulty !== null ? difficultyArt(DIFFICULTY_ART_KEY[difficulty]) : null;
   const presets = isRest ? REST_DURATION_PRESETS : SEGMENT_DURATION_PRESETS;

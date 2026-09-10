@@ -8,8 +8,16 @@
  * AT-01L experiments. Every call is wrapped so a missing/corrupt asset or a
  * player error can never crash a screen (same contract as the original
  * victory chimes). `withTapCue` is the shared helper for button taps.
+ *
+ * Background-music coexistence (industry pattern: Sweat/Sworkit/Strava keep
+ * the user's music playing and layer cues over it):
+ * - click (UI taps): pure mix, no focus change — taps never disturb music.
+ * - workout/victory cues: transient duck — music dips under the cue, then
+ *   restores. CUE_DURATIONS_MS mirrors assets/sounds/*.wav lengths.
+ * The Sound FX settings toggle gates everything via setSoundFxEnabled
+ * (init once at startup, updated on toggle).
  */
-import { createAudioPlayer, type AudioPlayer } from 'expo-audio';
+import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
 
 export type SoundCue =
   | 'click'
@@ -36,6 +44,51 @@ const SOURCES: Record<SoundCue, number> = {
 
 const players = new Map<SoundCue, AudioPlayer>();
 
+/** Playback lengths of assets/sounds/*.wav — duck windows are duration + buffer. */
+const CUE_DURATIONS_MS: Record<Exclude<SoundCue, 'click'>, number> = {
+  countdown: 4000,
+  exerciseEnd: 1000,
+  restStart: 1000,
+  restEnd: 1000,
+  questComplete: 2000,
+  levelup: 1480,
+  victoryFanfare: 3080,
+  chapterUnlocked: 2560,
+};
+const DUCK_RELEASE_BUFFER_MS = 400;
+
+/** Rapid-fire guard: taps faster than this reuse the in-flight cue instead of
+ *  stacking seek+play storms on the shared player (builder add-taps). */
+const CLICK_THROTTLE_MS = 100;
+let lastClickAt = 0;
+
+/** Sound FX master switch (Settings). Defaults on; synced at startup + toggle. */
+let soundFxEnabled = true;
+export function setSoundFxEnabled(value: boolean): void {
+  soundFxEnabled = value;
+}
+
+/** Duck music under a cue, restoring mix afterwards (re-armed by overlaps). */
+let duckReleaseTimer: ReturnType<typeof setTimeout> | null = null;
+function duckForCue(durationMs: number): void {
+  try {
+    void setAudioModeAsync({ interruptionMode: 'duckOthers' }).catch(() => undefined);
+  } catch {
+    // audio must never block the UI
+  }
+  if (duckReleaseTimer !== null) {
+    clearTimeout(duckReleaseTimer);
+  }
+  duckReleaseTimer = setTimeout(() => {
+    duckReleaseTimer = null;
+    try {
+      void setAudioModeAsync({ interruptionMode: 'mixWithOthers' }).catch(() => undefined);
+    } catch {
+      // audio must never block the UI
+    }
+  }, durationMs + DUCK_RELEASE_BUFFER_MS);
+}
+
 function playerFor(cue: SoundCue): AudioPlayer | null {
   try {
     let player = players.get(cue);
@@ -51,6 +104,18 @@ function playerFor(cue: SoundCue): AudioPlayer | null {
 
 /** Replay the cue from the start; swallow any audio failure. */
 export function playCue(cue: SoundCue): void {
+  if (!soundFxEnabled) {
+    return;
+  }
+  if (cue === 'click') {
+    const now = Date.now();
+    if (now - lastClickAt < CLICK_THROTTLE_MS) {
+      return;
+    }
+    lastClickAt = now;
+  } else {
+    duckForCue(CUE_DURATIONS_MS[cue]);
+  }
   const player = playerFor(cue);
   if (!player) {
     return;

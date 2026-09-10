@@ -3,9 +3,10 @@
  * seeded 30-day loop against the LIVE local stack through the authoritative
  * `complete_quest` RPC (the exact client write path — never a direct table
  * write for progression data). After each user's stream the script recomputes
- * the expected state from its raw events (a faithful mirror of 0020: quest
- * XP, daily +75 first-of-day, weekly +500 on the 3rd of a Mon–Sun window,
- * streak ladder rungs 3/7/30/100, mastery +10/+5 per touch, level curve
+ * the expected state from its raw events (a faithful mirror of
+ * apply_completion_progression: quest XP, daily +150 first-of-day, weekly
+ * +1000 on the 3rd of a Mon-Sun window,
+ * streak ladder rungs 3/7/30/100, mastery +30/+15 per touch, level curve
  * 50·L·(L−1)) and asserts ZERO drift against server.profiles/mastery.
  *
  *   npm run population:sim           # 100 users × 30 days
@@ -47,8 +48,8 @@ const SERVICE_ROLE_KEY = serviceRoleKey();
 
 const EPOC = '2026-07-06'; // Monday — weekly windows align with 0020's isodow
 const DAY_MS = 86_400_000;
-const DAILY_XP = 75;
-const WEEKLY_XP = 500;
+const DAILY_XP = 150;
+const WEEKLY_XP = 1000;
 const MILESTONES: readonly { days: number; xp: number }[] = [
   { days: 3, xp: 50 },
   { days: 7, xp: 150 },
@@ -128,15 +129,15 @@ function runMirror(events: SimEvent[], quests: Map<string, Quest>): Mirror {
       throw new Error(`catalog drift: unknown quest ${ev.questId}`);
     }
     total += quest.xpReward;
-    // Mastery (FR-MAS-2): +10 only for the server's fixed track list
+    // Mastery (FR-MAS-2, AT-02H 3x): +30 only for the server's fixed track list
     // (strength/endurance/mobility); 'discipline' as a quest category earns
-    // no +10 — the +5 discipline grant is unconditional per completion.
+    // no +30 — the +15 discipline grant is unconditional per completion.
     for (const cat of ['strength', 'endurance', 'mobility']) {
       if (quest.categories.includes(cat)) {
-        mastery[cat] = (mastery[cat] ?? 0) + 10;
+        mastery[cat] = (mastery[cat] ?? 0) + 30;
       }
     }
-    mastery['discipline'] = (mastery['discipline'] ?? 0) + 5;
+    mastery['discipline'] = (mastery['discipline'] ?? 0) + 15;
 
     if (prevDay !== ev.dayOffset) {
       daily += DAILY_XP;
@@ -211,9 +212,11 @@ async function main(): Promise<void> {
 
   // Catalog: quest categories come straight from quests.categories — the same
   // column 0020 reads (no exercise-join needed for the mastery mirror).
+  // Active only: the inactive custom-workout sentinel can never complete.
   const { data: questRows, error: questErr } = await admin
     .from('quests')
-    .select('id, xp_reward, duration_sec, categories');
+    .select('id, xp_reward, duration_sec, categories')
+    .eq('active', true);
   if (questErr) {
     throw new Error(`quests: ${questErr.message}`);
   }

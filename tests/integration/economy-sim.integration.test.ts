@@ -1,8 +1,8 @@
 /**
  * S10-01 â€” economy validation sim (QA gate). Live-DB proof that the server
  * engine (0020_complete_quest) pays out exactly the FR/economy contract:
- *  - daily bonus (+75) on the first completion of each local day only
- *  - weekly bonus (+500) exactly on the 3rd completion of a Monâ€“Sun week
+ *  - daily bonus (+150) on the first completion of each local day only
+ *  - weekly bonus (+1000) exactly on the 3rd completion of a Monâ€“Sun week
  *  - streak-milestone payouts on a fresh 3/7/30/100-day streak (50/150/500/1500)
  *  - level curve boundaries, incl. the 100 â†’ 101 transition (10,000 XP span)
  *  - mastery +30/+15 per touched track (250-point levels; AT-02H)
@@ -39,7 +39,7 @@ type Payload = {
   cosmetics: { slug: string }[];
 };
 
-// Server contract mirrors (0020_complete_quest + seed.sql).
+// Server contract mirrors (apply_completion_progression + seed.sql).
 const DAILY_XP = 150;
 const WEEKLY_XP = 1000;
 const MILESTONES: readonly { days: number; xp: number }[] = [
@@ -213,8 +213,8 @@ describe('economy simulation sweep (live supabase)', () => {
   /**
    * INVARIANT MIRROR â€” recompute the server snapshot from the raw event
    * stream (quest reward + day keys only), replicating 0020 exactly:
-   * quest XP per completion, daily +75 only on the first per-day completion,
-   * weekly +500 only on the 3rd completion per Monâ€“Sun window (offset
+   * quest XP per completion, daily +150 only on the first per-day completion,
+   * weekly +1000 only on the 3rd completion per Monâ€“Sun window (offset
    * week = floor(day/7)), ladder payouts only when the streak lands exactly
    * on a rung day, and level via the closed form 50*L*(L-1).
    */
@@ -293,12 +293,12 @@ describe('economy simulation sweep (live supabase)', () => {
     }[];
     questMorning = {
       id: list.find((q) => q.slug === 'morning-stretch')!.id,
-      xp_reward: 50,
+      xp_reward: 100,
       duration_sec: list.find((q) => q.slug === 'morning-stretch')!.duration_sec,
     };
     questHard = {
       id: list.find((q) => q.slug === 'strength-builder')!.id,
-      xp_reward: 200,
+      xp_reward: 400,
       duration_sec: list.find((q) => q.slug === 'strength-builder')!.duration_sec,
     };
   });
@@ -327,13 +327,13 @@ describe('economy simulation sweep (live supabase)', () => {
     expect(payouts[3]!.xp.streak).toBe(0); // day 4 â€” no re-grant
     expect(payouts[100]!.xp.streak).toBe(0); // day 101 â€” past the ladder
 
-    // Daily: +75 on every first-of-day (one event per day here).
+    // Daily: +150 on every first-of-day (one event per day here).
     expect(payouts.reduce((sum, p) => sum + p.xp.daily, 0)).toBe(DAILY_XP * DAYS);
-    // Weekly: +500 exactly on the 3rd of each Monâ€“Sun window; 15 windows.
+    // Weekly: +1000 exactly on the 3rd of each Monâ€“Sun window; 15 windows.
     const weeklyEvents = payouts.filter((p) => p.xp.weekly > 0);
     expect(weeklyEvents.length).toBe(15);
     expect(weeklyEvents.every((p) => p.xp.weekly === WEEKLY_XP)).toBe(true);
-    expect(payouts[2]!.xp.weekly).toBe(500);
+    expect(payouts[2]!.xp.weekly).toBe(WEEKLY_XP);
     expect(payouts[3]!.xp.weekly).toBe(0); // 4th of week 1 window
 
     // Achievement boundary firing, exactly once each.
