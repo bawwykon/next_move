@@ -23,6 +23,7 @@ const RESOLVER = (slug: string) => {
     'push-up': 'intermediate',
     lunges: 'intermediate',
     plank: 'intermediate',
+    'wall-sit': 'intermediate',
     burpees: 'advanced',
     'mountain-climber': 'advanced',
     'bicycle-crunch': 'advanced',
@@ -38,32 +39,44 @@ const ex = (exerciseSlug: string, durationSec: number): CustomSegment => ({
 
 describe('custom workout classification & XP rebalance', () => {
   it('classifies all beginner exercises as Easy (100 XP)', () => {
-    const draft = [ex('wall-push-up', 60), ex('step-touch', 60)]; // 120s total, beginner
+    const draft = [ex('wall-push-up', 240), ex('step-touch', 240)]; // 480s total, beginner
     expect(projectedXp(draft, RESOLVER)).toBe(100);
     expect(classifyWorkout(draft, RESOLVER).tier).toBe('easy');
   });
 
   it('classifies 2+ Normal exercises (and 0 Hard) as Normal (200 XP)', () => {
-    const draft = [ex('squat', 60), ex('push-up', 60)]; // 120s total, 2 intermediate, 0 hard
+    const draft = [ex('squat', 240), ex('push-up', 240)]; // 480s total, 2 intermediate, 0 hard
     expect(projectedXp(draft, RESOLVER)).toBe(200);
     expect(classifyWorkout(draft, RESOLVER).tier).toBe('normal');
   });
 
   it('classifies workouts with >= 45s Hard exercises as Hard (400 XP)', () => {
-    const draft = [ex('squat', 60), ex('burpees', 60)]; // 60s hard >= 45s
+    const draft = [ex('squat', 240), ex('burpees', 240)]; // 480s, 240s hard >= 45s
     expect(projectedXp(draft, RESOLVER)).toBe(400);
     expect(classifyWorkout(draft, RESOLVER).tier).toBe('hard');
   });
 
   it('supports 3+ Hard exercises without cap (Hard / 400 XP)', () => {
-    const draft = [ex('burpees', 60), ex('mountain-climber', 60), ex('bicycle-crunch', 60)];
+    const draft = [ex('burpees', 240), ex('mountain-climber', 240), ex('bicycle-crunch', 240)];
     expect(projectedXp(draft, RESOLVER)).toBe(400);
     expect(classifyWorkout(draft, RESOLVER).tier).toBe('hard');
   });
 
   it('does not qualify as Hard if Hard time is insufficient (< 45s)', () => {
-    const draft = [ex('wall-push-up', 60), ex('burpees', 30)]; // 30s hard < 45s, 0 normal
-    expect(projectedXp(draft, RESOLVER)).toBe(100); // defaults to easy since < 2 normal
+    const draft = [ex('wall-push-up', 240), ex('burpees', 30)]; // 30s hard < 45s, 0 normal
+    expect(projectedXp(draft, RESOLVER)).toBe(100); // defaults to easy since < 45s hard
+  });
+
+  it('classifies 5+ Normal exercises (and 0 Hard) as Hard (400 XP)', () => {
+    const draft = [
+      ex('squat', 96),
+      ex('push-up', 96),
+      ex('lunges', 96),
+      ex('plank', 96),
+      ex('wall-sit', 96),
+    ]; // 480s total, 5 intermediate, 0 hard
+    expect(projectedXp(draft, RESOLVER)).toBe(400);
+    expect(classifyWorkout(draft, RESOLVER).tier).toBe('hard');
   });
 
   it('use preset sets: segments [30, 45, 60], rest [30]', () => {
@@ -91,7 +104,7 @@ describe('zones + meter', () => {
 });
 
 describe('guardrails', () => {
-  const beg60 = ex('wall-push-up', 60);
+  const beg240 = ex('wall-push-up', 240);
 
   it('requires at least one segment', () => {
     expect(validateDraft([])).toEqual(['empty']);
@@ -99,13 +112,13 @@ describe('guardrails', () => {
   });
 
   it('accepts a draft inside every bound', () => {
-    expect(validateDraft([beg60, beg60])).toEqual([]);
-    expect(isValidDraft([beg60, beg60])).toBe(true);
+    expect(validateDraft([beg240, beg240])).toEqual([]);
+    expect(isValidDraft([beg240, beg240])).toBe(true);
   });
 
-  it('rejects totals under 120s with min_total', () => {
+  it('rejects totals under 480s with min_total', () => {
     expect(validateDraft([ex('wall-push-up', 60)])).toContain('min_total');
-    expect(validateDraft([beg60, beg60])).not.toContain('min_total');
+    expect(validateDraft([beg240, beg240])).not.toContain('min_total');
   });
 
   it('rejects totals over 900s with max_total', () => {
@@ -115,7 +128,7 @@ describe('guardrails', () => {
   });
 
   it('bounds agree with constants', () => {
-    expect(MIN_TOTAL_SEC).toBe(120);
+    expect(MIN_TOTAL_SEC).toBe(480);
     expect(MAX_TOTAL_SEC).toBe(900);
     expect(MAX_SEGMENTS).toBe(12);
   });

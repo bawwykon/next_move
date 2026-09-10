@@ -27,10 +27,12 @@ export const REST_DURATION_PRESETS = [30] as const;
 
 export const MIN_SEGMENTS = 1;
 export const MAX_SEGMENTS = 12;
-export const MIN_TOTAL_SEC = 120;
+export const MIN_TOTAL_SEC = 480;
 export const MAX_TOTAL_SEC = 900;
 export const NAME_MAX_CHARS = 60;
 export const DEFAULT_WORKOUT_NAME = 'Custom Quest';
+
+export const MIN_NORMAL_COUNT_FOR_HARD_TIER = 5;
 
 /** Meter scale: ceiling at 400 XP. */
 export const METER_SCALE_XP = 400;
@@ -99,6 +101,9 @@ export function classifyWorkout(
   }
 
   if (hardSec >= MIN_HARD_SEC_FOR_HARD_TIER) {
+    return { xp: 400, tier: 'hard' };
+  }
+  if (normalCount >= MIN_NORMAL_COUNT_FOR_HARD_TIER && hardSec === 0) {
     return { xp: 400, tier: 'hard' };
   }
   if (normalCount >= MIN_NORMAL_COUNT_FOR_NORMAL_TIER && hardSec === 0) {

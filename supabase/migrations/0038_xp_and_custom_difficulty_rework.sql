@@ -141,7 +141,7 @@ begin
     raise exception 'complete_custom_workout.no_exercise' using errcode = 'F0002';
   end if;
 
-  if v_total_sec < 120 or v_total_sec > 900 then
+  if v_total_sec < 480 or v_total_sec > 900 then
     raise exception 'complete_custom_workout.length_bounds' using errcode = 'F0002';
   end if;
 
@@ -152,9 +152,12 @@ begin
 
   -- Classification logic:
   -- Hard (400 XP): >= 45s of Hard exercise time
+  -- OR >= 5 Normal/Intermediate exercises with 0 Hard exercises
   -- Normal (200 XP): >= 2 Normal/Intermediate exercises AND 0 Hard exercises
   -- Easy (100 XP): otherwise
   if v_hard_sec >= 45 then
+    v_base_xp := 400;
+  elsif v_normal_count >= 5 and v_hard_sec = 0 then
     v_base_xp := 400;
   elsif v_normal_count >= 2 and v_hard_sec = 0 then
     v_base_xp := 200;
