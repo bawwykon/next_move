@@ -1,9 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 
 import { colors, spacing } from '@/lib/theme';
 
 export default function TabsLayout() {
+  // I18N-01 — tab titles are the phase-1 proof set; Arabic uses the
+  // companion display font until the full typography swap (Arabic phase).
+  const { t, i18n } = useTranslation();
+  const labelFont = i18n.language === 'ar' ? 'Almarai-Bold' : 'Nunito-Bold';
   return (
     <Tabs
       initialRouteName="quest-board"
@@ -20,7 +25,7 @@ export default function TabsLayout() {
           paddingTop: spacing.xs,
         },
         tabBarLabelStyle: {
-          fontFamily: 'Nunito-Bold',
+          fontFamily: labelFont,
           fontSize: 12,
         },
       }}
@@ -28,7 +33,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="quest-board"
         options={{
-          title: 'Quest Board',
+          title: t('tabs.questBoard'),
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? 'compass' : 'compass-outline'} size={24} color={color} />
           ),
@@ -37,7 +42,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="journey"
         options={{
-          title: 'Journey',
+          title: t('tabs.journey'),
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? 'map' : 'map-outline'} size={24} color={color} />
           ),
@@ -46,7 +51,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: t('tabs.profile'),
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? 'person' : 'person-outline'} size={24} color={color} />
           ),
@@ -55,7 +60,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'Settings',
+          title: t('tabs.settings'),
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? 'settings' : 'settings-outline'} size={24} color={color} />
           ),

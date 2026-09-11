@@ -36,12 +36,16 @@
           "fonts": [
             "./assets/fonts/Baloo2-Bold.ttf",
             "./assets/fonts/Nunito-Regular.ttf",
-            "./assets/fonts/Nunito-Bold.ttf"
+            "./assets/fonts/Nunito-Bold.ttf",
+            "./assets/fonts/BalooBhaijaan2-Bold.ttf",
+            "./assets/fonts/Almarai-Regular.ttf",
+            "./assets/fonts/Almarai-Bold.ttf"
           ]
         }
       ],
       "expo-secure-store",
-      "expo-audio"
+      "expo-audio",
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true,

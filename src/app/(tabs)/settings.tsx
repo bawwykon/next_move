@@ -16,6 +16,9 @@ import {
 
 import { Screen } from '@/components/ui/Screen';
 import { supabase } from '@/data/supabase';
+import { applyLocale, loadSavedLocale } from '@/i18n';
+import { APP_LOCALES, LOCALE_NAMES, type AppLocale } from '@/i18n/locales';
+import { useTranslation } from 'react-i18next';
 import {
   loadLocalSettings,
   saveLocalSettings,
@@ -38,6 +41,8 @@ export default function SettingsScreen() {
   );
   const signOut = useSessionStore((s: { signOut: () => Promise<void> }) => s.signOut);
   const [settings, setSettings] = useState<AppSettings>({ ...DEFAULT_SETTINGS });
+  const [locale, setLocale] = useState<AppLocale>('en');
+  const { t, i18n } = useTranslation();
   const [syncing, setSyncing] = useState(false);
   const version =
     ((Constants as unknown as { expoConfig?: { version?: string } }).expoConfig?.version as
@@ -47,8 +52,10 @@ export default function SettingsScreen() {
     void (async () => {
       const local = await loadLocalSettings();
       setSettings(local);
+      const savedLocale = await loadSavedLocale();
+      setLocale(savedLocale ?? ((i18n.language as AppLocale) || 'en'));
     })();
-  }, []);
+  }, [i18n.language]);
 
   const updateToggle = useCallback(
     async (key: keyof AppSettings, value: boolean) => {
@@ -75,6 +82,19 @@ export default function SettingsScreen() {
       }
     },
     [settings],
+  );
+
+  // I18N-01 — language switch. Same direction hot-swaps; LTR<->RTL reloads
+  // (Android requirement) via applyLocale, so nothing else to do here.
+  const onSelectLocale = useCallback(
+    (next: AppLocale) => {
+      if (next === locale) {
+        return;
+      }
+      setLocale(next);
+      void applyLocale(next);
+    },
+    [locale],
   );
 
   const handleSyncNow = useCallback(async () => {
@@ -220,6 +240,38 @@ export default function SettingsScreen() {
                   thumbColor={colors.text}
                 />
               </View>
+            </View>
+          </View>
+
+          {/* Language (I18N-01) */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{t('settings.language')}</Text>
+            <View style={styles.card}>
+              {APP_LOCALES.map((option, index) => {
+                const active = option === locale;
+                return (
+                  <View key={option}>
+                    {index > 0 ? <View style={styles.divider} /> : null}
+                    <TouchableOpacity
+                      accessibilityRole="button"
+                      style={styles.row}
+                      onPress={withTapCue(() => onSelectLocale(option))}
+                    >
+                      <Ionicons
+                        name="language-outline"
+                        size={20}
+                        color={active ? colors.reward : colors.textMuted}
+                      />
+                      <View style={styles.rowBody}>
+                        <Text style={styles.rowLabel}>{LOCALE_NAMES[option]}</Text>
+                      </View>
+                      {active ? (
+                        <Ionicons name="checkmark" size={20} color={colors.reward} />
+                      ) : null}
+                    </TouchableOpacity>
+                  </View>
+                );
+              })}
             </View>
           </View>
 
