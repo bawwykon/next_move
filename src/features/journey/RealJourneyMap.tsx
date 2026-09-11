@@ -638,7 +638,7 @@ const styles = StyleSheet.create({
   },
   tokenToggle: {
     position: 'absolute',
-    right: spacing.lg,
+    end: spacing.lg,
     bottom: 150,
     width: 44,
     height: 44,

@@ -683,7 +683,7 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontFamily: fonts.body.family,
     fontSize: 12,
-    marginLeft: 'auto',
+    marginStart: 'auto',
   },
   rowMain: {
     flexDirection: 'row',
@@ -754,8 +754,8 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     backgroundColor: colors.surface,
     borderRadius: radius.pill,
-    paddingLeft: spacing.xs,
-    paddingRight: spacing.md,
+    paddingStart: spacing.xs,
+    paddingEnd: spacing.md,
     paddingVertical: spacing.xs,
   },
   pickChipDisabled: {

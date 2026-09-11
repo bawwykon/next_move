@@ -416,7 +416,7 @@ const styles = StyleSheet.create({
   lockOverlay: {
     position: 'absolute',
     top: 8,
-    right: 8,
+    end: 8,
     backgroundColor: colors.surfaceElevated,
     borderRadius: radius.pill,
     padding: 4,

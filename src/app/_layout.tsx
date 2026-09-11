@@ -6,7 +6,7 @@ import { LogBox } from 'react-native';
 import { setAudioModeAsync } from 'expo-audio';
 
 import { useLoadedFonts } from '@/lib/fonts';
-import { initLocale } from '@/i18n';
+import { initLocale, type AppLocale } from '@/i18n';
 import { track } from '@/data/analytics';
 import { loadLocalSettings } from '@/data/repositories/settings';
 import { setSoundFxEnabled } from '@/lib/sounds';
@@ -26,8 +26,33 @@ SplashScreen.preventAutoHideAsync();
 let appOpenedTracked = false;
 
 export default function RootLayout() {
-  const [loaded, error] = useLoadedFonts();
-  const [localeReady, setLocaleReady] = useState(false);
+  const [locale, setLocale] = useState<AppLocale | null>(null);
+
+  // I18N-01 — resolve locale (saved, else device, else English) before first
+  // paint so no screen flashes the wrong language. I18N-03 — fonts load
+  // after the locale is known so Arabic gets its companion files.
+  useEffect(() => {
+    let cancelled = false;
+    void initLocale()
+      .catch(() => 'en' as AppLocale)
+      .then((resolved) => {
+        if (!cancelled) {
+          setLocale(resolved);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (!locale) {
+    return null;
+  }
+  return <ReadyRoot locale={locale} />;
+}
+
+function ReadyRoot({ locale }: { locale: AppLocale }) {
+  const [loaded, error] = useLoadedFonts(locale);
   const authStatus = useSessionStore((state) => state.authStatus);
   const onboarded = useSessionStore((state) => state.onboarded);
   const pathname = usePathname();
@@ -35,27 +60,7 @@ export default function RootLayout() {
   const needsOnboarding = signedIn && onboarded === false;
   // Signed-in but onboarded flag not loaded yet: hold the splash instead of
   // flickering between guards (Ref 04 guard pattern).
-  const ready =
-    (loaded || error) &&
-    localeReady &&
-    authStatus !== 'loading' &&
-    !(signedIn && onboarded === null);
-
-  // I18N-01 — resolve locale (saved, else device, else English) before first
-  // paint so no screen flashes the wrong language.
-  useEffect(() => {
-    let cancelled = false;
-    void initLocale()
-      .catch(() => undefined)
-      .then(() => {
-        if (!cancelled) {
-          setLocaleReady(true);
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const ready = (loaded || error) && authStatus !== 'loading' && !(signedIn && onboarded === null);
 
   useEffect(() => {
     captureTabPath(pathname);
