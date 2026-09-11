@@ -7,6 +7,7 @@ import { AppButton } from '@/components/ui/AppButton';
 import { AppTextField } from '@/components/ui/AppTextField';
 import { Screen } from '@/components/ui/Screen';
 import { colors, fonts, spacing } from '@/lib/theme';
+import { authErrorMessage } from '@/lib/auth-errors';
 import { withTapCue } from '@/lib/sounds';
 import { useSessionStore } from '@/state/sessionStore';
 
@@ -33,7 +34,7 @@ export default function RegisterScreen() {
     const message = await signUp(email.trim(), password);
     setBusy(false);
     if (message) {
-      setError(message);
+      setError(authErrorMessage(message, t));
       return;
     }
     // Session granted: the guard is still resolving profiles.onboarded,

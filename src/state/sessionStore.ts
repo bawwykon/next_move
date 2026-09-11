@@ -5,7 +5,7 @@ import { supabase } from '@/data/supabase';
 import { track } from '@/data/analytics';
 import { getOnboarded, saveOnboarding } from '@/data/repositories/profile';
 import type { OnboardingPayload } from '@/features/onboarding/wizardController';
-import { getAuthErrorMessage, signUpConfirmation } from '@/lib/auth-errors';
+import { getAuthErrorCode, type AuthErrorCode } from '@/lib/auth-errors';
 import { consumeManualSignOut, markManualSignOut, readCapturedTabPath } from '@/lib/intended-route';
 import { useCharacterStore } from '@/state/characterStore';
 
@@ -16,8 +16,8 @@ interface SessionStore {
   session: Session | null;
   onboarded: boolean | null;
   intendedRoute: string | null;
-  signIn: (email: string, password: string) => Promise<string | null>;
-  signUp: (email: string, password: string) => Promise<string | null>;
+  signIn: (email: string, password: string) => Promise<AuthErrorCode | null>;
+  signUp: (email: string, password: string) => Promise<AuthErrorCode | null>;
   signOut: () => Promise<void>;
   completeOnboarding: (payload: OnboardingPayload) => Promise<string | null>;
   setIntendedRoute: (route: string) => void;
@@ -32,15 +32,15 @@ export const useSessionStore = create<SessionStore>()((set) => ({
 
   signIn: async (email, password) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return getAuthErrorMessage(error);
+    return getAuthErrorCode(error);
   },
 
   signUp: async (email, password) => {
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) {
-      return getAuthErrorMessage(error);
+      return getAuthErrorCode(error);
     }
-    return signUpConfirmation(data.session);
+    return data.session ? null : 'confirmation_sent';
   },
 
   signOut: async () => {
