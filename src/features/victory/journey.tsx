@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import type { JourneyResult } from '@/domain/completion/types';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
@@ -14,20 +15,21 @@ interface JourneyCardProps {
  * threshold progress toward the next one, and the streak headline.
  */
 export function JourneyCard({ journey, streak }: JourneyCardProps) {
+  const { t } = useTranslation();
   const movedChapter = journey.chapter_after > journey.chapter_before;
   const progress =
     journey.next_threshold !== null ? Math.min(1, journey.quests / journey.next_threshold) : null;
 
   return (
     <View style={styles.card}>
-      <Text style={styles.cardTitle}>Your journey</Text>
+      <Text style={styles.cardTitle}>{t('victory.yourJourney')}</Text>
 
       <View style={styles.chapterRow}>
         <Ionicons name="map-outline" size={20} color={colors.calmStrong} />
         <Text style={styles.chapterText}>
           {movedChapter
-            ? `Chapter ${journey.chapter_after} — you moved up!`
-            : `Chapter ${journey.chapter_after}`}
+            ? t('victory.chapterMoved', { n: journey.chapter_after })
+            : t('victory.chapterSame', { n: journey.chapter_after })}
         </Text>
       </View>
 
@@ -43,17 +45,20 @@ export function JourneyCard({ journey, streak }: JourneyCardProps) {
             />
           </View>
           <Text style={styles.thresholdMeta}>
-            {journey.quests} of {journey.next_threshold} quests to the next chapter
+            {t('victory.journeyProgress', {
+              done: journey.quests,
+              total: journey.next_threshold,
+            })}
           </Text>
         </View>
       ) : (
-        <Text style={styles.thresholdMeta}>No next chapter set yet — keep moving.</Text>
+        <Text style={styles.thresholdMeta}>{t('victory.journeyNoNext')}</Text>
       )}
 
       {streak > 0 ? (
         <View style={styles.streakRow}>
           <Ionicons name="flame" size={18} color={colors.danger} />
-          <Text style={styles.streakText}>{streak}-day streak</Text>
+          <Text style={styles.streakText}>{t('victory.streakDays', { count: streak })}</Text>
         </View>
       ) : null}
     </View>

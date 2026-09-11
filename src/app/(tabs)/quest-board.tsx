@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Animated,
   RefreshControl,
@@ -38,14 +39,14 @@ import {
   zoneForXp,
 } from '@/domain/customWorkout/model';
 import { WEEKLY_TARGET, dayWindow, weeklyWindow } from '@/domain/board/window';
-import { dailyMessageFor } from '@/domain/journal/dailyMessages';
+import { dailyMessageKey } from '@/domain/journal/dailyMessages';
 import {
   DAILY_QUEST_ART,
   WEEKLY_CHALLENGE_ART,
   difficultyArt,
   masteryArt,
 } from '@/features/assets/assetMap';
-import { DIFFICULTY_DESCRIPTORS, difficultyBadge } from '@/features/questBoard/badges';
+import { difficultyBadge, difficultyDescriptor } from '@/features/questBoard/badges';
 import { isCompletedToday } from '@/features/questBoard/completedToday';
 import {
   WEEKLY_BONUS_XP,
@@ -61,13 +62,6 @@ import { useCharacterStore } from '@/state/characterStore';
 import { useWorkoutStore } from '@/state/workoutStore';
 import { useCompletionStore } from '@/state/completionStore';
 
-const CATEGORY_LABELS: Record<QuestCategory, string> = {
-  strength: 'Strength',
-  endurance: 'Endurance',
-  mobility: 'Mobility',
-  discipline: 'Discipline',
-};
-
 // recommendQuest accepts onboarding for parity with Ref 06; its rules do not
 // consume it, so a fresh (unskipped) session can still get a recommendation.
 const DEFAULT_ONBOARDING: OnboardingAnswers = {
@@ -79,6 +73,7 @@ const DEFAULT_ONBOARDING: OnboardingAnswers = {
 
 export default function QuestBoardScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { profile, streak, mastery, completions, status, refresh } = useCharacterStore();
   // S4-03 — persisted checkpoint for the resume banner (FR-TIMER-7).
   const checkpoint = useWorkoutStore((state) => state.checkpoint);
@@ -169,7 +164,7 @@ export default function QuestBoardScreen() {
     () => dailyChallengeProgress(completions ?? [], todayKey),
     [completions, todayKey],
   );
-  const dailyCell = dailyCellCopy(daily.done);
+  const dailyCell = dailyCellCopy(daily.done, t);
 
   const recommendation = useMemo(() => {
     if (!catalog || catalog.length === 0 || !completions) {
@@ -231,23 +226,23 @@ export default function QuestBoardScreen() {
     [router],
   );
 
-  const { greeting, line } = greetingForHour(new Date().getHours());
+  const { greeting, line } = greetingForHour(new Date().getHours(), t);
   const displayName = profile?.displayName ?? 'Adventurer';
   const streakCount = streak?.current ?? 0;
-  const streakPill = streakPillCopy(streakCount);
+  const streakPill = streakPillCopy(streakCount, t);
 
   return (
     <Screen>
       {hasError ? (
         <View style={styles.center}>
-          <Text style={styles.errorTitle}>Hmm, the board wandered off.</Text>
-          <Text style={styles.errorLine}>Could not load your quests. Try again in a moment.</Text>
+          <Text style={styles.errorTitle}>{t('board.errorTitle')}</Text>
+          <Text style={styles.errorLine}>{t('board.errorLine')}</Text>
           <TouchableOpacity
             accessibilityRole="button"
             style={styles.retryButton}
             onPress={withTapCue(onRefresh)}
           >
-            <Text style={styles.retryLabel}>Retry</Text>
+            <Text style={styles.retryLabel}>{t('board.retry')}</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -274,7 +269,7 @@ export default function QuestBoardScreen() {
                 <Text style={styles.greetingLine}>{line}</Text>
                 {/* PH4-02 — one message per day, seeded by the day key. */}
                 <View style={styles.dailyMessageCard}>
-                  <Text style={styles.dailyMessageText}>{dailyMessageFor(todayKey)}</Text>
+                  <Text style={styles.dailyMessageText}>{t(dailyMessageKey(todayKey))}</Text>
                 </View>
                 <View style={styles.pillRow}>
                   {/* S9-01 — countdown to the next server streak milestone.
@@ -289,7 +284,7 @@ export default function QuestBoardScreen() {
                   {pendingCount > 0 ? (
                     <View style={styles.syncingPill}>
                       <Ionicons name="sync" size={14} color={colors.textMuted} />
-                      <Text style={styles.syncingText}>Syncing…</Text>
+                      <Text style={styles.syncingText}>{t('board.syncing')}</Text>
                     </View>
                   ) : null}
                 </View>
@@ -336,15 +331,15 @@ export default function QuestBoardScreen() {
               >
                 <Ionicons name="hammer-outline" size={22} color={colors.rewardStrong} />
                 <View style={styles.buildCopy}>
-                  <Text style={styles.buildTitle}>Build Your Quest</Text>
-                  <Text style={styles.buildLine}>Mix your own workout — your rules, your XP.</Text>
+                  <Text style={styles.buildTitle}>{t('board.buildTitle')}</Text>
+                  <Text style={styles.buildLine}>{t('board.buildLine')}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
               </TouchableOpacity>
 
               {recommendation?.recommended ? (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Today&apos;s Recommended Quest</Text>
+                  <Text style={styles.sectionTitle}>{t('board.recommendedTitle')}</Text>
                   <QuestCard
                     quest={recommendation.recommended}
                     completedToday={isCompletedToday(
@@ -359,7 +354,7 @@ export default function QuestBoardScreen() {
 
               {recommendation && recommendation.picks.length > 0 ? (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Choose Your Adventure</Text>
+                  <Text style={styles.sectionTitle}>{t('board.chooseTitle')}</Text>
                   {recommendation.picks.map((quest) => (
                     <QuestCard
                       key={quest.id}
@@ -372,7 +367,7 @@ export default function QuestBoardScreen() {
               ) : null}
 
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Daily Challenge</Text>
+                <Text style={styles.sectionTitle}>{t('board.dailyTitle')}</Text>
                 <View style={styles.weeklyCard}>
                   <View style={styles.weeklyHeader}>
                     <Image
@@ -402,7 +397,7 @@ export default function QuestBoardScreen() {
               </View>
 
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Weekly Challenge</Text>
+                <Text style={styles.sectionTitle}>{t('board.weeklyTitle')}</Text>
                 <View style={styles.weeklyCard}>
                   <View style={styles.weeklyHeader}>
                     <Image
@@ -412,8 +407,8 @@ export default function QuestBoardScreen() {
                     />
                     <Text style={styles.weeklyGoal}>
                       {weekly.challengeState === 'complete'
-                        ? 'Weekly challenge complete!'
-                        : 'Weekly Challenge'}
+                        ? t('board.weeklyDone')
+                        : t('board.weeklyTitle')}
                     </Text>
                     {weekly.challengeState === 'complete' ? (
                       <Ionicons name="checkmark-circle" size={20} color={colors.success} />
@@ -437,17 +432,17 @@ export default function QuestBoardScreen() {
                     <Text style={styles.weeklyCount}>
                       {weekly.completionsInWindow}/{WEEKLY_TARGET}
                     </Text>
-                    <Text style={styles.weeklyReward}>+{WEEKLY_BONUS_XP} XP</Text>
+                    <Text style={styles.weeklyReward}>
+                      {t('board.xpReward', { xp: WEEKLY_BONUS_XP })}
+                    </Text>
                   </View>
                 </View>
               </View>
 
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>All Quests</Text>
+                <Text style={styles.sectionTitle}>{t('board.allQuests')}</Text>
                 {catalog.length === 0 ? (
-                  <Text style={styles.quietLine}>
-                    The board is a little quiet right now — new quests are on the way.
-                  </Text>
+                  <Text style={styles.quietLine}>{t('board.emptyBoard')}</Text>
                 ) : (
                   catalog.map((quest) => (
                     <QuestRow
@@ -464,14 +459,14 @@ export default function QuestBoardScreen() {
                   exists (no empty-state noise). */}
               {customs.length > 0 ? (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Your Quests</Text>
+                  <Text style={styles.sectionTitle}>{t('board.yourQuests')}</Text>
                   {customs.map((custom) => {
                     const difficultyOf = (slug: string) =>
                       exerciseCatalog.find((exercise) => exercise.slug === slug)?.difficulty ??
                       null;
                     const xp = projectedXp(custom.segments, difficultyOf);
                     const zone = zoneForXp(xp);
-                    const badge = difficultyBadge(zone as QuestDifficulty);
+                    const badge = difficultyBadge(zone as QuestDifficulty, t);
                     return (
                       <TouchableOpacity
                         key={custom.id}
@@ -490,12 +485,15 @@ export default function QuestBoardScreen() {
                             {custom.name || DEFAULT_WORKOUT_NAME}
                           </Text>
                           <Text style={styles.rowMeta}>
-                            {Math.round(totalDurationSec(custom.segments) / 60)} min · +{xp} XP
+                            {t('board.minutes', {
+                              count: Math.round(totalDurationSec(custom.segments) / 60),
+                            })}{' '}
+                            · {t('board.xpReward', { xp })}
                           </Text>
                         </View>
                         <View style={[styles.zonePill, { backgroundColor: badge.color }]}>
                           <Text style={styles.zonePillLabel}>
-                            {DIFFICULTY_DESCRIPTORS[zone as QuestDifficulty]}
+                            {difficultyDescriptor(zone as QuestDifficulty, t)}
                           </Text>
                         </View>
                       </TouchableOpacity>
@@ -512,7 +510,8 @@ export default function QuestBoardScreen() {
 }
 
 function BadgePill({ difficulty }: { difficulty: QuestDifficulty }) {
-  const badge = difficultyBadge(difficulty);
+  const { t } = useTranslation();
+  const badge = difficultyBadge(difficulty, t);
   const icon = difficultyArt(difficulty);
   return (
     <View style={[styles.badgePill, { backgroundColor: badge.color }]}>
@@ -523,6 +522,7 @@ function BadgePill({ difficulty }: { difficulty: QuestDifficulty }) {
 }
 
 function CategoryChips({ categories }: { categories: QuestCategory[] }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.chipRow}>
       {categories.map((category) => {
@@ -532,7 +532,7 @@ function CategoryChips({ categories }: { categories: QuestCategory[] }) {
             {icon !== null ? (
               <Image source={icon} style={styles.chipIcon} contentFit="contain" />
             ) : null}
-            <Text style={styles.chipLabel}>{CATEGORY_LABELS[category]}</Text>
+            <Text style={styles.chipLabel}>{t(`board.categories.${category}`)}</Text>
           </View>
         );
       })}
@@ -549,6 +549,7 @@ function QuestCard({
   completedToday: boolean;
   onPress: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <TouchableOpacity
       accessibilityRole="button"
@@ -561,13 +562,13 @@ function QuestCard({
         <BadgePill difficulty={quest.difficulty} />
       </View>
       <Text style={styles.cardMeta}>
-        {formatDuration(quest.durationSec)} · {quest.xpReward} XP
+        {formatDuration(quest.durationSec, t)} · {quest.xpReward} XP
       </Text>
       <CategoryChips categories={quest.categories} />
       {completedToday ? (
         <View style={styles.donePill}>
           <Ionicons name="checkmark-circle" size={16} color={colors.success} />
-          <Text style={styles.doneLabel}>Done for today</Text>
+          <Text style={styles.doneLabel}>{t('board.doneToday')}</Text>
         </View>
       ) : null}
     </TouchableOpacity>
@@ -583,6 +584,7 @@ function QuestRow({
   completedToday: boolean;
   onPress: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <TouchableOpacity
       accessibilityRole="button"
@@ -593,7 +595,7 @@ function QuestRow({
       <View style={styles.rowLeft}>
         <Text style={styles.rowTitle}>{quest.title}</Text>
         <Text style={styles.rowMeta}>
-          {formatDuration(quest.durationSec)} · {quest.xpReward} XP
+          {formatDuration(quest.durationSec, t)} · {quest.xpReward} XP
         </Text>
       </View>
       {completedToday ? (
@@ -614,22 +616,23 @@ function ResumeBanner({
   onResume: () => void;
   onDismiss: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.resumeBanner}>
       <View style={styles.resumeHeader}>
         <Ionicons name="timer-outline" size={20} color={colors.calm} />
         <Text style={styles.resumeTitle}>
-          {title ? `Unfinished quest: ${title}` : 'Unfinished quest'}
+          {title ? t('board.resumeTitleNamed', { name: title }) : t('board.resumeTitle')}
         </Text>
       </View>
-      <Text style={styles.resumeLine}>Pick up where you left off.</Text>
+      <Text style={styles.resumeLine}>{t('board.resumeLine')}</Text>
       <View style={styles.resumeActions}>
         <TouchableOpacity
           accessibilityRole="button"
           style={styles.resumeButton}
           onPress={withTapCue(onResume)}
         >
-          <Text style={styles.resumeButtonLabel}>Resume</Text>
+          <Text style={styles.resumeButtonLabel}>{t('board.resumeCta')}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           accessibilityRole="button"
@@ -637,7 +640,7 @@ function ResumeBanner({
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           onPress={withTapCue(onDismiss)}
         >
-          <Text style={styles.resumeLaterLabel}>Not now</Text>
+          <Text style={styles.resumeLaterLabel}>{t('board.resumeDismiss')}</Text>
         </TouchableOpacity>
       </View>
     </View>

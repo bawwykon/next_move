@@ -39,10 +39,12 @@ export interface AchievementRow {
 }
 
 export const LOCKED_EMBLEM = '?';
-const FALLBACK_HINT = 'Some things reveal themselves in time.';
 
-export function lockedCopy(hint: string | null): { emblem: typeof LOCKED_EMBLEM; hint: string } {
-  return { emblem: LOCKED_EMBLEM, hint: hint ?? FALLBACK_HINT };
+export function lockedCopy(
+  hint: string | null,
+  t: (key: string) => string,
+): { emblem: typeof LOCKED_EMBLEM; hint: string } {
+  return { emblem: LOCKED_EMBLEM, hint: hint ?? t('achievements.lockedFallback') };
 }
 
 /**

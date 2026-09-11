@@ -5,6 +5,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Animated, Dimensions, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { chapterArt } from '@/features/assets/assetMap';
@@ -34,6 +35,7 @@ export function ChapterDetailSheet({
   onClose,
 }: ChapterDetailSheetProps) {
   const [slideAnim] = useState(() => new Animated.Value(SCREEN_HEIGHT));
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (visible) {
@@ -56,12 +58,12 @@ export function ChapterDetailSheet({
   const remaining = span !== null ? span - questsInChapter : null;
 
   const statusLabel = isCompleted
-    ? 'Complete'
+    ? t('journeyMap.complete')
     : isLocked
-      ? 'Locked'
+      ? t('journeyMap.locked')
       : fraction >= 1
-        ? 'Complete'
-        : 'In Progress';
+        ? t('journeyMap.complete')
+        : t('journeyMap.inProgress');
 
   const statusColor =
     isCompleted || fraction >= 1 ? colors.success : isLocked ? colors.textMuted : colors.reward;
@@ -91,7 +93,9 @@ export function ChapterDetailSheet({
 
             {/* Requirement */}
             {isLocked ? (
-              <Text style={styles.requirement}>Reach {chapter.threshold} quests to unlock</Text>
+              <Text style={styles.requirement}>
+                {t('journeyMap.reachToUnlock', { n: chapter.threshold })}
+              </Text>
             ) : null}
 
             {/* Progress (unlocked only) */}
@@ -107,11 +111,13 @@ export function ChapterDetailSheet({
                 </View>
                 <Text style={styles.progressText}>
                   {span !== null
-                    ? `${questsInChapter} / ${span} quests`
-                    : `${chapter.threshold} / ${chapter.threshold} quests`}
+                    ? t('journeyMap.progressOf', { a: questsInChapter, b: span })
+                    : t('journeyMap.progressOf', { a: chapter.threshold, b: chapter.threshold })}
                 </Text>
                 {remaining !== null && remaining > 0 ? (
-                  <Text style={styles.remaining}>{remaining} quests remaining</Text>
+                  <Text style={styles.remaining}>
+                    {t('journeyMap.remaining', { count: remaining })}
+                  </Text>
                 ) : null}
               </View>
             ) : null}

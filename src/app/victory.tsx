@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -29,6 +30,7 @@ import { useCompletionStore } from '@/state/completionStore';
  */
 export default function VictoryScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const params = useLocalSearchParams<{ questId?: string; title?: string; source?: string }>();
   const questId = params.questId;
   // BYQ-04 — custom quests label the breakdown's base row with their own name.
@@ -155,7 +157,7 @@ export default function VictoryScreen() {
     skipCelebration();
   };
 
-  const headline = params.title ?? 'Great work!';
+  const headline = params.title ?? t('victory.headlineFallback');
 
   return (
     <Screen>
@@ -167,19 +169,23 @@ export default function VictoryScreen() {
         >
           <Pressable onPress={handleSkipPress}>
             <View style={styles.header}>
-              <Text style={styles.kicker}>Quest Complete</Text>
+              <Text style={styles.kicker}>{t('victory.kicker')}</Text>
               <Ionicons name="trophy" size={44} color={colors.reward} />
               <Text style={styles.title}>{headline}</Text>
 
               {result ? (
                 <View style={styles.totalBlock}>
                   <Text style={styles.totalValue}>+{result.xp.total}</Text>
-                  <Text style={styles.totalLabel}>XP earned</Text>
+                  <Text style={styles.totalLabel}>{t('victory.xpEarned')}</Text>
                   {leveledUp ? (
                     <View style={styles.levelChip}>
                       <Ionicons name="arrow-up-circle" size={16} color={colors.background} />
                       <Text style={styles.levelChipText}>
-                        Level {result.level.before} → {result.level.after} · {result.level.title}
+                        {t('victory.levelChip', {
+                          before: result.level.before,
+                          after: result.level.after,
+                          title: result.level.title,
+                        })}
                       </Text>
                     </View>
                   ) : null}
@@ -187,7 +193,7 @@ export default function VictoryScreen() {
               ) : (
                 <View style={styles.syncing}>
                   <View style={styles.syncingDot} />
-                  <Text style={styles.syncingLabel}>Syncing…</Text>
+                  <Text style={styles.syncingLabel}>{t('victory.syncing')}</Text>
                 </View>
               )}
             </View>
@@ -202,17 +208,14 @@ export default function VictoryScreen() {
             </View>
           ) : (
             <View style={styles.buffer}>
-              <Text style={styles.bufferText}>
-                Your rewards are on their way — the server is settling the books. They appear the
-                moment the sync lands.
-              </Text>
+              <Text style={styles.bufferText}>{t('victory.bufferText')}</Text>
             </View>
           )}
         </ScrollView>
 
         <View style={styles.footer}>
           <AppButton
-            label="Back to Quest Board"
+            label={t('victory.backToBoard')}
             variant="primary"
             onPress={() => router.replace('/')}
           />

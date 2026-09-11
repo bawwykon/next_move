@@ -4,6 +4,13 @@ import {
   mergeCatalogWithUnlocks,
   type AchievementCatalogRow,
 } from '@/domain/achievements/merge';
+import { englishT } from '../../i18n/testLocale';
+import type { TFunction } from 'i18next';
+
+let t: TFunction;
+beforeAll(async () => {
+  t = await englishT();
+});
 
 /** Mirror of the live seed catalogue (supabase/seed.sql) — constants only. */
 const CATALOG: AchievementCatalogRow[] = [
@@ -184,7 +191,7 @@ describe('mergeCatalogWithUnlocks', () => {
 
 describe('lockedCopy', () => {
   it('always renders the permanent "?" emblems and the vague hint, never a trigger', () => {
-    expect(lockedCopy('A week of small wins adds up.')).toEqual({
+    expect(lockedCopy('A week of small wins adds up.', t)).toEqual({
       emblem: LOCKED_EMBLEM,
       hint: 'A week of small wins adds up.',
     });
@@ -192,8 +199,8 @@ describe('lockedCopy', () => {
   });
 
   it('falls back deterministically when the hint is null so locked still renders something kind', () => {
-    const first = lockedCopy(null);
-    const second = lockedCopy(null);
+    const first = lockedCopy(null, t);
+    const second = lockedCopy(null, t);
     expect(first).toEqual(second);
     expect(first.hint).toBe('Some things reveal themselves in time.');
   });

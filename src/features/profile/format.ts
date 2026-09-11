@@ -5,6 +5,8 @@
  * renders. The level/mastery numbers are mirrors of the server curves
  * (src/domain/xp/level.ts) over server-authoritative columns — display only.
  */
+import type { TFunction } from 'i18next';
+
 import { masteryProgress, masteryLevelForPoints, xpProgress } from '@/domain/xp/level';
 import { COSMETIC_SLOTS, resolveEquipped, type CosmeticSlot } from '@/domain/cosmetics/loadout';
 import { nextStreakMilestone } from '@/domain/streak/milestone';
@@ -33,22 +35,24 @@ export function xpBar(totalXp: number, level: number): XpBar {
   };
 }
 
-export function levelLine(level: number): string {
-  return `Level ${Math.max(1, level)} · ${levelTitleFor(level)}`;
+export function levelLine(level: number, t: TFunction): string {
+  const lv = Math.max(1, level);
+  return t('profile.levelLine', { n: lv, title: levelTitleFor(lv, t) });
 }
 
 /**
  * FR-XP-3 level title string (Beginner → Legend ladder, mirrors the server's
  * `level_title`). Kept here as the single display-side source; `level_title` in
  * the victory payload comes from the server itself (FR-XP-7).
+ * Copy comes from the locale tables via `t` (I18N-01).
  */
-export function levelTitleFor(level: number): string {
-  if (level >= 100) return 'Legend';
-  if (level >= 50) return 'Champion';
-  if (level >= 25) return 'Warrior';
-  if (level >= 10) return 'Adventurer';
-  if (level >= 5) return 'Apprentice';
-  return 'Beginner';
+export function levelTitleFor(level: number, t: TFunction): string {
+  if (level >= 100) return t('profile.levelTitles.legend');
+  if (level >= 50) return t('profile.levelTitles.champion');
+  if (level >= 25) return t('profile.levelTitles.warrior');
+  if (level >= 10) return t('profile.levelTitles.adventurer');
+  if (level >= 5) return t('profile.levelTitles.apprentice');
+  return t('profile.levelTitles.beginner');
 }
 
 export interface StreakCopy {
@@ -58,16 +62,16 @@ export interface StreakCopy {
   longest: string | null;
 }
 
-export function streakCopy(current: number, longest: number): StreakCopy {
+export function streakCopy(current: number, longest: number, t: TFunction): StreakCopy {
   if (current > 0) {
     return {
-      primary: `${current} ${current === 1 ? 'day' : 'days'} strong`,
-      longest: longest > current ? `Best: ${longest}` : null,
+      primary: t('board.streakActive', { count: current }),
+      longest: longest > current ? t('profile.bestSingle', { n: longest }) : null,
     };
   }
   return {
-    primary: 'Your adventure is waiting. Your next quest is ready.',
-    longest: longest > 0 ? `Best: ${longest} days` : null,
+    primary: t('board.streakIdle'),
+    longest: longest > 0 ? t('profile.bestDays', { n: longest }) : null,
   };
 }
 
@@ -76,13 +80,14 @@ export function streakCopy(current: number, longest: number): StreakCopy {
  * row and the board pill. Uses the S9-01 domain mirror of the server ladder
  * (0011/0020): whole days until the next paid milestone, null once the top
  * (100-day) rung is passed. Encouragement-only phrasing (FR-STR-2).
+ * Copy comes from the locale tables via `t` (I18N-01).
  */
-export function streakMilestoneLine(current: number): string | null {
+export function streakMilestoneLine(current: number, t: TFunction): string | null {
   const next = nextStreakMilestone(current);
   if (!next) {
     return null;
   }
-  return `${next.daysTo} ${next.daysTo === 1 ? 'day' : 'days'} to a ${next.days}-day bonus`;
+  return t('board.streakMilestone', { count: next.daysTo, days: next.days });
 }
 
 export interface MasteryDisplayRow {
@@ -109,6 +114,7 @@ const TRACK_ORDER: readonly ('strength' | 'endurance' | 'mobility' | 'discipline
  */
 export function masteryRows(
   rows: readonly { track: string; points: number }[],
+  t: TFunction,
 ): MasteryDisplayRow[] {
   const byTrack = new Map(rows.map((row) => [row.track, Math.max(0, row.points)]));
   return TRACK_ORDER.map((track) => {
@@ -117,10 +123,10 @@ export function masteryRows(
     const progress = masteryProgress(points);
     return {
       track,
-      label: masteryTrackLabel(track),
+      label: masteryTrackLabel(track, t),
       points,
       level,
-      levelTitle: masteryLevelTitle(level),
+      levelTitle: masteryLevelTitle(level, t),
       fraction: progress.fraction,
       into: progress.into,
       needed: progress.needed,
@@ -173,8 +179,6 @@ export function loadoutSlots(
   }));
 }
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
 /** S8-02 — locked picker rows show a "?" emblem (like achievements), never a rule. */
 export const LOCKED_PICKER_EMBLEM = '?';
 
@@ -191,22 +195,25 @@ export function pickerRowStrings(item: { owned: boolean; name: string }): readon
 /**
  * Calendar-day label, deterministic on plain YYYY-MM-DD keys (the day the
  * completion happened in the PROFILE light) — Today / Yesterday / "Aug 6".
+ * Month names and order come from the locale tables via `t` (I18N-01).
  */
-export function dayLabel(dayKey: string | null, todayKey: string): string {
+export function dayLabel(dayKey: string | null, todayKey: string, t: TFunction): string {
   if (!dayKey) {
     return '—';
   }
   if (dayKey === todayKey) {
-    return 'Today';
+    return t('profile.today');
   }
   const yesterday = new Date(`${todayKey}T00:00:00Z`);
   yesterday.setUTCDate(yesterday.getUTCDate() - 1);
   if (dayKey === yesterday.toISOString().slice(0, 10)) {
-    return 'Yesterday';
+    return t('profile.yesterday');
   }
   const parts = dayKey.split('-');
   const month = Number(parts[1]);
-  return `${MONTHS[month - 1] ?? ''} ${Number(parts[2])}`;
+  const months = t('profile.months', { returnObjects: true }) as unknown as string[];
+  const mon = months[month - 1] ?? '';
+  return t('profile.dateShort', { mon, d: Number(parts[2]) });
 }
 
 export interface HistoryItem {
@@ -222,10 +229,11 @@ export interface HistoryItem {
 export function historyLines(
   rows: readonly { questTitle: string | null; dayKey: string | null; xp: number }[],
   todayKey: string,
+  t: TFunction,
 ): HistoryItem[] {
   return rows.map((row) => ({
     questTitle: row.questTitle,
-    dayLabel: dayLabel(row.dayKey, todayKey),
+    dayLabel: dayLabel(row.dayKey, todayKey, t),
     xp: row.xp,
   }));
 }
@@ -235,6 +243,6 @@ export function historyExhausted(rowsCount: number, pageSize: number): boolean {
   return rowsCount < pageSize;
 }
 
-export function achievementsEntry(count: number): string {
-  return `${count} ${count === 1 ? 'unlock' : 'unlocks'} earned`;
+export function achievementsEntry(count: number, t: TFunction): string {
+  return t('profile.unlocksEarned', { count });
 }

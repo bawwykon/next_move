@@ -1,24 +1,18 @@
 import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/AppButton';
 import { Screen } from '@/components/ui/Screen';
 import { planSummary } from '@/domain/recommendation/plan';
 import { cosmeticArt, masteryArt } from '@/features/assets/assetMap';
-import { optionLabel } from '@/features/onboarding/steps';
+import { localizedOptionLabel } from '@/features/onboarding/steps';
 import type { OnboardingPayload } from '@/features/onboarding/wizardController';
 import { withTapCue } from '@/lib/sounds';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 
 const CALIBRATION_MS = 1500;
-
-const TRACK_LABEL: Record<string, string> = {
-  strength: 'Strength',
-  endurance: 'Endurance',
-  mobility: 'Mobility',
-  discipline: 'Discipline',
-};
 
 const MASTERY_TRACKS = ['strength', 'endurance', 'mobility', 'discipline'] as const;
 
@@ -45,6 +39,7 @@ export function CharacterSummaryScreen({
   onEdit,
 }: CharacterSummaryScreenProps) {
   const [calibrating, setCalibrating] = useState(true);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const timer = setTimeout(() => setCalibrating(false), CALIBRATION_MS);
@@ -56,22 +51,26 @@ export function CharacterSummaryScreen({
       <Screen>
         <View style={styles.loader}>
           <ActivityIndicator size="large" color={colors.reward} />
-          <Text style={styles.loaderTitle}>Setting up your daily quest board...</Text>
-          <Text style={styles.loaderSubtitle}>Forging your Adventurer Profile...</Text>
+          <Text style={styles.loaderTitle}>{t('onboarding.summary.loading')}</Text>
+          <Text style={styles.loaderSubtitle}>{t('onboarding.summary.forging')}</Text>
         </View>
       </Screen>
     );
   }
 
   const displayName =
-    payload.display_name && payload.display_name.trim() ? payload.display_name : 'Adventurer';
+    payload.display_name && payload.display_name.trim()
+      ? payload.display_name
+      : t('onboarding.summary.fallbackName');
   const focusAreas = planSummary(payload).focusAreas;
   const focusSet = new Set(focusAreas);
-  const focusLabels = focusAreas.map((area) => TRACK_LABEL[area] ?? area);
+  const focusLabels = focusAreas.map((area) => t(`board.categories.${area}`));
   const scheduleLabel =
     payload.workout_time === 'any'
-      ? 'Any Time'
-      : `${optionLabel('workout_time', payload.workout_time)} Quests`;
+      ? t('onboarding.summary.anyTime')
+      : t('onboarding.summary.scheduleQuests', {
+          label: localizedOptionLabel('workout_time', payload.workout_time, t),
+        });
   const portrait = cosmeticArt('portrait-default');
   const frame = cosmeticArt('frame-default');
 
@@ -89,7 +88,7 @@ export function CharacterSummaryScreen({
                 source={portrait}
                 style={styles.avatarImage}
                 contentFit="cover"
-                accessibilityLabel="Character portrait"
+                accessibilityLabel={t('profile.portraitA11y')}
               />
             ) : (
               <Text style={styles.initials}>{displayName.slice(0, 2).toUpperCase()}</Text>
@@ -101,17 +100,17 @@ export function CharacterSummaryScreen({
               style={styles.avatarFrame}
               contentFit="contain"
               pointerEvents="none"
-              accessibilityLabel="Frame"
+              accessibilityLabel={t('profile.frameA11y')}
             />
           ) : null}
         </View>
 
-        <Text style={styles.headline}>Your Adventurer Profile is Ready!</Text>
+        <Text style={styles.headline}>{t('onboarding.summary.headline')}</Text>
 
         <View style={styles.identity}>
           <Text style={styles.name}>{displayName}</Text>
           <View style={styles.rankBadge}>
-            <Text style={styles.rankText}>Level 1 • Novice Adventurer</Text>
+            <Text style={styles.rankText}>{t('onboarding.summary.rank')}</Text>
           </View>
         </View>
 
@@ -120,12 +119,16 @@ export function CharacterSummaryScreen({
             <Text style={styles.pillText}>{scheduleLabel}</Text>
           </View>
           <View style={styles.pill}>
-            <Text style={styles.pillText}>Focus: {focusLabels.join(' & ')}</Text>
+            <Text style={styles.pillText}>
+              {t('onboarding.summary.focus', {
+                labels: focusLabels.join(t('onboarding.summary.focusJoin')),
+              })}
+            </Text>
           </View>
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Mastery</Text>
+          <Text style={styles.cardTitle}>{t('onboarding.summary.mastery')}</Text>
           <View style={styles.masteryList}>
             {MASTERY_TRACKS.map((track) => {
               const icon = masteryArt(track);
@@ -136,14 +139,16 @@ export function CharacterSummaryScreen({
                     {icon !== null ? (
                       <Image source={icon} style={styles.masteryIcon} contentFit="contain" />
                     ) : null}
-                    <Text style={styles.masteryLabel}>{TRACK_LABEL[track] ?? track}</Text>
+                    <Text style={styles.masteryLabel}>{t(`board.categories.${track}`)}</Text>
                     {isFocus ? (
                       <View style={styles.focusBadge}>
-                        <Text style={styles.focusBadgeText}>Primary Focus</Text>
+                        <Text style={styles.focusBadgeText}>
+                          {t('onboarding.summary.primaryFocus')}
+                        </Text>
                       </View>
                     ) : null}
                   </View>
-                  <Text style={styles.masteryLevel}>Lv 1 • Novice (0 / 100 XP)</Text>
+                  <Text style={styles.masteryLevel}>{t('onboarding.summary.levelRow')}</Text>
                   <View style={styles.barTrack}>
                     <View style={[styles.barFill, { width: '0%' }]} />
                   </View>
@@ -154,14 +159,14 @@ export function CharacterSummaryScreen({
         </View>
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <AppButton label="Claim Profile & Start Quest" onPress={onClaim} loading={saving} />
+        <AppButton label={t('onboarding.summary.claim')} onPress={onClaim} loading={saving} />
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Edit answers"
+          accessibilityLabel={t('onboarding.summary.editAnswers')}
           onPress={withTapCue(onEdit)}
           style={styles.editLink}
         >
-          <Text style={styles.editLinkText}>Edit answers</Text>
+          <Text style={styles.editLinkText}>{t('onboarding.summary.editAnswers')}</Text>
         </Pressable>
       </ScrollView>
     </Screen>

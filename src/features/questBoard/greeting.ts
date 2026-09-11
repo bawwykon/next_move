@@ -1,3 +1,5 @@
+import type { TFunction } from 'i18next';
+
 export interface Greeting {
   greeting: string;
   line: string;
@@ -6,22 +8,23 @@ export interface Greeting {
 /**
  * FR-BOARD-1 — time-of-day greeting. Buckets: 05:00–11:59 morning,
  * 12:00–16:59 afternoon, 17:00–04:59 evening. Tone stays positive (§7.5).
+ * Copy comes from the locale tables via `t` (I18N-01).
  */
-export function greetingForHour(hour: number): Greeting {
+export function greetingForHour(hour: number, t: TFunction): Greeting {
   if (hour >= 5 && hour < 12) {
     return {
-      greeting: 'Good morning',
-      line: 'A fresh start — small moves count.',
+      greeting: t('board.greeting.morning'),
+      line: t('board.greeting.morningLine'),
     };
   }
   if (hour >= 12 && hour < 17) {
     return {
-      greeting: 'Good afternoon',
-      line: 'Keep it moving — one quest is enough.',
+      greeting: t('board.greeting.afternoon'),
+      line: t('board.greeting.afternoonLine'),
     };
   }
   return {
-    greeting: 'Good evening',
-    line: 'Wind down with a gentle quest.',
+    greeting: t('board.greeting.evening'),
+    line: t('board.greeting.eveningLine'),
   };
 }

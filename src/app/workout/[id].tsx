@@ -3,6 +3,7 @@ import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
@@ -61,6 +62,7 @@ export default function WorkoutScreen() {
   useKeepAwake();
 
   const router = useRouter();
+  const { t } = useTranslation();
   const params = useLocalSearchParams<{ id?: string; title?: string; source?: string }>();
   const questId = params.id;
   // BYQ-04 — source=custom loads the SAVED custom definition (work-only
@@ -315,9 +317,12 @@ export default function WorkoutScreen() {
       return;
     }
     announcedSegmentRef.current = segmentIndex;
-    const label = seg.kind === 'rest' ? 'Rest' : (names[segmentIndex] ?? 'Move');
-    AccessibilityInfo.announceForAccessibility(`${label} — ${segmentKindLabel(seg.kind)}`);
-  }, [names, segmentIndex, workout]);
+    const label =
+      seg.kind === 'rest'
+        ? t('quest.segmentKind.rest')
+        : (names[segmentIndex] ?? t('quest.moveFallback'));
+    AccessibilityInfo.announceForAccessibility(`${label} — ${segmentKindLabel(seg.kind, t)}`);
+  }, [names, segmentIndex, t, workout]);
 
   const announcedMinuteRef = useRef<number | null>(null);
   useEffect(() => {
@@ -334,11 +339,11 @@ export default function WorkoutScreen() {
     }
     announcedMinuteRef.current = minute;
     if (minute === 0) {
-      AccessibilityInfo.announceForAccessibility('Less than a minute left');
+      AccessibilityInfo.announceForAccessibility(t('workout.lessThanMinute'));
     } else if (minute > 0) {
-      AccessibilityInfo.announceForAccessibility(`${minute} minute${minute === 1 ? '' : 's'} left`);
+      AccessibilityInfo.announceForAccessibility(t('workout.minutesLeft', { count: minute }));
     }
-  }, [remaining]);
+  }, [remaining, t]);
 
   // Android back during a workout = Quit Quest with the one allowed
   // confirmation sheet (Ref 04 rule 5, FR-TIMER-6). The explicit Quit button
@@ -374,16 +379,16 @@ export default function WorkoutScreen() {
 
   const segmentName = segment
     ? segment.kind === 'rest'
-      ? 'Rest'
-      : (names[segmentIndex ?? -1] ?? 'Move')
+      ? t('workout.restA11y')
+      : (names[segmentIndex ?? -1] ?? t('quest.moveFallback'))
     : null;
   const currentSlug =
     segment && segment.kind !== 'rest' ? (slugs[segmentIndex ?? -1] ?? null) : null;
   const heroSource = currentSlug ? exerciseArt(currentSlug) : null;
   const nextName = next
     ? next.kind === 'rest'
-      ? 'Rest'
-      : (names[(segmentIndex ?? -1) + 1] ?? 'Move')
+      ? t('workout.restA11y')
+      : (names[(segmentIndex ?? -1) + 1] ?? t('quest.moveFallback'))
     : null;
   const digits = remaining !== null ? formatCountdown(Math.ceil(remaining / 1000)) : null;
   const countdownDigit = countdown !== null ? String(countdown) : null;
@@ -392,8 +397,8 @@ export default function WorkoutScreen() {
   const currentInstruction = segment && !isRest ? (instructions[segmentIndex ?? -1] ?? null) : null;
   const currentSafetyNote = segment && !isRest ? (safetyNotes[segmentIndex ?? -1] ?? null) : null;
   // Rest step fallback copy
-  const restDescription = 'Take a deep breath and let your muscles relax before the next interval.';
-  const restSafetyTip = 'Stay loose — shake out your arms and legs while you wait.';
+  const restDescription = t('workout.restDescription');
+  const restSafetyTip = t('workout.restSafetyTip');
   // 3-2-1 countdown cue (AT-01K) — fires once when the roll-in begins, never
   // per digit change (the WAV itself ticks 3-2-1).
   const countdownActiveRef = useRef(false);
@@ -421,8 +426,8 @@ export default function WorkoutScreen() {
     return (
       <Screen>
         <View style={styles.centered}>
-          <Text style={styles.errorTitle}>This quest is hiding.</Text>
-          <Text style={styles.errorLine}>Could not load its details. Try again in a moment.</Text>
+          <Text style={styles.errorTitle}>{t('quest.errorTitle')}</Text>
+          <Text style={styles.errorLine}>{t('quest.errorLine')}</Text>
           <TouchableOpacity
             accessibilityRole="button"
             style={styles.retryButton}
@@ -431,7 +436,7 @@ export default function WorkoutScreen() {
               void load();
             })}
           >
-            <Text style={styles.retryLabel}>Retry</Text>
+            <Text style={styles.retryLabel}>{t('board.retry')}</Text>
           </TouchableOpacity>
         </View>
       </Screen>
@@ -449,7 +454,7 @@ export default function WorkoutScreen() {
             onPress={withTapCue(leaveQuest)}
           >
             <Ionicons name="close" size={16} color={colors.textMuted} />
-            <Text style={styles.quitLabel}>Quit</Text>
+            <Text style={styles.quitLabel}>{t('workout.quit')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -461,7 +466,7 @@ export default function WorkoutScreen() {
                   source={REST_DETAILED_ART}
                   style={[styles.hero, { width: heroWidth, height: heroHeight }]}
                   contentFit="contain"
-                  accessibilityLabel="Rest"
+                  accessibilityLabel={t('workout.restA11y')}
                   transition={150}
                 />
               ) : heroSource !== null ? (
@@ -471,13 +476,13 @@ export default function WorkoutScreen() {
                   source={heroSource}
                   style={[styles.hero, { width: heroWidth, height: heroHeight }]}
                   contentFit="contain"
-                  accessibilityLabel={segmentName ?? 'Exercise'}
+                  accessibilityLabel={segmentName ?? t('workout.exerciseFallback')}
                   transition={150}
                 />
               ) : null}
               <View style={styles.badgeRow}>
                 <View style={[styles.badge, { backgroundColor: KIND_COLORS[segment.kind] }]}>
-                  <Text style={styles.badgeLabel}>{segmentKindLabel(segment.kind)}</Text>
+                  <Text style={styles.badgeLabel}>{segmentKindLabel(segment.kind, t)}</Text>
                 </View>
               </View>
               <View style={styles.digitsBox}>
@@ -491,10 +496,12 @@ export default function WorkoutScreen() {
                 ) : null}
               </View>
               <Text style={styles.segmentName}>{segmentName}</Text>
-              {nextName !== null ? <Text style={styles.nextUp}>Next up: {nextName}</Text> : null}
+              {nextName !== null ? (
+                <Text style={styles.nextUp}>{t('workout.nextUp', { name: nextName })}</Text>
+              ) : null}
             </>
           ) : (
-            <Text style={styles.getReady}>Get ready…</Text>
+            <Text style={styles.getReady}>{t('workout.getReady')}</Text>
           )}
         </View>
 
@@ -521,9 +528,13 @@ export default function WorkoutScreen() {
                 size={15}
                 color={colors.textMuted}
               />
-              <Text style={styles.pauseLabel}>{pausedAtMs === null ? 'Pause' : 'Resume'}</Text>
+              <Text style={styles.pauseLabel}>
+                {pausedAtMs === null ? t('workout.pause') : t('workout.resume')}
+              </Text>
             </TouchableOpacity>
-            <Text style={styles.footerLabel}>{formatTotalRemaining(totalLeft)} left</Text>
+            <Text style={styles.footerLabel}>
+              {t('workout.remaining', { time: formatTotalRemaining(totalLeft) })}
+            </Text>
           </View>
         </View>
       </View>
@@ -547,7 +558,7 @@ export default function WorkoutScreen() {
                 source={REST_DETAILED_ART}
                 style={[styles.hero, { width: heroWidth, height: Math.round(heroHeight * 0.7) }]}
                 contentFit="contain"
-                accessibilityLabel="Rest"
+                accessibilityLabel={t('workout.restA11y')}
                 transition={150}
               />
             ) : heroSource !== null ? (
@@ -555,12 +566,12 @@ export default function WorkoutScreen() {
                 source={heroSource}
                 style={[styles.hero, { width: heroWidth, height: Math.round(heroHeight * 0.7) }]}
                 contentFit="contain"
-                accessibilityLabel={segmentName ?? 'Exercise'}
+                accessibilityLabel={segmentName ?? t('workout.exerciseFallback')}
                 transition={150}
               />
             ) : null}
-            <Text style={styles.pausedTitle}>Paused</Text>
-            <Text style={styles.pausedName}>{segmentName ?? 'Move'}</Text>
+            <Text style={styles.pausedTitle}>{t('workout.paused')}</Text>
+            <Text style={styles.pausedName}>{segmentName ?? t('quest.moveFallback')}</Text>
             {currentInstruction !== null ? (
               <Text style={styles.pausedInstruction}>{currentInstruction}</Text>
             ) : isRest ? (
@@ -584,7 +595,7 @@ export default function WorkoutScreen() {
             onPress={withTapCue(handleResume)}
           >
             <Ionicons name="play" size={20} color={colors.background} />
-            <Text style={styles.resumeLabel}>Resume</Text>
+            <Text style={styles.resumeLabel}>{t('workout.resume')}</Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -597,21 +608,21 @@ export default function WorkoutScreen() {
       >
         <View style={styles.sheetBackdrop}>
           <View style={styles.sheetCard}>
-            <Text style={styles.sheetTitle}>Leave this quest?</Text>
-            <Text style={styles.sheetBody}>No XP is awarded — it stays open for another day.</Text>
+            <Text style={styles.sheetTitle}>{t('workout.leaveTitle')}</Text>
+            <Text style={styles.sheetBody}>{t('workout.leaveBody')}</Text>
             <TouchableOpacity
               accessibilityRole="button"
               style={styles.sheetLeave}
               onPress={withTapCue(leaveQuest)}
             >
-              <Text style={styles.sheetLeaveLabel}>Leave</Text>
+              <Text style={styles.sheetLeaveLabel}>{t('workout.leaveCta')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               accessibilityRole="button"
               style={styles.sheetCancel}
               onPress={withTapCue(() => setQuitVisible(false))}
             >
-              <Text style={styles.sheetCancelLabel}>Cancel</Text>
+              <Text style={styles.sheetCancelLabel}>{t('workout.cancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>

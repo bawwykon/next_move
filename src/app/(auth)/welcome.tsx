@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/AppButton';
@@ -7,20 +8,18 @@ import { Screen } from '@/components/ui/Screen';
 import { colors, fonts, spacing } from '@/lib/theme';
 
 export default function WelcomeScreen() {
+  const { t } = useTranslation();
   return (
     <Screen>
       <View style={styles.hero}>
         <Text style={styles.title}>Next Move</Text>
-        <Text style={styles.pitch}>Small quests. Real progress.</Text>
-        <Text style={styles.body}>
-          Turn daily steps and quick workouts into a game you actually want to play — one move at a
-          time.
-        </Text>
+        <Text style={styles.pitch}>{t('auth.welcomeTagline')}</Text>
+        <Text style={styles.body}>{t('auth.welcomeBody')}</Text>
       </View>
       <View style={styles.actions}>
-        <AppButton label="Get started" onPress={() => router.push('/(auth)/register')} />
+        <AppButton label={t('auth.getStarted')} onPress={() => router.push('/(auth)/register')} />
         <AppButton
-          label="I already have an account"
+          label={t('auth.haveAccountLong')}
           variant="secondary"
           onPress={withTapCue(() => router.push('/(auth)/login'))}
         />

@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { Screen } from '@/components/ui/Screen';
@@ -21,6 +22,7 @@ import { colors, fonts, radius, spacing } from '@/lib/theme';
  * through the same repo paging the profile used to own.
  */
 export default function HistoryScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
 
   const [rows, setRows] = useState<CompletionHistoryRow[]>([]);
@@ -74,7 +76,7 @@ export default function HistoryScreen() {
   }, [loadingMore, rows.length]);
 
   const todayKey = dayKey(new Date());
-  const items = useMemo(() => historyLines(rows, todayKey), [rows, todayKey]);
+  const items = useMemo(() => historyLines(rows, todayKey, t), [rows, todayKey, t]);
   const exhausted = historyExhausted(rows.length, HISTORY_PAGE_SIZE);
 
   return (
@@ -86,20 +88,20 @@ export default function HistoryScreen() {
           onPress={withTapCue(() => router.back())}
         >
           <Ionicons name="chevron-back" size={22} color={colors.text} />
-          <Text style={styles.backLabel}>Back</Text>
+          <Text style={styles.backLabel}>{t('common.back')}</Text>
         </TouchableOpacity>
 
         {status === 'loading' ? (
-          <Text style={styles.note}>Loading your quest history…</Text>
+          <Text style={styles.note}>{t('history.loading')}</Text>
         ) : status === 'error' ? (
           <View style={styles.center}>
-            <Text style={styles.empty}>Could not load your history. Try again in a moment.</Text>
+            <Text style={styles.empty}>{t('history.errorLine')}</Text>
             <TouchableOpacity
               accessibilityRole="button"
               style={styles.retryButton}
               onPress={withTapCue(() => void loadFirstPage())}
             >
-              <Text style={styles.retryLabel}>Retry</Text>
+              <Text style={styles.retryLabel}>{t('common.retry')}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -108,13 +110,11 @@ export default function HistoryScreen() {
             contentContainerStyle={styles.content}
             showsVerticalScrollIndicator={false}
           >
-            <Text style={styles.title}>Quest history</Text>
-            <Text style={styles.note}>Every quest from the last 30 days.</Text>
+            <Text style={styles.title}>{t('history.title')}</Text>
+            <Text style={styles.note}>{t('history.subtitle')}</Text>
             {items.length === 0 ? (
               <View style={styles.card}>
-                <Text style={styles.empty}>
-                  History begins with your first quest — every one counts.
-                </Text>
+                <Text style={styles.empty}>{t('history.empty')}</Text>
               </View>
             ) : (
               <View style={styles.card}>
@@ -122,7 +122,9 @@ export default function HistoryScreen() {
                   {items.map((item, index) => (
                     <View key={`${item.questTitle}-${index}`} style={styles.row}>
                       <View style={styles.body}>
-                        <Text style={styles.rowTitle}>{item.questTitle ?? 'Quest completed'}</Text>
+                        <Text style={styles.rowTitle}>
+                          {item.questTitle ?? t('history.fallbackTitle')}
+                        </Text>
                         <Text style={styles.rowDay}>{item.dayLabel}</Text>
                       </View>
                       <Text style={styles.rowXp}>+{item.xp} XP</Text>
@@ -136,11 +138,11 @@ export default function HistoryScreen() {
                     onPress={withTapCue(() => void loadMore())}
                   >
                     <Text style={styles.loadMoreLabel}>
-                      {loadingMore ? 'Loading…' : 'Load more'}
+                      {loadingMore ? t('history.loadingMore') : t('history.loadMore')}
                     </Text>
                   </TouchableOpacity>
                 ) : (
-                  <Text style={styles.end}>{`That's all from the last 30 days.`}</Text>
+                  <Text style={styles.end}>{t('history.end')}</Text>
                 )}
               </View>
             )}

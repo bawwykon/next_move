@@ -1,17 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useState } from 'react';
 import { Animated, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { Screen } from '@/components/ui/Screen';
 import { fetchQuestDetail, type QuestDetail, type QuestSegment } from '@/data/repositories/quests';
 import { dayKey } from '@/domain/streak/dayKey';
-import {
-  DIFFICULTY_ART_KEY,
-  difficultyLabel,
-  exerciseDifficulty,
-} from '@/domain/exercises/difficulty';
+import { DIFFICULTY_ART_KEY, exerciseDifficulty } from '@/domain/exercises/difficulty';
 import {
   difficultyArt,
   exerciseThumb,
@@ -28,15 +25,9 @@ import { colors, fonts, radius, spacing } from '@/lib/theme';
 import { withTapCue } from '@/lib/sounds';
 import { useCharacterStore } from '@/state/characterStore';
 
-const CATEGORY_LABELS: Record<string, string> = {
-  strength: 'Strength',
-  endurance: 'Endurance',
-  mobility: 'Mobility',
-  discipline: 'Discipline',
-};
-
 export default function QuestDetailScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const params = useLocalSearchParams<{ id?: string }>();
   const questId = params.id;
 
@@ -90,15 +81,15 @@ export default function QuestDetailScreen() {
           onPress={withTapCue(() => router.back())}
         >
           <Ionicons name="chevron-back" size={22} color={colors.text} />
-          <Text style={styles.backLabel}>Back</Text>
+          <Text style={styles.backLabel}>{t('quest.back')}</Text>
         </TouchableOpacity>
 
         {status === 'loading' || (status === 'idle' && !detail) ? (
           <SkeletonPulse />
         ) : status === 'error' || !detail ? (
           <View style={styles.center}>
-            <Text style={styles.errorTitle}>This quest is hiding.</Text>
-            <Text style={styles.errorLine}>Could not load its details. Try again in a moment.</Text>
+            <Text style={styles.errorTitle}>{t('quest.errorTitle')}</Text>
+            <Text style={styles.errorLine}>{t('quest.errorLine')}</Text>
             <TouchableOpacity
               accessibilityRole="button"
               style={styles.retryButton}
@@ -107,7 +98,7 @@ export default function QuestDetailScreen() {
                 void load();
               })}
             >
-              <Text style={styles.retryLabel}>Retry</Text>
+              <Text style={styles.retryLabel}>{t('board.retry')}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -121,7 +112,7 @@ export default function QuestDetailScreen() {
                 <Text style={styles.title}>{detail.title}</Text>
                 <Badge difficulty={detail.difficulty} />
                 <Text style={styles.meta}>
-                  {formatDuration(detail.durationSec)} · +{detail.xpReward} XP
+                  {formatDuration(detail.durationSec, t)} · +{detail.xpReward} XP
                 </Text>
                 <View style={styles.chipRow}>
                   {detail.categories.map((category) => {
@@ -131,9 +122,7 @@ export default function QuestDetailScreen() {
                         {icon !== null ? (
                           <Image source={icon} style={styles.chipIcon} contentFit="contain" />
                         ) : null}
-                        <Text style={styles.chipLabel}>
-                          {CATEGORY_LABELS[category] ?? category}
-                        </Text>
+                        <Text style={styles.chipLabel}>{t(`board.categories.${category}`)}</Text>
                       </View>
                     );
                   })}
@@ -141,7 +130,7 @@ export default function QuestDetailScreen() {
                 {completedToday ? (
                   <View style={styles.donePill}>
                     <Ionicons name="checkmark-circle" size={16} color={colors.success} />
-                    <Text style={styles.doneLabel}>Done for today — you can still go again.</Text>
+                    <Text style={styles.doneLabel}>{t('quest.doneLine')}</Text>
                   </View>
                 ) : null}
                 {detail.description ? (
@@ -150,16 +139,16 @@ export default function QuestDetailScreen() {
               </View>
 
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Your Quest</Text>
+                <Text style={styles.sectionTitle}>{t('quest.yourQuest')}</Text>
                 {detail.segments.map((segment) => (
                   <SegmentRow key={segment.position} segment={segment} />
                 ))}
               </View>
 
               <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Total</Text>
+                <Text style={styles.totalLabel}>{t('quest.total')}</Text>
                 <Text style={styles.totalValue}>
-                  {formatDuration(segmentsTotal(detail.segments))}
+                  {formatDuration(segmentsTotal(detail.segments), t)}
                 </Text>
               </View>
             </ScrollView>
@@ -170,7 +159,7 @@ export default function QuestDetailScreen() {
                 style={styles.startButton}
                 onPress={withTapCue(start)}
               >
-                <Text style={styles.startLabel}>Start</Text>
+                <Text style={styles.startLabel}>{t('quest.start')}</Text>
                 <Ionicons name="play" size={20} color={colors.background} />
               </TouchableOpacity>
             </View>
@@ -182,7 +171,8 @@ export default function QuestDetailScreen() {
 }
 
 function Badge({ difficulty }: { difficulty: QuestDetail['difficulty'] }) {
-  const badge = difficultyBadge(difficulty);
+  const { t } = useTranslation();
+  const badge = difficultyBadge(difficulty, t);
   const icon = difficultyArt(difficulty);
   return (
     <View style={[styles.badge, { backgroundColor: badge.color }]}>
@@ -193,6 +183,7 @@ function Badge({ difficulty }: { difficulty: QuestDetail['difficulty'] }) {
 }
 
 function SegmentRow({ segment }: { segment: QuestSegment }) {
+  const { t } = useTranslation();
   const isRest = segment.kind === 'rest';
   const isEdge = segment.kind === 'warmup' || segment.kind === 'cooldown';
   const labelColor = isRest ? colors.textMuted : isEdge ? colors.calm : colors.text;
@@ -206,10 +197,10 @@ function SegmentRow({ segment }: { segment: QuestSegment }) {
       <Image source={thumb} style={styles.segmentThumb} contentFit="contain" />
       <View style={styles.segmentLeft}>
         <Text style={[styles.segmentKind, { color: labelColor }]}>
-          {segmentKindLabel(segment.kind)}
+          {segmentKindLabel(segment.kind, t)}
         </Text>
         <Text style={isRest ? styles.segmentRest : styles.segmentName}>
-          {isRest ? 'Take a breather' : (segment.exerciseName ?? 'Move')}
+          {isRest ? t('quest.takeBreather') : (segment.exerciseName ?? t('quest.moveFallback'))}
         </Text>
       </View>
       {!isRest && difficulty !== null ? (
@@ -217,10 +208,12 @@ function SegmentRow({ segment }: { segment: QuestSegment }) {
           source={difficultyArt(DIFFICULTY_ART_KEY[difficulty])}
           style={styles.segmentDifficultyIcon}
           contentFit="contain"
-          accessibilityLabel={`${difficultyLabel(difficulty)} difficulty`}
+          accessibilityLabel={t('quest.difficultyA11y', {
+            level: t(`quest.difficultyName.${difficulty}`),
+          })}
         />
       ) : null}
-      <Text style={styles.segmentDuration}>{formatSegmentDuration(segment.durationSec)}</Text>
+      <Text style={styles.segmentDuration}>{formatSegmentDuration(segment.durationSec, t)}</Text>
     </View>
   );
 }

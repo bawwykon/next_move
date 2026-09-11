@@ -140,7 +140,10 @@ describe('profile data path (live local supabase)', () => {
   it('the recorded achievements unlock count matches the badge entry', async () => {
     const unlocks = (await achievementsRepo.fetchProfileAchievements(profileId)).data ?? [];
     expect(unlocks.length).toBeGreaterThanOrEqual(1);
-    const entry = format.achievementsEntry(unlocks.length);
+    const { englishT } = jest.requireActual('../i18n/testLocale') as {
+      englishT: () => Promise<import('i18next').TFunction>;
+    };
+    const entry = format.achievementsEntry(unlocks.length, await englishT());
     expect(entry).toContain(`${unlocks.length}`);
     console.log(`unlocked achievements: ${unlocks.length} → "${entry}"`);
   });

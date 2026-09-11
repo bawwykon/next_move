@@ -92,3 +92,102 @@ export function optionLabel(key: StepKey, value: number | string): string {
   const step = ONBOARDING_STEPS.find((s) => s.key === key);
   return step?.options.find((option) => option.value === value)?.label ?? String(value);
 }
+
+/**
+ * I18N-01 — localized onboarding content. `ONBOARDING_STEPS` above stays as
+ * the English reference (pinned by wizard tests); the UI renders
+ * `localizeOnboardingSteps(t)` so every step title, option label and hint
+ * follows the active locale. Pools mirror the reference 1:1 in
+ * `onboarding.steps/activity/experience/goals/time`.
+ */
+export function localizedOptionLabel(
+  key: StepKey,
+  value: number | string,
+  t: (k: string) => string,
+): string {
+  switch (key) {
+    case 'activity_level':
+      if (value === 1) return t('onboarding.activity.sitting.label');
+      if (value === 2) return t('onboarding.activity.some.label');
+      if (value === 3) return t('onboarding.activity.active.label');
+      break;
+    case 'experience':
+      if (value === 1) return t('onboarding.experience.never.label');
+      if (value === 2) return t('onboarding.experience.rarely.label');
+      if (value === 3) return t('onboarding.experience.sometimes.label');
+      if (value === 4) return t('onboarding.experience.regularly.label');
+      break;
+    case 'goals':
+      if (value === 'build_a_habit') return t('onboarding.goals.habit');
+      if (value === 'get_stronger') return t('onboarding.goals.stronger');
+      if (value === 'more_energy') return t('onboarding.goals.energy');
+      if (value === 'feel_better') return t('onboarding.goals.better');
+      if (value === 'move_easier') return t('onboarding.goals.easier');
+      break;
+    case 'workout_time':
+      if (value === 'morning') return t('onboarding.time.morning');
+      if (value === 'afternoon') return t('onboarding.time.afternoon');
+      if (value === 'evening') return t('onboarding.time.evening');
+      if (value === 'any') return t('onboarding.time.any');
+      break;
+    case 'display_name':
+      break;
+  }
+  return optionLabel(key, value);
+}
+
+function localizedOptions(key: StepKey, t: (k: string) => string): OnboardingOption[] {
+  switch (key) {
+    case 'activity_level':
+      return [
+        {
+          value: 1,
+          label: t('onboarding.activity.sitting.label'),
+          hint: t('onboarding.activity.sitting.hint'),
+        },
+        {
+          value: 2,
+          label: t('onboarding.activity.some.label'),
+          hint: t('onboarding.activity.some.hint'),
+        },
+        {
+          value: 3,
+          label: t('onboarding.activity.active.label'),
+          hint: t('onboarding.activity.active.hint'),
+        },
+      ];
+    case 'experience':
+      return (['never', 'rarely', 'sometimes', 'regularly'] as const).map((k, i) => ({
+        value: i + 1,
+        label: t(`onboarding.experience.${k}.label`),
+        hint: t(`onboarding.experience.${k}.hint`),
+      }));
+    case 'goals':
+      return (
+        [
+          ['build_a_habit', 'habit'],
+          ['get_stronger', 'stronger'],
+          ['more_energy', 'energy'],
+          ['feel_better', 'better'],
+          ['move_easier', 'easier'],
+        ] as const
+      ).map(([value, k]) => ({ value, label: t(`onboarding.goals.${k}`) }));
+    case 'workout_time':
+      return (['morning', 'afternoon', 'evening', 'any'] as const).map((k) => ({
+        value: k,
+        label: t(`onboarding.time.${k}`),
+      }));
+    case 'display_name':
+      return [];
+  }
+}
+
+export function localizeOnboardingSteps(t: (k: string) => string): OnboardingStep[] {
+  return ONBOARDING_STEPS.map((step) => ({
+    key: step.key,
+    title: t(`onboarding.steps.${step.key}.title`),
+    subtitle: step.subtitle ? (t(`onboarding.steps.${step.key}.subtitle`) as string) : undefined,
+    multi: step.multi,
+    options: localizedOptions(step.key, t),
+  }));
+}

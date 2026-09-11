@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { Screen } from '@/components/ui/Screen';
@@ -9,6 +10,7 @@ import { useCharacterStore } from '@/state/characterStore';
 import { useFocusEffect } from 'expo-router';
 
 export default function JourneyScreen() {
+  const { t } = useTranslation();
   const { profile, status, refresh } = useCharacterStore();
 
   useFocusEffect(
@@ -23,14 +25,14 @@ export default function JourneyScreen() {
     return (
       <Screen>
         <View style={styles.center}>
-          <Text style={styles.errorTitle}>Your path is taking a breather.</Text>
-          <Text style={styles.errorLine}>Could not load your journey. Try again in a moment.</Text>
+          <Text style={styles.errorTitle}>{t('journey.errorTitle')}</Text>
+          <Text style={styles.errorLine}>{t('journey.errorLine')}</Text>
           <TouchableOpacity
             accessibilityRole="button"
             style={styles.retryButton}
             onPress={withTapCue(() => void refresh())}
           >
-            <Text style={styles.retryLabel}>Retry</Text>
+            <Text style={styles.retryLabel}>{t('common.retry')}</Text>
           </TouchableOpacity>
         </View>
       </Screen>

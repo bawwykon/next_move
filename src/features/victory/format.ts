@@ -3,6 +3,8 @@
  * mastery and unlock figure rendered on victory comes from the authoritative
  * complete_quest payload (S5-05), never recomputed on the client (FR-XP-7).
  */
+import type { TFunction } from 'i18next';
+
 import type { QuestCategory } from '@/domain/recommendation/types';
 import type {
   AchievementUnlock,
@@ -19,24 +21,28 @@ export interface XpBreakdownRow {
   xp: number;
 }
 
-const BREAKDOWN_LABELS: Record<'quest' | 'daily' | 'weekly' | 'streak', string> = {
-  quest: 'Quest',
-  daily: 'Daily bonus',
-  weekly: 'Weekly bonus',
-  streak: 'Streak bonus',
-};
+const BREAKDOWN_KEYS = {
+  quest: 'victory.breakdownQuest',
+  daily: 'victory.breakdownDaily',
+  weekly: 'victory.breakdownWeekly',
+  streak: 'victory.breakdownStreak',
+} as const;
 
 /**
  * FR-XP-6 — one row per stage that actually paid out, in a fixed order.
  * Zero-value stages are dropped; the total row is separate (below), so the
  * rows + total never hide a grant. BYQ-04 — baseLabel renames the base stage
- * row to the custom quest's own name.
+ * row to the custom quest's own name. Labels via `t` (I18N-01).
  */
-export function xpBreakdownRows(xp: XpBreakdown, baseLabel?: string): XpBreakdownRow[] {
+export function xpBreakdownRows(
+  xp: XpBreakdown,
+  t: TFunction,
+  baseLabel?: string,
+): XpBreakdownRow[] {
   const order: ('quest' | 'daily' | 'weekly' | 'streak')[] = ['quest', 'daily', 'weekly', 'streak'];
   return order
     .map((stage) => ({
-      label: stage === 'quest' && baseLabel ? baseLabel : BREAKDOWN_LABELS[stage],
+      label: stage === 'quest' && baseLabel ? baseLabel : t(BREAKDOWN_KEYS[stage]),
       xp: xp[stage],
     }))
     .filter((row) => row.xp > 0);
@@ -67,45 +73,38 @@ export interface MasteryDelta {
 
 /**
  * FR-MAS-2/3 — per-track mastery titles. 1 Novice, 2 Explorer, 3 Adept,
- * 4 Expert, 5 through the cap (10) Master.
+ * 4 Expert, 5 through the cap (10) Master. Copy via `t` (I18N-01).
  */
-const MASTERY_TITLES: Record<number, string> = {
-  1: 'Novice',
-  2: 'Explorer',
-  3: 'Adept',
-  4: 'Expert',
-  5: 'Master',
-};
+const MASTERY_TITLE_KEYS = {
+  1: 'victory.masteryTitle.novice',
+  2: 'victory.masteryTitle.explorer',
+  3: 'victory.masteryTitle.adept',
+  4: 'victory.masteryTitle.expert',
+  5: 'victory.masteryTitle.master',
+} as const;
 
 export const MASTERY_CAP = 10;
 
-export function masteryLevelTitle(level: number): string {
-  const clamped = Math.min(Math.max(level, 1), 5);
-  return MASTERY_TITLES[clamped] ?? 'Novice';
+export function masteryLevelTitle(level: number, t: TFunction): string {
+  const clamped = Math.min(Math.max(level, 1), 5) as keyof typeof MASTERY_TITLE_KEYS;
+  return t(MASTERY_TITLE_KEYS[clamped] ?? MASTERY_TITLE_KEYS[1]);
 }
 
-const TRACK_LABELS: Record<QuestCategory, string> = {
-  strength: 'Strength',
-  endurance: 'Endurance',
-  mobility: 'Mobility',
-  discipline: 'Discipline',
-};
-
-export function masteryTrackLabel(track: QuestCategory): string {
-  return TRACK_LABELS[track];
+export function masteryTrackLabel(track: QuestCategory, t: TFunction): string {
+  return t(`board.categories.${track}`);
 }
 
 /** Per-track delta rows for the mastery card (FR-MAS-6) — never empty. */
-export function masteryDeltas(rows: MasteryResult[]): MasteryDelta[] {
+export function masteryDeltas(rows: MasteryResult[], t: TFunction): MasteryDelta[] {
   return rows.map((row) => ({
     track: row.track,
-    trackLabel: masteryTrackLabel(row.track),
+    trackLabel: masteryTrackLabel(row.track, t),
     pointsBefore: row.points_before,
     pointsAfter: row.points_after,
     pointsGained: row.points_after - row.points_before,
     levelBefore: row.level_before,
     levelAfter: row.level_after,
-    levelTitle: masteryLevelTitle(row.level_after),
+    levelTitle: masteryLevelTitle(row.level_after, t),
     leveledUp: row.level_after > row.level_before,
   }));
 }

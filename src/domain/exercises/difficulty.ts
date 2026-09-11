@@ -35,12 +35,6 @@ export const EXERCISE_DIFFICULTY: Readonly<Record<string, ExerciseDifficulty>> =
   burpees: 'advanced',
 };
 
-const DIFFICULTY_LABELS: Record<ExerciseDifficulty, string> = {
-  beginner: 'Beginner',
-  intermediate: 'Intermediate',
-  advanced: 'Advanced',
-};
-
 export function exerciseDifficulty(slug: string | null): ExerciseDifficulty | null {
   if (!slug) {
     return null;
@@ -58,7 +52,3 @@ export const DIFFICULTY_ART_KEY: Record<ExerciseDifficulty, string> = {
   intermediate: 'normal',
   advanced: 'hard',
 };
-
-export function difficultyLabel(difficulty: ExerciseDifficulty): string {
-  return DIFFICULTY_LABELS[difficulty];
-}

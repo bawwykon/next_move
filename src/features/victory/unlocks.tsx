@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import type { UnlockOverview } from '@/features/victory/format';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
@@ -14,17 +15,18 @@ interface UnlocksCardProps {
  * Renders nothing when this completion unlocked nothing.
  */
 export function UnlocksCard({ overview }: UnlocksCardProps) {
+  const { t } = useTranslation();
   if (!overview.hasUnlocks) {
     return null;
   }
 
   return (
     <View style={styles.card}>
-      <Text style={styles.cardTitle}>Unlocked</Text>
+      <Text style={styles.cardTitle}>{t('victory.unlocked')}</Text>
 
       {overview.achievements.length > 0 ? (
         <View style={styles.group}>
-          <Text style={styles.groupLabel}>Achievements</Text>
+          <Text style={styles.groupLabel}>{t('victory.achievementsGroup')}</Text>
           {overview.achievements.map((unlock) => (
             <View key={unlock.id} style={styles.row}>
               <Ionicons name="trophy-outline" size={20} color={colors.reward} />
@@ -39,7 +41,7 @@ export function UnlocksCard({ overview }: UnlocksCardProps) {
 
       {overview.cosmetics.length > 0 ? (
         <View style={styles.group}>
-          <Text style={styles.groupLabel}>Fresh look</Text>
+          <Text style={styles.groupLabel}>{t('victory.cosmeticsGroup')}</Text>
           {overview.cosmetics.map((unlock) => (
             <View key={unlock.id} style={styles.row}>
               <Ionicons name="sparkles-outline" size={20} color={colors.calm} />

@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
   ScrollView,
@@ -103,6 +104,7 @@ function frameAvatarStyle(slug: string | null): {
  */
 export default function ProfileScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const email = useSessionStore((state) => state.session?.user?.email ?? '');
   const signOut = useSessionStore((state) => state.signOut);
 
@@ -168,11 +170,11 @@ export default function ProfileScreen() {
   const handleEquip = useCallback(
     async (slot: CosmeticSlot, itemId: string | null): Promise<string | null> => {
       if (!profile) {
-        return 'Not ready yet — try again in a moment.';
+        return t('profile.notReady');
       }
       const verdict = validateEquip(slot, itemId, owned, catalog);
       if (!verdict.ok) {
-        return 'This one is still locked for you.';
+        return t('profile.locked');
       }
       const previous = profile.equipped[slot];
       // nameplate is stored as slug in DB; keep optimistic state as slug too so nameplateArt resolves
@@ -190,16 +192,16 @@ export default function ProfileScreen() {
         setProfile((current) =>
           current ? { ...current, equipped: { ...current.equipped, [slot]: previous } } : current,
         );
-        return 'Could not save. Give it one more try.';
+        return t('profile.saveFailed');
       }
       return null;
     },
-    [profile, owned, catalog],
+    [profile, owned, catalog, t],
   );
 
   const handleEquipBadges = useCallback(
     async (badges: string[]): Promise<string | null> => {
-      if (!profile) return 'Not ready yet.';
+      if (!profile) return t('profile.notReadyShort');
       const previous = profile.equipped.badges;
       setProfile((current) =>
         current ? { ...current, equipped: { ...current.equipped, badges } } : current,
@@ -212,11 +214,11 @@ export default function ProfileScreen() {
         setProfile((current) =>
           current ? { ...current, equipped: { ...current.equipped, badges: previous } } : current,
         );
-        return 'Could not save badges.';
+        return t('profile.badgesFailed');
       }
       return null;
     },
-    [profile],
+    [profile, t],
   );
 
   const initials = email ? (email.split('@')[0] ?? '').slice(0, 2).toUpperCase() : 'A';
@@ -276,29 +278,28 @@ export default function ProfileScreen() {
     [profile],
   );
   const streaks = useMemo(
-    () => (profile ? streakCopy(profile.currentStreak, profile.longestStreak) : streakCopy(0, 0)),
-    [profile],
+    () =>
+      profile ? streakCopy(profile.currentStreak, profile.longestStreak, t) : streakCopy(0, 0, t),
+    [profile, t],
   );
   // S9-02 — shared milestone countdown (same wording as the board pill).
-  const milestoneLine = streakMilestoneLine(profile?.currentStreak ?? 0);
-  const masteryRowsView = useMemo(() => masteryRows(mastery), [mastery]);
-  const historyView = useMemo(() => historyLines(history, todayKey), [history, todayKey]);
+  const milestoneLine = streakMilestoneLine(profile?.currentStreak ?? 0, t);
+  const masteryRowsView = useMemo(() => masteryRows(mastery, t), [mastery, t]);
+  const historyView = useMemo(() => historyLines(history, todayKey, t), [history, todayKey, t]);
 
   return (
     <Screen>
       <View style={styles.screen}>
         {status === 'error' ? (
           <View style={styles.center}>
-            <Text style={styles.errorTitle}>The profile took a pause.</Text>
-            <Text style={styles.errorLine}>
-              Could not load your character page. Try again in a moment.
-            </Text>
+            <Text style={styles.errorTitle}>{t('profile.errorTitle')}</Text>
+            <Text style={styles.errorLine}>{t('profile.errorLine')}</Text>
             <TouchableOpacity
               accessibilityRole="button"
               style={styles.retryButton}
               onPress={withTapCue(() => void loadFirstPage())}
             >
-              <Text style={styles.retryLabel}>Retry</Text>
+              <Text style={styles.retryLabel}>{t('common.retry')}</Text>
             </TouchableOpacity>
           </View>
         ) : status !== 'ready' ? (
@@ -322,16 +323,16 @@ export default function ProfileScreen() {
                     style={[styles.avatarFrame, frameAvatarStyle(frameSlug)]}
                     contentFit="contain"
                     pointerEvents="none"
-                    accessibilityLabel="Frame"
+                    accessibilityLabel={t('profile.frameA11y')}
                   />
                 ) : null}
-                <View style={styles.avatar} accessibilityLabel={`Profile for ${email}`}>
+                <View style={styles.avatar} accessibilityLabel={t('profile.profileFor', { email })}>
                   {portraitArt !== null ? (
                     <Image
                       source={portraitArt}
                       style={styles.avatarImage}
                       contentFit="cover"
-                      accessibilityLabel="Character portrait"
+                      accessibilityLabel={t('profile.portraitA11y')}
                     />
                   ) : (
                     <Text style={styles.initials}>{initials}</Text>
@@ -371,7 +372,8 @@ export default function ProfileScreen() {
                     ]}
                   >
                     {(
-                      profile?.displayName ?? (email ? `Signed in as ${email}` : 'Your journey')
+                      profile?.displayName ??
+                      (email ? t('profile.signedInAs', { email }) : t('profile.yourJourney'))
                     ).toUpperCase()}
                   </Text>
                 </View>
@@ -400,24 +402,32 @@ export default function ProfileScreen() {
                 ) : null}
               </View>
               <Text style={styles.levelLine}>
-                {profile ? levelLine(profile.level) : 'Level 1 · Beginner'}
+                {profile ? levelLine(profile.level, t) : t('profile.levelFallback')}
               </Text>
             </View>
 
             {/* XP bar + total (FR-XP-2 curve; pure derivation, server columns). */}
             <View style={styles.card}>
               <View style={styles.cardHeader}>
-                <Text style={styles.cardTitle}>Experience</Text>
-                <Text style={styles.cardMeta}>{formatXp(bar.totalXp)} XP total</Text>
+                <Text style={styles.cardTitle}>{t('profile.experience')}</Text>
+                <Text style={styles.cardMeta}>
+                  {t('profile.xpTotal', { xp: formatXp(bar.totalXp) })}
+                </Text>
               </View>
               <View style={styles.barTrack}>
                 <View
                   style={[styles.barFill, { width: `${bar.fraction * 100}%` }]}
-                  accessibilityLabel={`${Math.round(bar.fraction * 100)}% of level ${profile?.level ?? 1}`}
+                  accessibilityLabel={t('profile.levelPctA11y', {
+                    pct: Math.round(bar.fraction * 100),
+                    level: profile?.level ?? 1,
+                  })}
                 />
               </View>
               <Text style={styles.barCaption}>
-                {formatXp(bar.intoXp)} / {formatXp(bar.neededXp)} XP into this level
+                {t('profile.intoLevel', {
+                  into: formatXp(bar.intoXp),
+                  needed: formatXp(bar.neededXp),
+                })}
               </Text>
             </View>
 
@@ -433,7 +443,7 @@ export default function ProfileScreen() {
 
             {/* Mastery bars (FR-MAS-4). */}
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>Mastery</Text>
+              <Text style={styles.cardTitle}>{t('profile.mastery')}</Text>
               <View style={styles.masteryList}>
                 {masteryRowsView.map((row) => {
                   const icon = masteryArt(row.track);
@@ -447,7 +457,7 @@ export default function ProfileScreen() {
                           <Text style={styles.masteryLabel}>{row.label}</Text>
                         </View>
                         <Text style={styles.masteryLevel}>
-                          Lv {row.level} · {row.levelTitle}
+                          {t('profile.levelRow', { n: row.level, title: row.levelTitle })}
                         </Text>
                       </View>
                       <View style={styles.barTrack}>
@@ -467,8 +477,8 @@ export default function ProfileScreen() {
                 onPress={withTapCue(() => router.push('/achievements'))}
               >
                 <Ionicons name="trophy-outline" size={22} color={colors.reward} />
-                <Text style={styles.entryLabel}>Achievements</Text>
-                <Text style={styles.entryCount}>{achievementsEntry(earnedBadges.length)}</Text>
+                <Text style={styles.entryLabel}>{t('profile.achievements')}</Text>
+                <Text style={styles.entryCount}>{achievementsEntry(earnedBadges.length, t)}</Text>
                 <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
@@ -486,18 +496,16 @@ export default function ProfileScreen() {
             {/* Quest history — last-4 preview; the full paged list lives on
                 the dedicated history screen (AT-02G, FR-PROF-1). */}
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>Quest history</Text>
+              <Text style={styles.cardTitle}>{t('profile.questHistory')}</Text>
               {historyView.length === 0 ? (
-                <Text style={styles.historyEmpty}>
-                  History begins with your first quest — every one counts.
-                </Text>
+                <Text style={styles.historyEmpty}>{t('profile.historyEmpty')}</Text>
               ) : (
                 <View style={styles.historyList}>
                   {historyView.map((item, index) => (
                     <View key={`${item.questTitle}-${index}`} style={styles.historyRow}>
                       <View style={styles.historyBody}>
                         <Text style={styles.historyTitle}>
-                          {item.questTitle ?? 'Quest completed'}
+                          {item.questTitle ?? t('profile.historyFallback')}
                         </Text>
                         <Text style={styles.historyDay}>{item.dayLabel}</Text>
                       </View>
@@ -512,14 +520,18 @@ export default function ProfileScreen() {
                   style={styles.viewAllRow}
                   onPress={withTapCue(() => router.push('/history'))}
                 >
-                  <Text style={styles.viewAllLabel}>View all history</Text>
+                  <Text style={styles.viewAllLabel}>{t('profile.viewAllHistory')}</Text>
                   <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
                 </TouchableOpacity>
               ) : null}
             </View>
 
             <View style={styles.footer}>
-              <AppButton label="Sign out" variant="secondary" onPress={() => void signOut()} />
+              <AppButton
+                label={t('profile.signOut')}
+                variant="secondary"
+                onPress={() => void signOut()}
+              />
             </View>
           </ScrollView>
         )}

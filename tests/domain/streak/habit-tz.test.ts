@@ -10,6 +10,8 @@
  * Node only honors TZ set at process spawn, so this suite runs when
  * `TZ=Asia/Tokyo` is exported before jest starts (CI step); otherwise skip.
  */
+import type { TFunction } from 'i18next';
+
 import { dayKey } from '@/domain/streak/dayKey';
 import { nextStreakMilestone } from '@/domain/streak/milestone';
 import { currentStreak } from '@/domain/streak/streak';
@@ -18,8 +20,14 @@ import {
   daysUntilNextMonday,
   weeklyEarnCopy,
 } from '@/features/questBoard/earn';
+import { englishT } from '../../i18n/testLocale';
 
 const pinned = process.env.TZ === 'Asia/Tokyo' ? describe : describe.skip;
+
+let t: TFunction;
+beforeAll(async () => {
+  t = await englishT();
+});
 
 pinned('habit surface derived states under TZ=Asia/Tokyo', () => {
   it('the daily cell flips exactly at JST midnight (23:59:59 → 00:00)', () => {
@@ -41,10 +49,10 @@ pinned('habit surface derived states under TZ=Asia/Tokyo', () => {
     expect(daysUntilNextMonday(mondayStart)).toBe(7);
 
     // The earn line reflects the paid bonus and the near rollover.
-    expect(weeklyEarnCopy(3, 3, daysUntilNextMonday(sundayEnd))).toBe(
+    expect(weeklyEarnCopy(3, 3, daysUntilNextMonday(sundayEnd), t)).toBe(
       'Bonus banked — the next one starts tomorrow.',
     );
-    expect(weeklyEarnCopy(3, 3, daysUntilNextMonday(mondayStart))).toBe(
+    expect(weeklyEarnCopy(3, 3, daysUntilNextMonday(mondayStart), t)).toBe(
       'Bonus banked — the next one starts in 7 days.',
     );
   });

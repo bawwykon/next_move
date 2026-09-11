@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Animated, Easing, StyleSheet, Text } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 
@@ -17,6 +18,7 @@ interface LevelUpOverlayProps {
  * while fading).
  */
 export function LevelUpOverlay({ visible, level, title }: LevelUpOverlayProps) {
+  const { t } = useTranslation();
   const [progress] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
@@ -38,8 +40,8 @@ export function LevelUpOverlay({ visible, level, title }: LevelUpOverlayProps) {
       accessibilityViewIsModal={visible}
     >
       <Animated.View style={[styles.card, { transform: [{ scale }] }]}>
-        <Text style={styles.levelUp}>Level Up!</Text>
-        <Text style={styles.levelNumber}>Level {level}</Text>
+        <Text style={styles.levelUp}>{t('victory.levelUpTitle')}</Text>
+        <Text style={styles.levelNumber}>{t('victory.levelLevel', { n: level })}</Text>
         <Text style={styles.levelTitle}>{title}</Text>
       </Animated.View>
     </Animated.View>

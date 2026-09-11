@@ -3,6 +3,13 @@ import { join } from 'node:path';
 
 import { CHAPTERS } from '@/domain/journey/chapter';
 import { goalLine, journeyNodes, milestoneLine } from '@/features/journey/format';
+import { englishT } from '../../i18n/testLocale';
+import type { TFunction } from 'i18next';
+
+let t: TFunction;
+beforeAll(async () => {
+  t = await englishT();
+});
 
 const VICTORY_JOURNEY_SOURCE = join(
   __dirname,
@@ -17,12 +24,12 @@ const VICTORY_JOURNEY_SOURCE = join(
 
 describe('milestoneLine (FR-JOURNEY-1/8 milestone copy)', () => {
   it('reports the head position as "You have finished X quests — Chapter N (name)"', () => {
-    const line = milestoneLine(12, CHAPTERS[1]!);
+    const line = milestoneLine(12, CHAPTERS[1]!, t);
     expect(line).toBe("You've finished 12 quests — Chapter 2 (Training Grounds).");
   });
 
   it('correctly pluralizes a single quest', () => {
-    expect(milestoneLine(1, CHAPTERS[0]!)).toBe(
+    expect(milestoneLine(1, CHAPTERS[0]!, t)).toBe(
       "You've finished 1 quest — Chapter 1 (The First Step).",
     );
   });
@@ -30,19 +37,19 @@ describe('milestoneLine (FR-JOURNEY-1/8 milestone copy)', () => {
 
 describe('goalLine', () => {
   it('gives the very first chapter a beginning, not a detour to zero', () => {
-    expect(goalLine(CHAPTERS[0]!)).toBe('The journey begins here');
+    expect(goalLine(CHAPTERS[0]!, t)).toBe('The journey begins here');
   });
 
   it('states each later goal as "Reach N quests"', () => {
-    expect(goalLine(CHAPTERS[1]!)).toBe('Reach 10 quests');
-    expect(goalLine(CHAPTERS[4]!)).toBe('Reach 100 quests');
-    expect(goalLine(CHAPTERS[6]!)).toBe('Reach 365 quests');
+    expect(goalLine(CHAPTERS[1]!, t)).toBe('Reach 10 quests');
+    expect(goalLine(CHAPTERS[4]!, t)).toBe('Reach 100 quests');
+    expect(goalLine(CHAPTERS[6]!, t)).toBe('Reach 365 quests');
   });
 });
 
 describe('journeyNodes (FR-JOURNEY-5 bar semantics)', () => {
   it('at 0 quests: 7 nodes, first current, rest locked, no partial bars', () => {
-    const nodes = journeyNodes(0);
+    const nodes = journeyNodes(0, t);
     expect(nodes).toHaveLength(7);
     expect(nodes.map((node) => node.state)).toEqual([
       'current',
@@ -63,7 +70,7 @@ describe('journeyNodes (FR-JOURNEY-5 bar semantics)', () => {
 
   it('renders a partial bar on the current chapter (quests since chapter start)', () => {
     // 45 quests → chapter 3 (Into the Wild, 30..59): 15 since start, span 30.
-    const nodes = journeyNodes(45);
+    const nodes = journeyNodes(45, t);
     expect(nodes.map((node) => node.state)).toContain('current');
     expect(nodes[2]!).toMatchObject({ state: 'current', fraction: 0.5 });
     expect(nodes[2]!.meta).toBe('15 of 30 quests to the next chapter');
@@ -72,7 +79,7 @@ describe('journeyNodes (FR-JOURNEY-5 bar semantics)', () => {
   });
 
   it('exacts the 100-quest C4→C5 progress (100 → 0 of 100 into The Ascent)', () => {
-    const nodes = journeyNodes(100);
+    const nodes = journeyNodes(100, t);
     const ascent = nodes[4]!;
     expect(ascent.state).toBe('current');
     expect(ascent.fraction).toBe(0);
@@ -80,7 +87,7 @@ describe('journeyNodes (FR-JOURNEY-5 bar semantics)', () => {
   });
 
   it('fills completed chapters and locks the future ones at any count', () => {
-    const nodes = journeyNodes(600);
+    const nodes = journeyNodes(600, t);
     expect(nodes.map((node) => node.state)).toEqual([
       'completed',
       'completed',
@@ -98,7 +105,7 @@ describe('journeyNodes (FR-JOURNEY-5 bar semantics)', () => {
   });
 
   it('clamps negative inputs to the zero-quest mapping', () => {
-    expect(journeyNodes(-3)).toEqual(journeyNodes(0));
+    expect(journeyNodes(-3, t)).toEqual(journeyNodes(0, t));
   });
 });
 
@@ -106,6 +113,8 @@ describe('FR-JOURNEY-6 — chapter-unlock banner lives in the Victory screen', (
   it('keeps the "Chapter N — you moved up!" moment (S6-01), untouched (no duplicate)', () => {
     const source = readFileSync(VICTORY_JOURNEY_SOURCE, 'utf8');
     expect(source).toContain('movedChapter');
-    expect(source).toContain('you moved up!');
+    // I18N-01 — the copy now lives in the locale tables, referenced once.
+    expect(source).toContain('victory.chapterMoved');
+    expect(source).not.toContain('you moved up!');
   });
 });

@@ -6,6 +6,13 @@ import {
   ACHIEVEMENT_CATEGORY_ART,
 } from '@/features/achievements/format';
 import { mergeCatalogWithUnlocks, type AchievementCatalogRow } from '@/domain/achievements/merge';
+import { englishT } from '../../i18n/testLocale';
+import type { TFunction } from 'i18next';
+
+let t: TFunction;
+beforeAll(async () => {
+  t = await englishT();
+});
 
 /** Copy of the live seed catalogue (supabase/seed.sql) — constants only. */
 const CATALOG: AchievementCatalogRow[] = [
@@ -120,13 +127,13 @@ describe('ACHIEVEMENT_CATEGORY_ART', () => {
 
 describe('unlockedLabel', () => {
   it('renders a deterministic timestamp label (no locale/clock dependence)', () => {
-    expect(unlockedLabel('2026-08-08T11:54:11.903648+00:00')).toBe('Unlocked Aug 8, 2026');
-    expect(unlockedLabel('2026-01-02T23:59:59Z')).toBe('Unlocked Jan 2, 2026');
-    expect(unlockedLabel('2025-12-31T00:00:00Z')).toBe('Unlocked Dec 31, 2025');
+    expect(unlockedLabel('2026-08-08T11:54:11.903648+00:00', t)).toBe('Unlocked Aug 8, 2026');
+    expect(unlockedLabel('2026-01-02T23:59:59Z', t)).toBe('Unlocked Jan 2, 2026');
+    expect(unlockedLabel('2025-12-31T00:00:00Z', t)).toBe('Unlocked Dec 31, 2025');
   });
 
   it('degrades empty on broken input', () => {
-    expect(unlockedLabel('not-a-date')).toBe('');
+    expect(unlockedLabel('not-a-date', t)).toBe('');
   });
 });
 
@@ -135,7 +142,7 @@ describe('locked render surface (FR-ACH-4)', () => {
     const rows = mergeCatalogWithUnlocks(CATALOG, []);
     expect(rows).toHaveLength(13);
     for (const row of rows) {
-      const strings = lockedRowStrings(row);
+      const strings = lockedRowStrings(row, t);
       expect(strings).toHaveLength(3);
       expect(strings[0]).toBe(LOCKED_EMBLEM);
       expect(strings[1]).toBe(row.title);
@@ -152,7 +159,7 @@ describe('locked render surface (FR-ACH-4)', () => {
     const ruleSyntax =
       /"kind"|"count"|"days"|"level"|"hour"|"chapter"|"distinct"|"gap"|"unlock_rule"|\{|\}|>=|<=/;
     for (const row of rows) {
-      for (const text of lockedRowStrings(row)) {
+      for (const text of lockedRowStrings(row, t)) {
         expect(text).not.toMatch(ruleSyntax);
       }
     }
@@ -163,9 +170,9 @@ describe('locked render surface (FR-ACH-4)', () => {
       { slug: 'first-quest', unlockedAt: '2026-08-08T11:54:11.903648+00:00' },
     ]);
     const firstQuest = rows.find((row) => row.slug === 'first-quest')!;
-    const strings = unlockedRowStrings(firstQuest);
+    const strings = unlockedRowStrings(firstQuest, t);
     expect(strings).toEqual(['First Quest', 'Complete your first quest.', 'Unlocked Aug 8, 2026']);
-    expect(unlockedRowStrings(mergeCatalogWithUnlocks(CATALOG, [])[0]!)).toEqual([
+    expect(unlockedRowStrings(mergeCatalogWithUnlocks(CATALOG, [])[0]!, t)).toEqual([
       'Early Bird',
       'Start 100 quests before 10:00 AM.',
       '',

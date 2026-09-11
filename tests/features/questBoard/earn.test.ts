@@ -1,3 +1,5 @@
+import type { TFunction } from 'i18next';
+
 import {
   DAILY_BONUS_XP,
   WEEKLY_BONUS_XP,
@@ -7,6 +9,12 @@ import {
   streakPillCopy,
   weeklyEarnCopy,
 } from '@/features/questBoard/earn';
+import { englishT } from '../../i18n/testLocale';
+
+let t: TFunction;
+beforeAll(async () => {
+  t = await englishT();
+});
 
 describe('dailyChallengeProgress', () => {
   const completion = (dayKey: string | null) => ({ dayKey });
@@ -40,7 +48,7 @@ describe('dailyChallengeProgress', () => {
 
 describe('dailyCellCopy', () => {
   it('announces the bonus and the day count when pending', () => {
-    expect(dailyCellCopy(false)).toEqual({
+    expect(dailyCellCopy(false, t)).toEqual({
       goal: 'Daily Challenge',
       message: 'One quest today, one bonus earned.',
       reward: `+${DAILY_BONUS_XP} XP`,
@@ -49,7 +57,7 @@ describe('dailyCellCopy', () => {
   });
 
   it('celebrates when the day is done', () => {
-    expect(dailyCellCopy(true)).toEqual({
+    expect(dailyCellCopy(true, t)).toEqual({
       goal: 'Daily challenge complete!',
       message: 'Bonus banked — tomorrow has your name on it.',
       reward: `+${DAILY_BONUS_XP} XP`,
@@ -59,7 +67,7 @@ describe('dailyCellCopy', () => {
 
   it('never leaks server rule syntax (no {} >= or unlock internals)', () => {
     for (const done of [false, true]) {
-      const copy = Object.values(dailyCellCopy(done)).join(' ');
+      const copy = Object.values(dailyCellCopy(done, t)).join(' ');
       expect(copy).not.toMatch(/[{}]|>=|<=|unlock_rule|reward_day|complete_quest/);
     }
   });
@@ -67,18 +75,18 @@ describe('dailyCellCopy', () => {
 
 describe('weeklyEarnCopy', () => {
   it('counts remaining quests to the bonus, singular and plural', () => {
-    expect(weeklyEarnCopy(1, 3, 4)).toBe(`2 more quests to the +${WEEKLY_BONUS_XP} XP bonus`);
-    expect(weeklyEarnCopy(2, 3, 4)).toBe(`1 more quest to the +${WEEKLY_BONUS_XP} XP bonus`);
+    expect(weeklyEarnCopy(1, 3, 4, t)).toBe(`2 more quests to the +${WEEKLY_BONUS_XP} XP bonus`);
+    expect(weeklyEarnCopy(2, 3, 4, t)).toBe(`1 more quest to the +${WEEKLY_BONUS_XP} XP bonus`);
   });
 
   it('asks for the whole week when nothing is done yet', () => {
-    expect(weeklyEarnCopy(0, 3, 4)).toBe(`3 more quests to the +${WEEKLY_BONUS_XP} XP bonus`);
+    expect(weeklyEarnCopy(0, 3, 4, t)).toBe(`3 more quests to the +${WEEKLY_BONUS_XP} XP bonus`);
   });
 
   it('counts down the rollover once the bonus has paid', () => {
-    expect(weeklyEarnCopy(3, 3, 1)).toBe('Bonus banked — the next one starts tomorrow.');
-    expect(weeklyEarnCopy(3, 3, 5)).toBe('Bonus banked — the next one starts in 5 days.');
-    expect(weeklyEarnCopy(4, 3, 2)).toContain('starts in 2 days');
+    expect(weeklyEarnCopy(3, 3, 1, t)).toBe('Bonus banked — the next one starts tomorrow.');
+    expect(weeklyEarnCopy(3, 3, 5, t)).toBe('Bonus banked — the next one starts in 5 days.');
+    expect(weeklyEarnCopy(4, 3, 2, t)).toContain('starts in 2 days');
   });
 });
 
@@ -96,28 +104,28 @@ describe('daysUntilNextMonday', () => {
 
 describe('streakPillCopy', () => {
   it('headlines a live streak with its day count', () => {
-    expect(streakPillCopy(1)).toEqual({
+    expect(streakPillCopy(1, t)).toEqual({
       main: '1 day strong',
       milestone: '2 days to a 3-day bonus',
     });
-    expect(streakPillCopy(5).main).toBe('5 days strong');
+    expect(streakPillCopy(5, t).main).toBe('5 days strong');
   });
 
   it('counts down to the next milestone while the streak lives', () => {
-    expect(streakPillCopy(2).milestone).toBe('1 day to a 3-day bonus');
-    expect(streakPillCopy(6).milestone).toBe('1 day to a 7-day bonus');
-    expect(streakPillCopy(7).milestone).toBe('23 days to a 30-day bonus');
+    expect(streakPillCopy(2, t).milestone).toBe('1 day to a 3-day bonus');
+    expect(streakPillCopy(6, t).milestone).toBe('1 day to a 7-day bonus');
+    expect(streakPillCopy(7, t).milestone).toBe('23 days to a 30-day bonus');
   });
 
   it('has no countdown past the top of the ladder or on a dead streak', () => {
-    expect(streakPillCopy(100).milestone).toBeNull();
-    expect(streakPillCopy(0).milestone).toBeNull();
-    expect(streakPillCopy(0).main).toBe('Your adventure is waiting. Your next quest is ready.');
+    expect(streakPillCopy(100, t).milestone).toBeNull();
+    expect(streakPillCopy(0, t).milestone).toBeNull();
+    expect(streakPillCopy(0, t).main).toBe('Your adventure is waiting. Your next quest is ready.');
   });
 
   it('keeps tone familiar and positive (§7.5), no banned words', () => {
     const texts = [0, 1, 5, 29, 100]
-      .map((n) => Object.values(streakPillCopy(n)).filter(Boolean).join(' '))
+      .map((n) => Object.values(streakPillCopy(n, t)).filter(Boolean).join(' '))
       .join(' ')
       .toLowerCase();
     for (const banned of ['pain', 'suffer', 'grind', 'intense', 'must', 'should']) {

@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Image } from 'expo-image';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
 import type { MasteryResult } from '@/domain/completion/types';
@@ -18,11 +19,12 @@ interface MasteryCardProps {
  * progress, so they stay visible.
  */
 export function MasteryCard({ rows }: MasteryCardProps) {
-  const deltas = useMemo(() => masteryDeltas(rows), [rows]);
+  const { t } = useTranslation();
+  const deltas = useMemo(() => masteryDeltas(rows, t), [rows, t]);
 
   return (
     <View style={styles.card}>
-      <Text style={styles.cardTitle}>Skill levels</Text>
+      <Text style={styles.cardTitle}>{t('victory.skillLevels')}</Text>
       {deltas.map((delta) => {
         const icon = masteryArt(delta.track);
         return (

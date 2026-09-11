@@ -1,39 +1,47 @@
+import type { TFunction } from 'i18next';
+
 import { segmentKindLabel } from '@/features/questDetail/segmentKind';
 import { formatSegmentDuration } from '@/features/questDetail/segmentDuration';
 import { segmentsTotal } from '@/features/questDetail/segmentsTotal';
+import { englishT } from '../../i18n/testLocale';
+
+let t: TFunction;
+beforeAll(async () => {
+  t = await englishT();
+});
 
 describe('segmentKindLabel', () => {
   it('maps every kind to a friendly capitalized label', () => {
-    expect(segmentKindLabel('warmup')).toBe('Warm-up');
-    expect(segmentKindLabel('work')).toBe('Work');
-    expect(segmentKindLabel('rest')).toBe('Rest');
-    expect(segmentKindLabel('cooldown')).toBe('Cooldown');
+    expect(segmentKindLabel('warmup', t)).toBe('Warm-up');
+    expect(segmentKindLabel('work', t)).toBe('Work');
+    expect(segmentKindLabel('rest', t)).toBe('Rest');
+    expect(segmentKindLabel('cooldown', t)).toBe('Cooldown');
   });
 });
 
 describe('formatSegmentDuration', () => {
   it('formats sub-minute segments in seconds', () => {
-    expect(formatSegmentDuration(30)).toBe('30s');
-    expect(formatSegmentDuration(45)).toBe('45s');
-    expect(formatSegmentDuration(59)).toBe('59s');
+    expect(formatSegmentDuration(30, t)).toBe('30s');
+    expect(formatSegmentDuration(45, t)).toBe('45s');
+    expect(formatSegmentDuration(59, t)).toBe('59s');
   });
 
   it('formats whole minutes', () => {
-    expect(formatSegmentDuration(60)).toBe('1 min');
-    expect(formatSegmentDuration(120)).toBe('2 min');
-    expect(formatSegmentDuration(300)).toBe('5 min');
+    expect(formatSegmentDuration(60, t)).toBe('1 min');
+    expect(formatSegmentDuration(120, t)).toBe('2 min');
+    expect(formatSegmentDuration(300, t)).toBe('5 min');
   });
 
   it('formats minutes plus seconds for >60s', () => {
-    expect(formatSegmentDuration(90)).toBe('1 min 30s');
-    expect(formatSegmentDuration(150)).toBe('2 min 30s');
-    expect(formatSegmentDuration(135)).toBe('2 min 15s');
+    expect(formatSegmentDuration(90, t)).toBe('1 min 30s');
+    expect(formatSegmentDuration(150, t)).toBe('2 min 30s');
+    expect(formatSegmentDuration(135, t)).toBe('2 min 15s');
   });
 
   it('clamps negatives and rounds', () => {
-    expect(formatSegmentDuration(0)).toBe('0s');
-    expect(formatSegmentDuration(-5)).toBe('0s');
-    expect(formatSegmentDuration(60.4)).toBe('1 min');
+    expect(formatSegmentDuration(0, t)).toBe('0s');
+    expect(formatSegmentDuration(-5, t)).toBe('0s');
+    expect(formatSegmentDuration(60.4, t)).toBe('1 min');
   });
 });
 

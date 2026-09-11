@@ -15,6 +15,8 @@
  * Calendar note: the RPC does all day/week math on the client-supplied day_key,
  * never server time. 2026-07-06 is a Monday.
  */
+import type { TFunction } from 'i18next';
+
 import { installNativeFetch } from './setup-native-fetch';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -23,6 +25,12 @@ import { enqueueCompletion, flushOutbox, readOutbox } from '@/data/completionQue
 import { submitCompletion } from '@/data/repositories/completion';
 import type { CompletionEvent, CompletionResult } from '@/domain/completion/types';
 import { breakdownRowSum, reconcileCompletion, xpBreakdownRows } from '@/features/victory/format';
+import { englishT } from '../i18n/testLocale';
+
+let t: TFunction;
+beforeAll(async () => {
+  t = await englishT();
+});
 
 jest.mock('@react-native-async-storage/async-storage', () => {
   const state = new Map<string, string>();
@@ -319,7 +327,7 @@ describe('outbox → complete_quest sync (live local supabase)', () => {
 
     // FR-XP-6 — the visible breakdown rows always add up to the authoritative
     // total, and zero stages (weekly/streak here) are simply not rendered.
-    const rows = xpBreakdownRows(xp);
+    const rows = xpBreakdownRows(xp, t);
     expect(rows.map((row) => row.xp)).toEqual([100, 150]);
     expect(breakdownRowSum(rows)).toBe(xp.total);
   });

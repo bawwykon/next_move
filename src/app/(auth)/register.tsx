@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/AppButton';
@@ -10,6 +11,7 @@ import { withTapCue } from '@/lib/sounds';
 import { useSessionStore } from '@/state/sessionStore';
 
 export default function RegisterScreen() {
+  const { t } = useTranslation();
   const signUp = useSessionStore((state) => state.signUp);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,11 +21,11 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     if (!email.trim() || !password) {
-      setError('Enter an email and a password to create your account.');
+      setError(t('auth.registerEmptyError'));
       return;
     }
     if (password !== confirmPassword) {
-      setError('Those passwords don\u2019t match — check them again.');
+      setError(t('auth.passwordMismatch'));
       return;
     }
     setBusy(true);
@@ -42,46 +44,46 @@ export default function RegisterScreen() {
   return (
     <Screen>
       <View style={styles.header}>
-        <Text style={styles.title}>Create your account</Text>
-        <Text style={styles.subtitle}>One step to your first quest.</Text>
+        <Text style={styles.title}>{t('auth.registerTitle')}</Text>
+        <Text style={styles.subtitle}>{t('auth.registerSubtitle')}</Text>
       </View>
       <View style={styles.form}>
         <AppTextField
-          label="Email"
+          label={t('auth.email')}
           value={email}
           onChangeText={setEmail}
-          placeholder="you@example.com"
+          placeholder={t('auth.emailPlaceholder')}
           autoCapitalize="none"
           autoComplete="email"
           inputMode="email"
         />
         <AppTextField
-          label="Password"
+          label={t('auth.password')}
           value={password}
           onChangeText={setPassword}
-          placeholder="At least 6 characters"
+          placeholder={t('auth.passwordHint')}
           secureTextEntry
           autoComplete="new-password"
         />
         <AppTextField
-          label="Confirm password"
+          label={t('auth.confirmPassword')}
           value={confirmPassword}
           onChangeText={setConfirmPassword}
-          placeholder="Type it once more"
+          placeholder={t('auth.confirmPlaceholder')}
           secureTextEntry
           autoComplete="new-password"
         />
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <AppButton label="Create account" onPress={handleRegister} loading={busy} />
+        <AppButton label={t('auth.createAccountCta')} onPress={handleRegister} loading={busy} />
       </View>
       <View style={styles.footer}>
-        <Text style={styles.footerText}>Already have an account?</Text>
+        <Text style={styles.footerText}>{t('auth.haveAccount')}</Text>
         <Pressable
           accessibilityRole="button"
           onPress={withTapCue(() => router.push('/(auth)/login'))}
           style={styles.link}
         >
-          <Text style={styles.linkText}>Sign in</Text>
+          <Text style={styles.linkText}>{t('auth.signIn')}</Text>
         </Pressable>
       </View>
     </Screen>

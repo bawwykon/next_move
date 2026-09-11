@@ -7,6 +7,8 @@
  * The streak countdown line is the S9-02-unified builder shared with the
  * Profile row (src/features/profile/format.ts).
  */
+import type { TFunction } from 'i18next';
+
 import { streakMilestoneLine } from '@/features/profile/format';
 
 /** Mirror of `v_daily` — paid on the first completion of the local day. */
@@ -40,19 +42,19 @@ export interface DailyCellCopy {
 }
 
 /** The exact strings the daily cell renders for each state. */
-export function dailyCellCopy(done: boolean): DailyCellCopy {
+export function dailyCellCopy(done: boolean, t: TFunction): DailyCellCopy {
   if (done) {
     return {
-      goal: 'Daily challenge complete!',
-      message: 'Bonus banked — tomorrow has your name on it.',
-      reward: `+${DAILY_BONUS_XP} XP`,
+      goal: t('board.daily.goalDone'),
+      message: t('board.daily.messageDone'),
+      reward: t('board.xpReward', { xp: DAILY_BONUS_XP }),
       meta: '1/1',
     };
   }
   return {
-    goal: 'Daily Challenge',
-    message: 'One quest today, one bonus earned.',
-    reward: `+${DAILY_BONUS_XP} XP`,
+    goal: t('board.daily.goalTodo'),
+    message: t('board.daily.messageTodo'),
+    reward: t('board.xpReward', { xp: DAILY_BONUS_XP }),
     meta: '0/1',
   };
 }
@@ -63,16 +65,20 @@ export function dailyCellCopy(done: boolean): DailyCellCopy {
  * calendar days in zone time (see daysUntilNextMonday), so the rollover copy
  * stays day-accurate across DST.
  */
-export function weeklyEarnCopy(done: number, target: number, daysUntilNextMonday: number): string {
+export function weeklyEarnCopy(
+  done: number,
+  target: number,
+  daysUntilNextMonday: number,
+  t: TFunction,
+): string {
   if (done >= target) {
     if (daysUntilNextMonday === 1) {
-      return 'Bonus banked — the next one starts tomorrow.';
+      return t('board.weeklyBankedTomorrow');
     }
-    return `Bonus banked — the next one starts in ${daysUntilNextMonday} days.`;
+    return t('board.weeklyBankedInDays', { count: daysUntilNextMonday });
   }
   const remaining = target - done;
-  const unit = remaining === 1 ? 'quest' : 'quests';
-  return `${remaining} more ${unit} to the +${WEEKLY_BONUS_XP} XP bonus`;
+  return t('board.weeklyRemaining', { count: remaining, xp: WEEKLY_BONUS_XP });
 }
 
 /**
@@ -96,16 +102,15 @@ export interface StreakPillCopy {
  * countdown (identical wording to the Profile row); a dead streak shares the
  * Profile's full two-sentence invitation (FR-STR-2).
  */
-export function streakPillCopy(current: number): StreakPillCopy {
+export function streakPillCopy(current: number, t: TFunction): StreakPillCopy {
   if (current > 0) {
-    const unit = current === 1 ? 'day' : 'days';
     return {
-      main: `${current} ${unit} strong`,
-      milestone: streakMilestoneLine(current),
+      main: t('board.streakActive', { count: current }),
+      milestone: streakMilestoneLine(current, t),
     };
   }
   return {
-    main: 'Your adventure is waiting. Your next quest is ready.',
+    main: t('board.streakIdle'),
     milestone: null,
   };
 }

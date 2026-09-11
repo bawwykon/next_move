@@ -14,6 +14,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Animated,
   Dimensions,
@@ -142,6 +143,7 @@ interface RealJourneyMapProps {
 }
 
 export function RealJourneyMap({ journeyQuestCount, refreshing, onRefresh }: RealJourneyMapProps) {
+  const { t } = useTranslation();
   const { chapters, currentChapter } = useJourneyState(journeyQuestCount);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [showPlayerToken, setShowPlayerToken] = useState(true);
@@ -288,7 +290,13 @@ export function RealJourneyMap({ journeyQuestCount, refreshing, onRefresh }: Rea
               >
                 <TouchableOpacity
                   accessibilityRole="button"
-                  accessibilityLabel={`${chapter.data.name} - ${isCompleted ? 'Completed' : isCurrent ? 'Current Chapter' : 'Locked'}`}
+                  accessibilityLabel={
+                    isCompleted
+                      ? t('journeyMap.pinCompleted', { name: chapter.data.name })
+                      : isCurrent
+                        ? t('journeyMap.pinCurrent', { name: chapter.data.name })
+                        : t('journeyMap.pinLocked', { name: chapter.data.name })
+                  }
                   style={[
                     styles.badgeTouchTarget,
                     isCurrent && styles.badgeCurrentHalo,
@@ -311,7 +319,7 @@ export function RealJourneyMap({ journeyQuestCount, refreshing, onRefresh }: Rea
                   {/* Current Active Pulsing Indicator */}
                   {isCurrent ? (
                     <View style={styles.currentIndicatorPulse}>
-                      <Text style={styles.currentIndicatorText}>YOU</Text>
+                      <Text style={styles.currentIndicatorText}>{t('journeyMap.you')}</Text>
                     </View>
                   ) : null}
                 </TouchableOpacity>
@@ -342,12 +350,15 @@ export function RealJourneyMap({ journeyQuestCount, refreshing, onRefresh }: Rea
                   </Text>
                   <Text style={styles.pillProgress}>
                     {isCompleted
-                      ? 'Completed'
+                      ? t('journeyMap.completed')
                       : isCurrent
                         ? chapter.data.id === 7 && chapter.fraction >= 1
-                          ? '365 / 365 quests'
-                          : `${chapter.questsInChapter} / ${chapter.span ?? chapter.data.threshold} quests`
-                        : `Reach ${chapter.data.threshold} quests`}
+                          ? t('journeyMap.progressOf', { a: 365, b: 365 })
+                          : t('journeyMap.progressOf', {
+                              a: chapter.questsInChapter,
+                              b: chapter.span ?? chapter.data.threshold,
+                            })
+                        : t('journeyMap.reachQuests', { n: chapter.data.threshold })}
                   </Text>
                 </Pressable>
               </View>
@@ -400,7 +411,10 @@ export function RealJourneyMap({ journeyQuestCount, refreshing, onRefresh }: Rea
             <View style={styles.hudContent}>
               <View style={styles.hudHeaderRow}>
                 <Text style={styles.hudChapterName} numberOfLines={1}>
-                  Chapter {currentChapter.data.id} · {currentChapter.data.name}
+                  {t('journeyMap.chapterTitle', {
+                    id: currentChapter.data.id,
+                    name: currentChapter.data.name,
+                  })}
                 </Text>
                 <Text style={styles.hudQuestCount}>
                   {currentChapter.data.id === 7 &&
@@ -434,7 +448,7 @@ export function RealJourneyMap({ journeyQuestCount, refreshing, onRefresh }: Rea
       {/* Player Token Show/Hide Toggle */}
       <TouchableOpacity
         accessibilityRole="button"
-        accessibilityLabel={showPlayerToken ? 'Hide player token' : 'Show player token'}
+        accessibilityLabel={showPlayerToken ? t('journeyMap.hideToken') : t('journeyMap.showToken')}
         style={styles.tokenToggle}
         activeOpacity={0.8}
         onPress={withTapCue(() => setShowPlayerToken((visible) => !visible))}

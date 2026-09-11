@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/AppButton';
@@ -12,6 +13,7 @@ import { withTapCue } from '@/lib/sounds';
 import { colors, fonts, spacing } from '@/lib/theme';
 
 export default function ForgotPasswordScreen() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
@@ -19,7 +21,7 @@ export default function ForgotPasswordScreen() {
 
   const handleSend = async () => {
     if (!email.trim()) {
-      setError('Enter your email so we know where to send the link.');
+      setError(t('auth.forgotHint'));
       return;
     }
     setBusy(true);
@@ -29,7 +31,7 @@ export default function ForgotPasswordScreen() {
     });
     setBusy(false);
     if (authError) {
-      setError(getAuthErrorMessage(authError));
+      setError(getAuthErrorMessage(authError, t));
       return;
     }
     setSent(true);
@@ -38,27 +40,25 @@ export default function ForgotPasswordScreen() {
   return (
     <Screen>
       <View style={styles.header}>
-        <Text style={styles.title}>Reset your password</Text>
-        <Text style={styles.subtitle}>
-          We&apos;ll email you a link to set a new one. It takes about a minute to arrive.
-        </Text>
+        <Text style={styles.title}>{t('auth.forgotTitle')}</Text>
+        <Text style={styles.subtitle}>{t('auth.forgotBody')}</Text>
       </View>
       <View style={styles.form}>
         {sent ? (
-          <Text style={styles.success}>Check your inbox — the reset link is on its way.</Text>
+          <Text style={styles.success}>{t('auth.forgotSent')}</Text>
         ) : (
           <>
             <AppTextField
-              label="Email"
+              label={t('auth.email')}
               value={email}
               onChangeText={setEmail}
-              placeholder="you@example.com"
+              placeholder={t('auth.emailPlaceholder')}
               autoCapitalize="none"
               autoComplete="email"
               inputMode="email"
             />
             {error ? <Text style={styles.error}>{error}</Text> : null}
-            <AppButton label="Send reset link" onPress={handleSend} loading={busy} />
+            <AppButton label={t('auth.sendLink')} onPress={handleSend} loading={busy} />
           </>
         )}
         <Pressable
@@ -66,7 +66,7 @@ export default function ForgotPasswordScreen() {
           onPress={withTapCue(() => router.push('/(auth)/login'))}
           style={styles.link}
         >
-          <Text style={styles.linkText}>Back to sign in</Text>
+          <Text style={styles.linkText}>{t('auth.backToSignIn')}</Text>
         </Pressable>
       </View>
     </Screen>

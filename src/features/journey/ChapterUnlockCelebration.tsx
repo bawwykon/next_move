@@ -13,6 +13,7 @@
  */
 import { Image } from 'expo-image';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Animated, Pressable, StyleSheet, Text } from 'react-native';
 
 import { CHAPTERS } from '@/domain/journey/chapter';
@@ -47,6 +48,7 @@ export function ChapterUnlockCelebration({
 
   // Safe lookups: unknown ids fall back to a generic label and text-only
   // art (null badge skips the image) — the overlay can never crash.
+  const { t } = useTranslation();
   const chapter = CHAPTERS[chapterId - 1] ?? null;
   const chapterName =
     chapter !== null ? `Chapter ${chapter.id}: ${chapter.name}` : `Chapter ${chapterId}`;
@@ -83,7 +85,7 @@ export function ChapterUnlockCelebration({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`Dismiss chapter unlock celebration: ${chapterName}`}
+      accessibilityLabel={t('victory.dismissChapterCelebration', { name: chapterName })}
       onPress={onDismiss}
       style={styles.backdrop}
       testID="chapter-unlock-celebration"
@@ -97,7 +99,7 @@ export function ChapterUnlockCelebration({
             source={badge}
             style={styles.badge}
             contentFit="contain"
-            accessibilityLabel="Chapter badge"
+            accessibilityLabel={t('victory.chapterEmblem')}
           />
         ) : null}
       </Animated.View>
@@ -105,7 +107,7 @@ export function ChapterUnlockCelebration({
         style={[styles.textWrap, { opacity: fade }]}
         testID="chapter-unlock-celebration-name"
       >
-        <Text style={styles.kicker}>Chapter Unlocked</Text>
+        <Text style={styles.kicker}>{t('victory.chapterUnlocked')}</Text>
         <Text style={styles.chapterName}>{chapterName}</Text>
       </Animated.View>
     </Pressable>

@@ -6,6 +6,7 @@
  */
 import type { ComponentProps } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import type { TFunction } from 'i18next';
 
 import {
   LOCKED_EMBLEM,
@@ -27,33 +28,39 @@ export const ACHIEVEMENT_CATEGORY_ART: Record<AchievementCategory, CategoryArt> 
   special: { icon: 'star', iconColor: '#C4B5FD', blobColor: '#2B1B3E' },
 };
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
 /**
- * "Unlocked Aug 8, 2026" — deterministic across hosts (UTC frame, no locale).
+ * Localized unlock timestamp — "Unlocked Aug 8, 2026" (UTC frame,
+ * deterministic across hosts). Month names and order come from the locale
+ * tables via `t` (I18N-01, shared `profile.months` pool).
  */
-export function unlockedLabel(unlockedAtISO: string): string {
+export function unlockedLabel(unlockedAtISO: string, t: TFunction): string {
   const date = new Date(unlockedAtISO);
   if (Number.isNaN(date.getTime())) {
     return '';
   }
-  return `Unlocked ${MONTHS[date.getUTCMonth()] ?? ''} ${date.getUTCDate()}, ${date.getUTCFullYear()}`;
+  const months = t('profile.months', { returnObjects: true }) as unknown as string[];
+  const mon = months[date.getUTCMonth()] ?? '';
+  return t('achievements.unlockedDate', {
+    mon,
+    d: date.getUTCDate(),
+    y: date.getUTCFullYear(),
+  });
 }
 
 /**
  * The ONLY strings a locked row is allowed to render (FR-ACH-4: "?" + vague
  * hint — no description, no trigger, no rule math).
  */
-export function lockedRowStrings(row: AchievementRow): string[] {
-  const copy = lockedCopy(row.hint ?? null);
+export function lockedRowStrings(row: AchievementRow, t: TFunction): string[] {
+  const copy = lockedCopy(row.hint ?? null, t);
   return [copy.emblem, row.title, copy.hint];
 }
 
 /**
  * The strings an unlocked row renders: title, description, unlock date.
  */
-export function unlockedRowStrings(row: AchievementRow): string[] {
-  const label = row.unlockedAt ? unlockedLabel(row.unlockedAt) : '';
+export function unlockedRowStrings(row: AchievementRow, t: TFunction): string[] {
+  const label = row.unlockedAt ? unlockedLabel(row.unlockedAt, t) : '';
   return [row.title, row.description ?? '', label];
 }
 

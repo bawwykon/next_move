@@ -31,9 +31,6 @@ import { useSessionStore } from '@/state/sessionStore';
 import { useCharacterStore } from '@/state/characterStore';
 import { useCompletionStore } from '@/state/completionStore';
 
-const SAFETY_DISCLAIMER =
-  'NextMove is for informational purposes only and is not intended to replace professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition. Never disregard professional medical advice or delay in seeking it because of something you have read in this app. If you think you may have a medical emergency, call your doctor or emergency services immediately. NextMove does not recommend or endorse any specific tests, physicians, products, procedures, opinions, or other information that may be mentioned in the app.';
-
 export default function SettingsScreen() {
   const router = useRouter();
   const email = useSessionStore(
@@ -129,8 +126,8 @@ export default function SettingsScreen() {
       mastery: masteryRes.data,
       exportedAt: new Date().toISOString(),
     };
-    Alert.alert('Export ready', JSON.stringify(exportData, null, 2).slice(0, 4000));
-  }, []);
+    Alert.alert(t('settings.exportReady'), JSON.stringify(exportData, null, 2).slice(0, 4000));
+  }, [t]);
 
   const handleLogout = useCallback(async () => {
     await signOut();
@@ -141,11 +138,11 @@ export default function SettingsScreen() {
     <Screen>
       <View style={styles.screen}>
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          <Text style={styles.title}>Settings</Text>
+          <Text style={styles.title}>{t('tabs.settings')}</Text>
 
           {/* Account */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Account</Text>
+            <Text style={styles.sectionTitle}>{t('settings.account')}</Text>
             <View style={styles.card}>
               <TouchableOpacity
                 style={styles.row}
@@ -153,8 +150,8 @@ export default function SettingsScreen() {
               >
                 <Ionicons name="person-outline" size={20} color={colors.textMuted} />
                 <View style={styles.rowBody}>
-                  <Text style={styles.rowLabel}>Display Name</Text>
-                  <Text style={styles.rowHint}>Change how you appear</Text>
+                  <Text style={styles.rowLabel}>{t('settings.displayName')}</Text>
+                  <Text style={styles.rowHint}>{t('settings.displayNameHint')}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
               </TouchableOpacity>
@@ -162,7 +159,7 @@ export default function SettingsScreen() {
               <View style={styles.row}>
                 <Ionicons name="mail-outline" size={20} color={colors.textMuted} />
                 <View style={styles.rowBody}>
-                  <Text style={styles.rowLabel}>Email</Text>
+                  <Text style={styles.rowLabel}>{t('settings.email')}</Text>
                   <Text style={styles.rowHint}>{email || '—'}</Text>
                 </View>
               </View>
@@ -172,27 +169,29 @@ export default function SettingsScreen() {
               >
                 <Ionicons name="key-outline" size={20} color={colors.textMuted} />
                 <View style={styles.rowBody}>
-                  <Text style={styles.rowLabel}>Password</Text>
-                  <Text style={styles.rowHint}>Reset your password</Text>
+                  <Text style={styles.rowLabel}>{t('settings.password')}</Text>
+                  <Text style={styles.rowHint}>{t('settings.passwordHint')}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
               </TouchableOpacity>
               <View style={styles.divider} />
               <TouchableOpacity style={styles.row} onPress={withTapCue(() => void handleLogout())}>
                 <Ionicons name="log-out-outline" size={20} color={colors.danger} />
-                <Text style={[styles.rowLabel, { color: colors.danger }]}>Logout</Text>
+                <Text style={[styles.rowLabel, { color: colors.danger }]}>
+                  {t('settings.logout')}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
 
           {/* Gameplay */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Gameplay</Text>
+            <Text style={styles.sectionTitle}>{t('settings.gameplay')}</Text>
             <View style={styles.card}>
               <View style={styles.toggleRow}>
                 <View style={styles.rowBody}>
-                  <Text style={styles.rowLabel}>Sound FX</Text>
-                  <Text style={styles.rowHint}>Tap and victory sounds</Text>
+                  <Text style={styles.rowLabel}>{t('settings.soundFx')}</Text>
+                  <Text style={styles.rowHint}>{t('settings.soundFxHint')}</Text>
                 </View>
                 <Switch
                   value={settings.soundFx}
@@ -204,8 +203,8 @@ export default function SettingsScreen() {
               <View style={styles.divider} />
               <View style={styles.toggleRow}>
                 <View style={styles.rowBody}>
-                  <Text style={styles.rowLabel}>Haptics</Text>
-                  <Text style={styles.rowHint}>Vibration feedback</Text>
+                  <Text style={styles.rowLabel}>{t('settings.haptics')}</Text>
+                  <Text style={styles.rowHint}>{t('settings.hapticsHint')}</Text>
                 </View>
                 <Switch
                   value={settings.haptics}
@@ -217,8 +216,8 @@ export default function SettingsScreen() {
               <View style={styles.divider} />
               <View style={styles.toggleRow}>
                 <View style={styles.rowBody}>
-                  <Text style={styles.rowLabel}>Auto-Pause on Call</Text>
-                  <Text style={styles.rowHint}>Pause workout on incoming call</Text>
+                  <Text style={styles.rowLabel}>{t('settings.autoPause')}</Text>
+                  <Text style={styles.rowHint}>{t('settings.autoPauseHint')}</Text>
                 </View>
                 <Switch
                   value={settings.autoPauseOnCall}
@@ -230,8 +229,8 @@ export default function SettingsScreen() {
               <View style={styles.divider} />
               <View style={styles.toggleRow}>
                 <View style={styles.rowBody}>
-                  <Text style={styles.rowLabel}>Show Exercise Art</Text>
-                  <Text style={styles.rowHint}>Illustrations during workouts</Text>
+                  <Text style={styles.rowLabel}>{t('settings.showArt')}</Text>
+                  <Text style={styles.rowHint}>{t('settings.showArtHint')}</Text>
                 </View>
                 <Switch
                   value={settings.showExerciseArt}
@@ -277,21 +276,23 @@ export default function SettingsScreen() {
 
           {/* Data & Privacy */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Data & Privacy</Text>
+            <Text style={styles.sectionTitle}>{t('settings.dataPrivacy')}</Text>
             <View style={styles.card}>
               <TouchableOpacity style={styles.row} onPress={withTapCue(() => void handleSyncNow())}>
                 <Ionicons name="sync-outline" size={20} color={colors.textMuted} />
                 <View style={styles.rowBody}>
-                  <Text style={styles.rowLabel}>{syncing ? 'Syncing…' : 'Sync Now'}</Text>
-                  <Text style={styles.rowHint}>Push pending completions</Text>
+                  <Text style={styles.rowLabel}>
+                    {syncing ? t('settings.syncing') : t('settings.syncNow')}
+                  </Text>
+                  <Text style={styles.rowHint}>{t('settings.syncHint')}</Text>
                 </View>
               </TouchableOpacity>
               <View style={styles.divider} />
               <TouchableOpacity style={styles.row} onPress={withTapCue(() => void handleExport())}>
                 <Ionicons name="download-outline" size={20} color={colors.textMuted} />
                 <View style={styles.rowBody}>
-                  <Text style={styles.rowLabel}>Export My Data</Text>
-                  <Text style={styles.rowHint}>Download your profile as JSON</Text>
+                  <Text style={styles.rowLabel}>{t('settings.exportData')}</Text>
+                  <Text style={styles.rowHint}>{t('settings.exportHint')}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
               </TouchableOpacity>
@@ -300,19 +301,19 @@ export default function SettingsScreen() {
 
           {/* About */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>About</Text>
+            <Text style={styles.sectionTitle}>{t('settings.about')}</Text>
             <View style={styles.card}>
               <View style={styles.row}>
                 <Ionicons name="information-circle-outline" size={20} color={colors.textMuted} />
                 <View style={styles.rowBody}>
-                  <Text style={styles.rowLabel}>Version</Text>
+                  <Text style={styles.rowLabel}>{t('settings.version')}</Text>
                   <Text style={styles.rowHint}>{version}</Text>
                 </View>
               </View>
               <View style={styles.divider} />
               <View style={styles.disclaimerWrap}>
-                <Text style={styles.disclaimerTitle}>Safety Disclaimer</Text>
-                <Text style={styles.disclaimerText}>{SAFETY_DISCLAIMER}</Text>
+                <Text style={styles.disclaimerTitle}>{t('settings.safetyTitle')}</Text>
+                <Text style={styles.disclaimerText}>{t('settings.safetyText')}</Text>
               </View>
               <View style={styles.divider} />
               <TouchableOpacity
@@ -322,7 +323,7 @@ export default function SettingsScreen() {
                 }
               >
                 <Ionicons name="library-outline" size={20} color={colors.textMuted} />
-                <Text style={styles.rowLabel}>Credits & Licenses</Text>
+                <Text style={styles.rowLabel}>{t('settings.credits')}</Text>
                 <Ionicons name="open-outline" size={16} color={colors.textMuted} />
               </TouchableOpacity>
               <View style={styles.divider} />
@@ -333,7 +334,7 @@ export default function SettingsScreen() {
                 }
               >
                 <Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.textMuted} />
-                <Text style={styles.rowLabel}>Support & Feedback</Text>
+                <Text style={styles.rowLabel}>{t('settings.support')}</Text>
                 <Ionicons name="open-outline" size={16} color={colors.textMuted} />
               </TouchableOpacity>
             </View>

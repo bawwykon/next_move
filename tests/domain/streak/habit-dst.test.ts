@@ -8,6 +8,8 @@
  * `TZ=America/New_York` is exported before jest starts (CI step); otherwise
  * it skips.
  */
+import type { TFunction } from 'i18next';
+
 import { dayKey } from '@/domain/streak/dayKey';
 import { currentStreak } from '@/domain/streak/streak';
 import {
@@ -15,6 +17,12 @@ import {
   daysUntilNextMonday,
   weeklyEarnCopy,
 } from '@/features/questBoard/earn';
+import { englishT } from '../../i18n/testLocale';
+
+let t: TFunction;
+beforeAll(async () => {
+  t = await englishT();
+});
 
 const pinned = process.env.TZ === 'America/New_York' ? describe : describe.skip;
 
@@ -58,6 +66,6 @@ pinned('habit surface derived states under TZ=America/New_York', () => {
   });
 
   it('weekly earn rollover copy stays day-accurate through the DST weekend', () => {
-    expect(weeklyEarnCopy(3, 3, 1)).toBe('Bonus banked — the next one starts tomorrow.');
+    expect(weeklyEarnCopy(3, 3, 1, t)).toBe('Bonus banked — the next one starts tomorrow.');
   });
 });

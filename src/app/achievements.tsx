@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { Screen } from '@/components/ui/Screen';
@@ -50,6 +51,7 @@ const BADGE_BOX: Record<string, number> = {
 type Tab = 'badges' | 'list';
 
 export default function AchievementsScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const [catalog, setCatalog] = useState<AchievementCatalogRow[] | null>(null);
   const [unlocks, setUnlocks] = useState<AchievementUnlock[]>([]);
@@ -114,21 +116,19 @@ export default function AchievementsScreen() {
           onPress={withTapCue(() => router.back())}
         >
           <Ionicons name="chevron-back" size={22} color={colors.text} />
-          <Text style={styles.backLabel}>Back</Text>
+          <Text style={styles.backLabel}>{t('common.back')}</Text>
         </TouchableOpacity>
 
         {status === 'error' ? (
           <View style={styles.center}>
-            <Text style={styles.errorTitle}>The milestone board took a pause.</Text>
-            <Text style={styles.errorLine}>
-              Could not load your achievements. Try again in a moment.
-            </Text>
+            <Text style={styles.errorTitle}>{t('achievements.errorTitle')}</Text>
+            <Text style={styles.errorLine}>{t('achievements.errorLine')}</Text>
             <TouchableOpacity
               accessibilityRole="button"
               style={styles.retryButton}
               onPress={withTapCue(() => void load())}
             >
-              <Text style={styles.retryLabel}>Retry</Text>
+              <Text style={styles.retryLabel}>{t('common.retry')}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -138,11 +138,14 @@ export default function AchievementsScreen() {
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.header}>
-              <Text style={styles.title}>Achievements</Text>
+              <Text style={styles.title}>{t('achievements.title')}</Text>
               <Text style={styles.subtitle}>
                 {status === 'ready'
-                  ? `You've unlocked ${unlockedCount} of ${rows.length} — each one earned.`
-                  : 'Loading your milestones…'}
+                  ? t('achievements.subtitleUnlocked', {
+                      unlocked: unlockedCount,
+                      total: rows.length,
+                    })
+                  : t('achievements.subtitleLoading')}
               </Text>
             </View>
 
@@ -152,7 +155,7 @@ export default function AchievementsScreen() {
                 onPress={withTapCue(() => setTab('badges'))}
               >
                 <Text style={[styles.tabLabel, tab === 'badges' && styles.tabLabelActive]}>
-                  Badge Collection
+                  {t('achievements.badgesTab')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -160,7 +163,7 @@ export default function AchievementsScreen() {
                 onPress={withTapCue(() => setTab('list'))}
               >
                 <Text style={[styles.tabLabel, tab === 'list' && styles.tabLabelActive]}>
-                  Details
+                  {t('achievements.detailsTab')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -225,7 +228,9 @@ export default function AchievementsScreen() {
                       </Text>
                       <Text style={styles.gridRarity}>{rarity}</Text>
                       {isEquipped ? (
-                        <Text style={styles.equippedLabel}>Slot {equippedIndex + 1}</Text>
+                        <Text style={styles.equippedLabel}>
+                          {t('achievements.slot', { n: equippedIndex + 1 })}
+                        </Text>
                       ) : null}
                       {!isUnlocked ? (
                         <View style={styles.lockOverlay}>
@@ -251,11 +256,12 @@ export default function AchievementsScreen() {
 }
 
 function AchievementRowView({ row }: { row: AchievementRow }) {
+  const { t } = useTranslation();
   const art = ACHIEVEMENT_CATEGORY_ART[row.category];
   const badge = achievementArt(row.slug);
   const isLocked = row.state === 'locked';
   if (isLocked) {
-    const strings = lockedRowStrings(row);
+    const strings = lockedRowStrings(row, t);
     return (
       <View style={[styles.row, styles.rowLocked]}>
         <View style={styles.emblem}>
@@ -280,7 +286,7 @@ function AchievementRowView({ row }: { row: AchievementRow }) {
       </View>
     );
   }
-  const strings = unlockedRowStrings(row);
+  const strings = unlockedRowStrings(row, t);
   return (
     <View style={styles.row}>
       {badge ? (

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 
 import type { XpBreakdown } from '@/domain/completion/types';
@@ -19,7 +20,8 @@ interface BreakdownCardProps {
  * stages so the grants stay legible.
  */
 export function BreakdownCard({ xp, baseLabel }: BreakdownCardProps) {
-  const rows = useMemo(() => xpBreakdownRows(xp, baseLabel), [xp, baseLabel]);
+  const { t } = useTranslation();
+  const rows = useMemo(() => xpBreakdownRows(xp, t, baseLabel), [xp, t, baseLabel]);
   const total = useMemo(() => xpBreakdownTotal(xp), [xp]);
   // Mounted only after the payload landed, so rows are stable from first paint.
   const [reveals] = useState(() => rows.map(() => new Animated.Value(0)));
@@ -43,7 +45,7 @@ export function BreakdownCard({ xp, baseLabel }: BreakdownCardProps) {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.cardTitle}>Rewards</Text>
+      <Text style={styles.cardTitle}>{t('victory.rewards')}</Text>
       {rows.map((row, index) => (
         <Animated.View
           key={row.label}
@@ -68,7 +70,7 @@ export function BreakdownCard({ xp, baseLabel }: BreakdownCardProps) {
       ))}
       <View style={styles.divider} />
       <View style={styles.totalRow}>
-        <Text style={styles.totalLabel}>Total</Text>
+        <Text style={styles.totalLabel}>{t('victory.total')}</Text>
         <Text style={styles.totalValue}>{formatXp(total)}</Text>
       </View>
     </View>

@@ -1,34 +1,42 @@
+import type { TFunction } from 'i18next';
+
 import { colors } from '@/lib/theme';
 import { greetingForHour } from '@/features/questBoard/greeting';
 import { difficultyBadge } from '@/features/questBoard/badges';
 import { formatDuration } from '@/features/questBoard/format';
 import { weeklyChallengeProgress, WEEKLY_TARGET } from '@/features/questBoard/weekly';
 import { isCompletedToday } from '@/features/questBoard/completedToday';
+import { englishT } from '../../i18n/testLocale';
+
+let t: TFunction;
+beforeAll(async () => {
+  t = await englishT();
+});
 
 describe('greetingForHour', () => {
   it('returns morning copy for 5:00–11:59', () => {
     for (const hour of [5, 8, 11]) {
-      const g = greetingForHour(hour);
+      const g = greetingForHour(hour, t);
       expect(g.greeting).toBe('Good morning');
     }
   });
 
   it('returns afternoon copy for 12:00–16:59', () => {
     for (const hour of [12, 14, 16]) {
-      const g = greetingForHour(hour);
+      const g = greetingForHour(hour, t);
       expect(g.greeting).toBe('Good afternoon');
     }
   });
 
   it('returns evening copy for 17:00–04:59', () => {
     for (const hour of [17, 21, 23, 0, 4]) {
-      const g = greetingForHour(hour);
+      const g = greetingForHour(hour, t);
       expect(g.greeting).toBe('Good evening');
     }
   });
 
   it('varies the supporting line by time of day', () => {
-    const lines = [5, 12, 17].map((h) => greetingForHour(h).line);
+    const lines = [5, 12, 17].map((h) => greetingForHour(h, t).line);
     expect(new Set(lines).size).toBe(3);
     for (const line of lines) {
       expect(line.length).toBeGreaterThan(0);
@@ -37,7 +45,7 @@ describe('greetingForHour', () => {
 
   it('keeps tone familiar and positive (§7.5), no banned words', () => {
     for (const hour of [5, 12, 17]) {
-      const { greeting, line } = greetingForHour(hour);
+      const { greeting, line } = greetingForHour(hour, t);
       const text = `${greeting} ${line}`.toLowerCase();
       for (const banned of ['pain', 'suffer', 'grind', 'intense']) {
         expect(text).not.toContain(banned);
@@ -48,20 +56,20 @@ describe('greetingForHour', () => {
 
 describe('difficultyBadge', () => {
   it('maps every difficulty to a friendly label', () => {
-    expect(difficultyBadge('easy').label).toBe('A gentle start');
-    expect(difficultyBadge('normal').label).toBe('A steady step');
-    expect(difficultyBadge('hard').label).toBe('A real challenge');
+    expect(difficultyBadge('easy', t).label).toBe('A gentle start');
+    expect(difficultyBadge('normal', t).label).toBe('A steady step');
+    expect(difficultyBadge('hard', t).label).toBe('A real challenge');
   });
 
   it('maps theme colors: easy calm, normal rewardStrong, hard danger', () => {
-    expect(difficultyBadge('easy').color).toBe(colors.calm);
-    expect(difficultyBadge('normal').color).toBe(colors.rewardStrong);
-    expect(difficultyBadge('hard').color).toBe(colors.danger);
+    expect(difficultyBadge('easy', t).color).toBe(colors.calm);
+    expect(difficultyBadge('normal', t).color).toBe(colors.rewardStrong);
+    expect(difficultyBadge('hard', t).color).toBe(colors.danger);
   });
 
   it('never returns a raw hex through the payload source of truth', () => {
     for (const d of ['easy', 'normal', 'hard'] as const) {
-      const badge = difficultyBadge(d);
+      const badge = difficultyBadge(d, t);
       expect(Object.values(colors)).toContain(badge.color);
       expect(badge.label.toLowerCase()).not.toMatch(/\b(danger|intense)\b/);
     }
@@ -70,18 +78,18 @@ describe('difficultyBadge', () => {
 
 describe('formatDuration', () => {
   it('formats seeded durations to whole minutes', () => {
-    expect(formatDuration(480)).toBe('8 min');
-    expect(formatDuration(600)).toBe('10 min');
-    expect(formatDuration(720)).toBe('12 min');
-    expect(formatDuration(900)).toBe('15 min');
-    expect(formatDuration(1200)).toBe('20 min');
+    expect(formatDuration(480, t)).toBe('8 min');
+    expect(formatDuration(600, t)).toBe('10 min');
+    expect(formatDuration(720, t)).toBe('12 min');
+    expect(formatDuration(900, t)).toBe('15 min');
+    expect(formatDuration(1200, t)).toBe('20 min');
   });
 
   it('rounds to nearest minute and floors negatives to zero', () => {
-    expect(formatDuration(599)).toBe('10 min');
-    expect(formatDuration(61)).toBe('1 min');
-    expect(formatDuration(0)).toBe('0 min');
-    expect(formatDuration(-30)).toBe('0 min');
+    expect(formatDuration(599, t)).toBe('10 min');
+    expect(formatDuration(61, t)).toBe('1 min');
+    expect(formatDuration(0, t)).toBe('0 min');
+    expect(formatDuration(-30, t)).toBe('0 min');
   });
 });
 

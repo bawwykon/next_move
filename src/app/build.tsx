@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -33,11 +34,7 @@ import {
   type GuardrailViolation,
   type MeterZone,
 } from '@/domain/customWorkout/model';
-import {
-  DIFFICULTY_ART_KEY,
-  difficultyLabel,
-  type ExerciseDifficulty,
-} from '@/domain/exercises/difficulty';
+import { DIFFICULTY_ART_KEY, type ExerciseDifficulty } from '@/domain/exercises/difficulty';
 import { difficultyArt, exerciseThumb, REST_DETAILED_ART } from '@/features/assets/assetMap';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 import { withTapCue } from '@/lib/sounds';
@@ -46,12 +43,6 @@ const ZONE_COLORS: Record<MeterZone, string> = {
   easy: colors.calm,
   normal: colors.reward,
   hard: colors.rewardStrong,
-};
-
-const ZONE_LABELS: Record<MeterZone, string> = {
-  easy: 'EASY',
-  normal: 'NORMAL',
-  hard: 'HARD',
 };
 
 function mmss(totalSec: number): string {
@@ -66,6 +57,7 @@ function mmss(totalSec: number): string {
  * guardrail hints, and Start/Save CTAs. Edit mode arrives as /build?id=…
  */
 export default function BuilderScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams<{ id?: string }>();
   const editIdParam = typeof params.id === 'string' ? params.id : null;
@@ -160,7 +152,7 @@ export default function BuilderScreen() {
     });
     setSaving(false);
     if (result.error || !result.data) {
-      setToast('Could not save — check your connection and try again.');
+      setToast(t('build.saveFailed'));
       return null;
     }
     void track('custom_workout_saved', { segments: segments.length });
@@ -173,7 +165,7 @@ export default function BuilderScreen() {
       if (editingId === null) {
         setEditingId(id);
       }
-      setToast('Saved.');
+      setToast(t('build.saved'));
     }
   };
 
@@ -212,7 +204,7 @@ export default function BuilderScreen() {
     void track('custom_segment_removed', {});
   }, []);
 
-  const hint = guardrailHint(violations, totalSec);
+  const hint = guardrailHint(violations, totalSec, t);
 
   return (
     <Screen>
@@ -223,17 +215,19 @@ export default function BuilderScreen() {
           onPress={withTapCue(() => router.back())}
         >
           <Ionicons name="chevron-back" size={22} color={colors.text} />
-          <Text style={styles.backLabel}>{editingId ? 'Edit Quest' : 'Build Your Quest'}</Text>
+          <Text style={styles.backLabel}>
+            {editingId ? t('build.editTitle') : t('build.createTitle')}
+          </Text>
         </TouchableOpacity>
 
         {status === 'loading' ? (
           <View style={styles.center}>
-            <Text style={styles.quietLine}>Loading exercises…</Text>
+            <Text style={styles.quietLine}>{t('build.loading')}</Text>
           </View>
         ) : status === 'error' || !catalog ? (
           <View style={styles.center}>
-            <Text style={styles.errorTitle}>The exercise shelf is empty.</Text>
-            <Text style={styles.quietLine}>Could not load exercises. Try again in a moment.</Text>
+            <Text style={styles.errorTitle}>{t('build.emptyTitle')}</Text>
+            <Text style={styles.quietLine}>{t('build.emptyLine')}</Text>
             <TouchableOpacity
               accessibilityRole="button"
               style={styles.retryButton}
@@ -242,7 +236,7 @@ export default function BuilderScreen() {
                 void load();
               })}
             >
-              <Text style={styles.retryLabel}>Retry</Text>
+              <Text style={styles.retryLabel}>{t('common.retry')}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -254,20 +248,18 @@ export default function BuilderScreen() {
             >
               {/* Spec item 1 — name (optional, ≤60, defaults to Custom Quest). */}
               <AppTextField
-                label="Name (optional)"
+                label={t('build.nameLabel')}
                 value={name}
                 onChangeText={(text) => setName(text.slice(0, NAME_MAX_CHARS))}
-                placeholder={`Leave blank for “${DEFAULT_WORKOUT_NAME}”`}
+                placeholder={t('build.namePlaceholder', { name: DEFAULT_WORKOUT_NAME })}
                 maxLength={NAME_MAX_CHARS}
               />
 
               {/* Spec item 3 — the build list. */}
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Your Quest</Text>
+                <Text style={styles.sectionTitle}>{t('build.yourQuest')}</Text>
                 {segments.length === 0 ? (
-                  <Text style={styles.quietLine}>
-                    Nothing here yet — tap exercises below to forge your quest.
-                  </Text>
+                  <Text style={styles.quietLine}>{t('build.emptyQuest')}</Text>
                 ) : (
                   segments.map((segment, index) => (
                     <BuildRow
@@ -276,7 +268,9 @@ export default function BuilderScreen() {
                       isFirst={index === 0}
                       isLast={index === segments.length - 1}
                       segment={segment}
-                      name={segment.kind === 'rest' ? 'Rest' : nameOf(segment.exerciseSlug)}
+                      name={
+                        segment.kind === 'rest' ? t('build.restName') : nameOf(segment.exerciseSlug)
+                      }
                       difficulty={
                         segment.kind === 'exercise' ? difficultyOf(segment.exerciseSlug) : null
                       }
@@ -294,10 +288,8 @@ export default function BuilderScreen() {
 
               {/* Spec item 2 — catalog picker. */}
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Exercises</Text>
-                <Text style={styles.quietLine}>
-                  Tap to add — duplicates are allowed, order is up to you.
-                </Text>
+                <Text style={styles.sectionTitle}>{t('build.exercisesTitle')}</Text>
+                <Text style={styles.quietLine}>{t('build.exercisesHint')}</Text>
                 <View style={styles.pickerWrap}>
                   {catalog.map((exercise) => (
                     <CatalogChip
@@ -323,10 +315,10 @@ export default function BuilderScreen() {
                     source={REST_DETAILED_ART}
                     style={styles.restChipIcon}
                     contentFit="contain"
-                    accessibilityLabel="Rest"
+                    accessibilityLabel={t('build.restName')}
                   />
-                  <Text style={styles.pickName}>Rest</Text>
-                  <Text style={styles.restChipHint}>30s · no XP</Text>
+                  <Text style={styles.pickName}>{t('build.restName')}</Text>
+                  <Text style={styles.restChipHint}>{t('build.restMeta')}</Text>
                 </TouchableOpacity>
               </View>
             </ScrollView>
@@ -341,7 +333,9 @@ export default function BuilderScreen() {
                   disabled={!valid || saving}
                   onPress={withTapCue(() => void onStartQuest())}
                 >
-                  <Text style={styles.startLabel}>{saving ? 'Saving…' : 'Start Quest'}</Text>
+                  <Text style={styles.startLabel}>
+                    {saving ? t('build.saving') : t('build.start')}
+                  </Text>
                   <Ionicons name="play" size={18} color={colors.background} />
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -350,7 +344,7 @@ export default function BuilderScreen() {
                   disabled={!valid || saving}
                   onPress={withTapCue(() => void onSave())}
                 >
-                  <Text style={styles.saveLabel}>Save</Text>
+                  <Text style={styles.saveLabel}>{t('common.save')}</Text>
                 </TouchableOpacity>
               </View>
               {hint !== null ? <Text style={styles.ctaHint}>{hint}</Text> : null}
@@ -363,20 +357,24 @@ export default function BuilderScreen() {
   );
 }
 
-function guardrailHint(violations: GuardrailViolation[], totalSec: number): string | null {
+function guardrailHint(
+  violations: GuardrailViolation[],
+  totalSec: number,
+  t: (key: string, opts?: Record<string, unknown>) => string,
+): string | null {
   if (violations.includes('segment_cap')) {
-    return `Up to ${MAX_SEGMENTS} exercises.`;
+    return t('build.maxBlocks', { max: MAX_SEGMENTS });
   }
   if (violations.includes('max_total')) {
-    return `Keep it under ${MAX_TOTAL_SEC / 60} min total.`;
+    return t('build.maxTime', { n: MAX_TOTAL_SEC / 60 });
   }
   if (violations.includes('min_total')) {
     const missing = MIN_TOTAL_SEC - totalSec;
     const blocks = Math.ceil(missing / SEGMENT_DURATION_PRESETS[0]);
-    return `Add ${blocks} more short block${blocks > 1 ? 's' : ''} — at least ${MIN_TOTAL_SEC / 60} min total.`;
+    return t('build.needMore', { n: blocks, min: MIN_TOTAL_SEC / 60 });
   }
   if (violations.includes('empty')) {
-    return 'Pick exercises below to start building.';
+    return t('build.pickToStart');
   }
   return null;
 }
@@ -390,6 +388,7 @@ const CatalogChip = memo(function CatalogChip({
   disabled: boolean;
   onAdd: (slug: string) => void;
 }) {
+  const { t } = useTranslation();
   const icon = difficultyArt(DIFFICULTY_ART_KEY[exercise.difficulty]);
   const thumb = exerciseThumb(exercise.slug);
   return (
@@ -410,7 +409,9 @@ const CatalogChip = memo(function CatalogChip({
           source={icon}
           style={styles.pickIcon}
           contentFit="contain"
-          accessibilityLabel={`${difficultyLabel(exercise.difficulty)} difficulty`}
+          accessibilityLabel={t('quest.difficultyA11y', {
+            level: t(`quest.difficultyName.${exercise.difficulty}`),
+          })}
         />
       ) : null}
     </TouchableOpacity>
@@ -438,6 +439,7 @@ const BuildRow = memo(function BuildRow({
   onMove: (index: number, delta: -1 | 1) => void;
   onRemove: (index: number) => void;
 }) {
+  const { t } = useTranslation();
   const isRest = segment.kind === 'rest';
   const thumb = isRest ? null : exerciseThumb(segment.exerciseSlug);
   const diffIcon =
@@ -484,7 +486,9 @@ const BuildRow = memo(function BuildRow({
             style={styles.diffIcon}
             contentFit="contain"
             accessibilityLabel={
-              difficulty !== null ? `${difficultyLabel(difficulty)} difficulty` : undefined
+              difficulty !== null
+                ? t('quest.difficultyA11y', { level: t(`quest.difficultyName.${difficulty}`) })
+                : undefined
             }
           />
         ) : null}
@@ -531,13 +535,19 @@ const BuildRow = memo(function BuildRow({
  * Hard mark the fill turns reward-strong and the track gains an amber ring.
  */
 export const XpMeter = memo(function XpMeter({ xp, overflow }: { xp: number; overflow: boolean }) {
+  const { t } = useTranslation();
   const zone = zoneForXp(xp);
+  const zoneLabels: Record<MeterZone, string> = {
+    easy: t('build.zoneEasy'),
+    normal: t('build.zoneNormal'),
+    hard: t('build.zoneHard'),
+  };
   return (
     <View style={styles.meterWrap}>
       <View style={styles.meterHeader}>
-        <Text style={styles.meterTitle}>Projected XP</Text>
+        <Text style={styles.meterTitle}>{t('build.projectedXp')}</Text>
         <Text style={[styles.meterXp, { color: ZONE_COLORS[zone] }]}>
-          {xp} XP · {ZONE_LABELS[zone]}
+          {xp} XP · {zoneLabels[zone]}
           {overflow ? '+' : ''}
         </Text>
       </View>
@@ -562,7 +572,7 @@ export const XpMeter = memo(function XpMeter({ xp, overflow }: { xp: number; ove
             key={z}
             style={[styles.zoneLabelText, { left: `${(ZONE_MARKS[z] / METER_SCALE_XP) * 100}%` }]}
           >
-            {ZONE_LABELS[z]}
+            {zoneLabels[z]}
           </Text>
         ))}
       </View>

@@ -1,3 +1,5 @@
+import type { TFunction } from 'i18next';
+
 export const SIGN_UP_CONFIRMATION_MESSAGE =
   'We emailed you a confirmation link — open it, then sign in.';
 
@@ -16,27 +18,46 @@ const CODE_MESSAGES: Record<string, string> = {
 
 const NETWORK_MARKERS = ['network request failed', 'failed to fetch', 'load failed', 'timed out'];
 
-export function getAuthErrorMessage(error: unknown): string {
+const CODE_KEY: Record<string, string> = {
+  invalid_credentials: 'errors.invalidCredentials',
+  validation_failed: 'errors.validationFailed',
+  email_not_confirmed: 'errors.emailNotConfirmed',
+  user_already_exists: 'errors.userExists',
+  weak_password: 'errors.weakPassword',
+  over_email_send_rate_limit: 'errors.rateLimit',
+  session_not_found: 'errors.sessionNotFound',
+};
+
+export function getAuthErrorMessage(error: unknown, t?: TFunction): string {
+  const fallback = t ? t('errors.fallback') : FALLBACK_MESSAGE;
+  const network = t ? t('errors.network') : NETWORK_MESSAGE;
   if (error == null) {
     return '';
   }
   if (typeof error !== 'object') {
-    return FALLBACK_MESSAGE;
+    return fallback;
   }
   const candidate = error as { code?: unknown; message?: unknown };
   if (typeof candidate.code === 'string') {
-    const mapped = CODE_MESSAGES[candidate.code];
-    if (mapped) {
-      return mapped;
+    if (t) {
+      const key = CODE_KEY[candidate.code];
+      if (key) {
+        return t(key);
+      }
+    } else {
+      const mapped = CODE_MESSAGES[candidate.code];
+      if (mapped) {
+        return mapped;
+      }
     }
   }
   if (typeof candidate.message === 'string') {
     const lowered = candidate.message.toLowerCase();
     if (NETWORK_MARKERS.some((marker) => lowered.includes(marker))) {
-      return NETWORK_MESSAGE;
+      return network;
     }
   }
-  return FALLBACK_MESSAGE;
+  return fallback;
 }
 
 export function signUpConfirmation(session: unknown): string | null {

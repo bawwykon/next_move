@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/AppButton';
@@ -11,6 +12,7 @@ import { colors, fonts, spacing } from '@/lib/theme';
 import { useSessionStore } from '@/state/sessionStore';
 
 export default function LoginScreen() {
+  const { t } = useTranslation();
   const signIn = useSessionStore((state) => state.signIn);
   const clearIntendedRoute = useSessionStore((state) => state.clearIntendedRoute);
   const [email, setEmail] = useState('');
@@ -20,7 +22,7 @@ export default function LoginScreen() {
 
   const handleSignIn = async () => {
     if (!email.trim() || !password) {
-      setError('Enter your email and password to sign in.');
+      setError(t('auth.emptyError'));
       return;
     }
     setBusy(true);
@@ -39,45 +41,45 @@ export default function LoginScreen() {
   return (
     <Screen>
       <View style={styles.header}>
-        <Text style={styles.title}>Welcome back</Text>
-        <Text style={styles.subtitle}>Sign in to keep your streak alive.</Text>
+        <Text style={styles.title}>{t('auth.loginTitle')}</Text>
+        <Text style={styles.subtitle}>{t('auth.loginSubtitle')}</Text>
       </View>
       <View style={styles.form}>
         <AppTextField
-          label="Email"
+          label={t('auth.email')}
           value={email}
           onChangeText={setEmail}
-          placeholder="you@example.com"
+          placeholder={t('auth.emailPlaceholder')}
           autoCapitalize="none"
           autoComplete="email"
           inputMode="email"
         />
         <AppTextField
-          label="Password"
+          label={t('auth.password')}
           value={password}
           onChangeText={setPassword}
-          placeholder="Your password"
+          placeholder={t('auth.passwordPlaceholder')}
           secureTextEntry
           autoComplete="current-password"
         />
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <AppButton label="Sign in" onPress={handleSignIn} loading={busy} />
+        <AppButton label={t('auth.signIn')} onPress={handleSignIn} loading={busy} />
         <Pressable
           accessibilityRole="button"
           onPress={withTapCue(() => router.push('/(auth)/forgot-password'))}
           style={styles.link}
         >
-          <Text style={styles.linkText}>Forgot your password?</Text>
+          <Text style={styles.linkText}>{t('auth.forgot')}</Text>
         </Pressable>
       </View>
       <View style={styles.footer}>
-        <Text style={styles.footerText}>New here?</Text>
+        <Text style={styles.footerText}>{t('auth.newHere')}</Text>
         <Pressable
           accessibilityRole="button"
           onPress={withTapCue(() => router.push('/(auth)/register'))}
           style={styles.link}
         >
-          <Text style={styles.linkText}>Create an account</Text>
+          <Text style={styles.linkText}>{t('auth.createAccount')}</Text>
         </Pressable>
       </View>
     </Screen>

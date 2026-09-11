@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { Image } from 'expo-image';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   BackHandler,
   Pressable,
@@ -16,7 +17,12 @@ import { Screen } from '@/components/ui/Screen';
 import { onboardingArt } from '@/features/assets/assetMap';
 import { CharacterSummaryScreen } from '@/features/onboarding/CharacterSummaryScreen';
 import { withTapCue } from '@/lib/sounds';
-import { ONBOARDING_STEPS, type Goal, type OnboardingOption } from '@/features/onboarding/steps';
+import {
+  ONBOARDING_STEPS,
+  localizeOnboardingSteps,
+  type Goal,
+  type OnboardingOption,
+} from '@/features/onboarding/steps';
 import {
   advance,
   canAdvance,
@@ -34,6 +40,7 @@ const STEP_COUNT = ONBOARDING_STEPS.length;
 const NAME_MAX = 16;
 
 export default function OnboardingScreen() {
+  const { t } = useTranslation();
   const completeOnboarding = useSessionStore((state) => state.completeOnboarding);
   const [wizard, setWizard] = useState<WizardState>(initialWizardState);
   const [saving, setSaving] = useState(false);
@@ -43,6 +50,8 @@ export default function OnboardingScreen() {
   const nameInputRef = useRef<TextInput>(null);
 
   const step = ONBOARDING_STEPS[wizard.stepIndex]!;
+  const localizedSteps = useMemo(() => localizeOnboardingSteps(t), [t]);
+  const lStep = localizedSteps[wizard.stepIndex]!;
   // AT-01D — one hero illustration per onboarding step (assets/onboarding/).
   const hero = onboardingArt(wizard.stepIndex + 1);
 
@@ -116,7 +125,10 @@ export default function OnboardingScreen() {
       >
         <View
           style={styles.dots}
-          accessibilityLabel={`Step ${wizard.stepIndex + 1} of ${STEP_COUNT}`}
+          accessibilityLabel={t('onboarding.stepOf', {
+            n: wizard.stepIndex + 1,
+            m: STEP_COUNT,
+          })}
         >
           {ONBOARDING_STEPS.map((item, index) => (
             <View
@@ -129,18 +141,18 @@ export default function OnboardingScreen() {
           {hero !== null ? (
             <Image source={hero} style={styles.heroImage} contentFit="contain" />
           ) : null}
-          <Text style={styles.title}>{step.title}</Text>
-          {step.subtitle ? <Text style={styles.subtitle}>{step.subtitle}</Text> : null}
+          <Text style={styles.title}>{lStep.title}</Text>
+          {lStep.subtitle ? <Text style={styles.subtitle}>{lStep.subtitle}</Text> : null}
         </View>
         <View style={styles.options}>
-          {step.options.length === 0 ? (
+          {lStep.options.length === 0 ? (
             // PH3-01 — text input variant for the display_name step.
             <View style={styles.nameInputWrap}>
               <TextInput
                 ref={nameInputRef}
                 value={nameDraft}
                 onChangeText={(text) => setNameDraft(text.slice(0, NAME_MAX))}
-                placeholder="Adventurer"
+                placeholder={t('onboarding.namePlaceholder')}
                 placeholderTextColor={colors.textMuted}
                 returnKeyType="done"
                 maxLength={NAME_MAX}
@@ -151,12 +163,10 @@ export default function OnboardingScreen() {
                   }
                 }}
               />
-              <Text style={styles.nameHint}>
-                Leave blank for &quot;Adventurer&quot; — you can change this anytime.
-              </Text>
+              <Text style={styles.nameHint}>{t('onboarding.nameHint')}</Text>
             </View>
           ) : (
-            step.options.map((option) => {
+            lStep.options.map((option) => {
               const selected = isSelected(option);
               return (
                 <Pressable
@@ -188,24 +198,26 @@ export default function OnboardingScreen() {
         </View>
         <View style={styles.actions}>
           <AppButton
-            label={wizard.stepIndex === STEP_COUNT - 1 ? 'Finish' : 'Next'}
+            label={
+              wizard.stepIndex === STEP_COUNT - 1 ? t('onboarding.finish') : t('onboarding.next')
+            }
             onPress={handleAdvance}
             disabled={!canAdvance(wizard)}
           />
           {wizard.stepIndex > 0 ? (
             <AppButton
-              label="Back"
+              label={t('onboarding.back')}
               variant="secondary"
               onPress={() => setWizard((c) => goBack(c))}
             />
           ) : null}
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Not sure yet — skip"
+            accessibilityLabel={t('onboarding.skip')}
             onPress={withTapCue(handleSkip)}
             style={styles.skip}
           >
-            <Text style={styles.skipText}>Not sure yet — skip</Text>
+            <Text style={styles.skipText}>{t('onboarding.skip')}</Text>
           </Pressable>
         </View>
       </ScrollView>

@@ -4,6 +4,7 @@
  */
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { chapterArt } from '@/features/assets/assetMap';
@@ -15,6 +16,7 @@ interface CurrentChapterPanelProps {
 }
 
 export function CurrentChapterPanel({ chapter }: CurrentChapterPanelProps) {
+  const { t } = useTranslation();
   const emblem = chapterArt(chapter.data.id);
   const remaining = chapter.span !== null ? chapter.span - chapter.questsInChapter : null;
   const isComplete = chapter.fraction >= 1;
@@ -46,18 +48,19 @@ export function CurrentChapterPanel({ chapter }: CurrentChapterPanelProps) {
           <View style={[styles.barFill, { width: `${Math.round(chapter.fraction * 100)}%` }]} />
         </View>
         <Text style={styles.progressText}>
-          {chapter.questsInChapter}
-          {chapter.span !== null ? ` / ${chapter.span}` : ''}
-          {' quests'}
+          {t('journeyMap.progressOf', {
+            a: chapter.questsInChapter,
+            b: chapter.span ?? chapter.data.threshold,
+          })}
         </Text>
       </View>
 
       <Text style={styles.remaining}>
         {isComplete
-          ? 'Chapter Complete'
+          ? t('journeyMap.chapterComplete')
           : remaining !== null
-            ? `${remaining} quests remaining`
-            : 'The summit is yours'}
+            ? t('journeyMap.remaining', { count: remaining })
+            : t('journeyMap.summitShort')}
       </Text>
     </View>
   );

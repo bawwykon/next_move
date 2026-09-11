@@ -19,6 +19,13 @@ import {
   xpBar,
 } from '@/features/profile/format';
 import { streakPillCopy } from '@/features/questBoard/earn';
+import { englishT } from '../../i18n/testLocale';
+import type { TFunction } from 'i18next';
+
+let t: TFunction;
+beforeAll(async () => {
+  t = await englishT();
+});
 
 const CATALOG = [
   { id: 'c-frame', slug: 'frame-default', name: 'Classic Frame' },
@@ -48,52 +55,57 @@ describe('xpBar', () => {
 
 describe('levelLine', () => {
   it('pairs the level with its FR-XP-3 title', () => {
-    expect(levelLine(1)).toBe('Level 1 · Beginner');
-    expect(levelLine(10)).toBe('Level 10 · Adventurer');
-    expect(levelLine(100)).toBe('Level 100 · Legend');
+    expect(levelLine(1, t)).toBe('Level 1 · Beginner');
+    expect(levelLine(10, t)).toBe('Level 10 · Adventurer');
+    expect(levelLine(100, t)).toBe('Level 100 · Legend');
   });
 });
 
 describe('streakCopy (FR-STR-2)', () => {
   it('encourages an active streak', () => {
-    expect(streakCopy(1, 3)).toEqual({ primary: '1 day strong', longest: 'Best: 3' });
-    expect(streakCopy(3, 3)).toEqual({ primary: '3 days strong', longest: null });
+    expect(streakCopy(1, 3, t)).toEqual({ primary: '1 day strong', longest: 'Best: 3' });
+    expect(streakCopy(3, 3, t)).toEqual({ primary: '3 days strong', longest: null });
   });
 
   it('never blames a missed day', () => {
-    expect(streakCopy(0, 0).primary).toBe('Your adventure is waiting. Your next quest is ready.');
-    expect(streakCopy(0, 0).longest).toBeNull();
-    expect(streakCopy(0, 12).longest).toBe('Best: 12 days');
+    expect(streakCopy(0, 0, t).primary).toBe(
+      'Your adventure is waiting. Your next quest is ready.',
+    );
+    expect(streakCopy(0, 0, t).longest).toBeNull();
+    expect(streakCopy(0, 12, t).longest).toBe('Best: 12 days');
   });
 });
 
 describe('streakMilestoneLine (S9-02, shared with the board pill)', () => {
   it('counts whole days down to the next paid milestone', () => {
-    expect(streakMilestoneLine(1)).toBe('2 days to a 3-day bonus');
-    expect(streakMilestoneLine(2)).toBe('1 day to a 3-day bonus');
-    expect(streakMilestoneLine(5)).toBe('2 days to a 7-day bonus');
-    expect(streakMilestoneLine(7)).toBe('23 days to a 30-day bonus');
-    expect(streakMilestoneLine(29)).toBe('1 day to a 30-day bonus');
-    expect(streakMilestoneLine(99)).toBe('1 day to a 100-day bonus');
+    expect(streakMilestoneLine(1, t)).toBe('2 days to a 3-day bonus');
+    expect(streakMilestoneLine(2, t)).toBe('1 day to a 3-day bonus');
+    expect(streakMilestoneLine(5, t)).toBe('2 days to a 7-day bonus');
+    expect(streakMilestoneLine(7, t)).toBe('23 days to a 30-day bonus');
+    expect(streakMilestoneLine(29, t)).toBe('1 day to a 30-day bonus');
+    expect(streakMilestoneLine(99, t)).toBe('1 day to a 100-day bonus');
   });
 
   it('says nothing once the ladder is exhausted', () => {
-    expect(streakMilestoneLine(100)).toBeNull();
-    expect(streakMilestoneLine(101)).toBeNull();
+    expect(streakMilestoneLine(100, t)).toBeNull();
+    expect(streakMilestoneLine(101, t)).toBeNull();
   });
 
   it('matches the board pill wording exactly (unified string)', () => {
-    const { milestone } = streakPillCopy(2);
-    expect(milestone).toBe(streakMilestoneLine(2));
+    const { milestone } = streakPillCopy(2, t);
+    expect(milestone).toBe(streakMilestoneLine(2, t));
   });
 });
 
 describe('masteryRows', () => {
   it('renders all four tracks in fixed order with level math', () => {
-    const rows = masteryRows([
-      { track: 'discipline', points: 499 },
-      { track: 'strength', points: 0 },
-    ]);
+    const rows = masteryRows(
+      [
+        { track: 'discipline', points: 499 },
+        { track: 'strength', points: 0 },
+      ],
+      t,
+    );
     expect(rows.map((row) => row.track)).toEqual([
       'strength',
       'endurance',
@@ -136,10 +148,10 @@ describe('loadoutSlots (FR-PROF-2, defaults when unset)', () => {
 
 describe('dayLabel', () => {
   it('marks today and yesterday, else a plain date', () => {
-    expect(dayLabel('2026-08-08', '2026-08-08')).toBe('Today');
-    expect(dayLabel('2026-08-07', '2026-08-08')).toBe('Yesterday');
-    expect(dayLabel('2026-07-30', '2026-08-08')).toBe('Jul 30');
-    expect(dayLabel(null, '2026-08-08')).toBe('—');
+    expect(dayLabel('2026-08-08', '2026-08-08', t)).toBe('Today');
+    expect(dayLabel('2026-08-07', '2026-08-08', t)).toBe('Yesterday');
+    expect(dayLabel('2026-07-30', '2026-08-08', t)).toBe('Jul 30');
+    expect(dayLabel(null, '2026-08-08', t)).toBe('—');
   });
 });
 
@@ -151,6 +163,7 @@ describe('historyLines', () => {
         { questTitle: null, dayKey: '2026-07-30', xp: 75 },
       ],
       '2026-08-08',
+      t,
     );
     expect(lines).toEqual([
       { questTitle: 'Morning Stretch', dayLabel: 'Today', xp: 50 },
@@ -169,8 +182,8 @@ describe('historyExhausted', () => {
 
 describe('achievementsEntry', () => {
   it('counts unlocks with singular/plural copy', () => {
-    expect(achievementsEntry(1)).toBe('1 unlock earned');
-    expect(achievementsEntry(13)).toBe('13 unlocks earned');
+    expect(achievementsEntry(1, t)).toBe('1 unlock earned');
+    expect(achievementsEntry(13, t)).toBe('13 unlocks earned');
   });
 });
 

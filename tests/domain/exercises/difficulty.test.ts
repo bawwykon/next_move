@@ -1,6 +1,5 @@
 import {
   DIFFICULTY_ART_KEY,
-  difficultyLabel,
   exerciseDifficulty,
   EXERCISE_DIFFICULTY,
 } from '@/domain/exercises/difficulty';
@@ -49,12 +48,6 @@ describe('exercise difficulty map', () => {
     expect(exerciseDifficulty('dragon-flag')).toBeNull();
     expect(exerciseDifficulty(null)).toBeNull();
     expect(exerciseDifficulty('')).toBeNull();
-  });
-
-  it('labels difficulties in title case', () => {
-    expect(difficultyLabel('beginner')).toBe('Beginner');
-    expect(difficultyLabel('intermediate')).toBe('Intermediate');
-    expect(difficultyLabel('advanced')).toBe('Advanced');
   });
 
   it('maps every tier to an existing difficulty art key', () => {

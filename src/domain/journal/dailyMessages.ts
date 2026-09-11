@@ -2,6 +2,12 @@
  * PH4-02 — Daily motivational messages.
  * One random message per day, seeded by dayKey for consistency within a day.
  * Pool written by the owner (2026-08-22).
+ *
+ * I18N-01: the pools now live in the locale tables
+ * (`board.dailyMessages`, 30 entries per locale). This module keeps the pure
+ * deterministic index math; `dailyMessageKey` resolves the i18n key and the
+ * UI translates it. DAILY_MESSAGES/dailyMessageFor remain as the English
+ * reference used by older tests.
  */
 export const DAILY_MESSAGES: readonly string[] = [
   'Every quest begins with one move.',
@@ -43,13 +49,22 @@ export const DAILY_MESSAGES: readonly string[] = [
  * so adjacent days land on different indices; modulo spreads over the pool.
  */
 export function dailyMessageFor(dayKey: string): string {
+  return DAILY_MESSAGES[dailyMessageIndex(dayKey)] ?? DAILY_MESSAGES[0]!;
+}
+
+/** Pure index math shared by every locale (pools must all carry 30 entries). */
+export function dailyMessageIndex(dayKey: string): number {
   if (DAILY_MESSAGES.length === 0) {
-    return '';
+    return 0;
   }
   let hash = 0;
   for (let i = 0; i < dayKey.length; i += 1) {
     hash = (hash * 31 + dayKey.charCodeAt(i)) % 2_147_483_647;
   }
-  const index = hash % DAILY_MESSAGES.length;
-  return DAILY_MESSAGES[index] ?? DAILY_MESSAGES[0]!;
+  return hash % DAILY_MESSAGES.length;
+}
+
+/** i18n key for the day's message — the UI translates it (I18N-01). */
+export function dailyMessageKey(dayKey: string): string {
+  return `board.dailyMessages.${dailyMessageIndex(dayKey)}`;
 }

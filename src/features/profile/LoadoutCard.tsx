@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import type { CosmeticRow } from '@/data/repositories/cosmetics';
@@ -16,31 +17,33 @@ const SLOT_LABELS: Record<CosmeticSlot, string> = {
   portrait: 'Portrait',
 };
 
-const LEVEL_LABEL_BY_SLUG: Record<string, string> = {
-  'frame-default': 'Always available',
-  'frame-level-05': 'Lv 5',
-  'frame-level-10': 'Lv 10',
-  'frame-level-25': 'Lv 25',
-  'frame-level-50': 'Lv 50',
-  'frame-level-75': 'Lv 75',
-  'frame-level-100': 'Lv 100',
-  premium_frame: 'Purchase',
-  'nameplate-default': 'Lv 1',
-  'nameplate-level-05': 'Lv 5',
-  'nameplate-level-10': 'Lv 10',
-  'nameplate-level-25': 'Lv 25',
-  'nameplate-level-50': 'Lv 50',
-  'nameplate-level-75': 'Lv 75',
-  'nameplate-level-100': 'Lv 100',
-  'premium-nameplate': 'Purchase',
-  premium_nameplate: 'Purchase',
-  'portrait-default': 'Always available',
-  'portrait-phoenix': 'Lv 25',
-  'portrait-pathfinder': 'Lv 45',
-  'portrait-warden': 'Lv 65',
-  'portrait-master': 'Lv 100',
-  premium_portrait: 'Purchase',
+const LEVEL_SLUG_TO_MIN: Record<string, number> = {
+  'frame-level-05': 5,
+  'frame-level-10': 10,
+  'frame-level-25': 25,
+  'frame-level-50': 50,
+  'frame-level-75': 75,
+  'frame-level-100': 100,
+  'nameplate-default': 1,
+  'nameplate-level-05': 5,
+  'nameplate-level-10': 10,
+  'nameplate-level-25': 25,
+  'nameplate-level-50': 50,
+  'nameplate-level-75': 75,
+  'nameplate-level-100': 100,
+  'portrait-phoenix': 25,
+  'portrait-pathfinder': 45,
+  'portrait-warden': 65,
+  'portrait-master': 100,
 };
+
+const ALWAYS_SLUGS = new Set(['frame-default', 'portrait-default']);
+const PURCHASE_SLUGS = new Set([
+  'premium_frame',
+  'premium-nameplate',
+  'premium_nameplate',
+  'premium_portrait',
+]);
 
 export interface LoadoutCardProps {
   catalog: readonly CosmeticRow[];
@@ -60,19 +63,20 @@ function slotValue(
   equipped: { frame: string | null; nameplate: string | null; portrait: string | null },
   slot: CosmeticSlot,
   items: readonly CosmeticRow[],
+  fallback: string,
 ): string {
   const id = equipped[slot];
   if (id === null) {
     const defaultSlug = DEFAULT_SLOT_SLUGS[slot];
     return defaultSlug
-      ? (items.find((item) => item.slug === defaultSlug)?.name ?? 'Default')
-      : 'Default';
+      ? (items.find((item) => item.slug === defaultSlug)?.name ?? fallback)
+      : fallback;
   }
   const byId = items.find((item) => item.id === id);
   if (byId) return byId.name;
   const bySlug = items.find((item) => item.slug === id);
   if (bySlug) return bySlug.name;
-  return 'Default';
+  return fallback;
 }
 
 export function LoadoutCard({
@@ -89,8 +93,19 @@ export function LoadoutCard({
   const [error, setError] = useState<string | null>(null);
   const [badgeModalOpen, setBadgeModalOpen] = useState(false);
   const [tempBadges, setTempBadges] = useState<string[]>(equipped.badges);
+  const { t } = useTranslation();
 
   const bySlot = catalogBySlot(catalog, owned);
+
+  const slotLabel = (slot: CosmeticSlot): string => t(`profile.slots.${slot}`);
+
+  const levelLabelForSlug = (slug: string): string | null => {
+    if (ALWAYS_SLUGS.has(slug)) return t('loadout.always');
+    if (PURCHASE_SLUGS.has(slug)) return t('loadout.purchase');
+    const lvl = LEVEL_SLUG_TO_MIN[slug];
+    if (lvl !== undefined) return t('loadout.levelShort', { n: lvl });
+    return null;
+  };
 
   const open = (slot: CosmeticSlot) => {
     setOpenSlot(slot);
@@ -158,8 +173,8 @@ export function LoadoutCard({
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle}>Loadout</Text>
-        <Text style={styles.cardHint}>Tap a slot to change it</Text>
+        <Text style={styles.cardTitle}>{t('loadout.title')}</Text>
+        <Text style={styles.cardHint}>{t('loadout.hint')}</Text>
       </View>
       <View style={styles.loadoutList}>
         {(Object.keys(SLOT_LABELS) as CosmeticSlot[]).map((slot) => (
@@ -169,8 +184,10 @@ export function LoadoutCard({
             style={styles.loadoutRow}
             onPress={withTapCue(() => open(slot))}
           >
-            <Text style={styles.loadoutSlot}>{SLOT_LABELS[slot]}</Text>
-            <Text style={styles.loadoutName}>{slotValue(equipped, slot, catalog)}</Text>
+            <Text style={styles.loadoutSlot}>{slotLabel(slot)}</Text>
+            <Text style={styles.loadoutName}>
+              {slotValue(equipped, slot, catalog, t('loadout.def'))}
+            </Text>
             <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
           </TouchableOpacity>
         ))}
@@ -179,9 +196,11 @@ export function LoadoutCard({
           style={styles.loadoutRow}
           onPress={withTapCue(openBadges)}
         >
-          <Text style={styles.loadoutSlot}>Badges</Text>
+          <Text style={styles.loadoutSlot}>{t('loadout.badges')}</Text>
           <Text style={styles.loadoutName}>
-            {equipped.badges.length > 0 ? `${equipped.badges.length} equipped` : 'None'}
+            {equipped.badges.length > 0
+              ? t('loadout.equippedCount', { n: equipped.badges.length })
+              : t('loadout.equippedNone')}
           </Text>
           <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
         </TouchableOpacity>
@@ -193,7 +212,7 @@ export function LoadoutCard({
           <View style={styles.sheetBackdrop}>
             <Pressable style={styles.sheetDismissArea} onPress={withTapCue(close)} />
             <View style={styles.sheet}>
-              <Text style={styles.sheetTitle}>{SLOT_LABELS[openSlot]}</Text>
+              <Text style={styles.sheetTitle}>{slotLabel(openSlot)}</Text>
 
               {openSlot !== 'nameplate' && (
                 <TouchableOpacity
@@ -207,8 +226,8 @@ export function LoadoutCard({
                     size={20}
                     color={selected === null ? colors.reward : colors.textMuted}
                   />
-                  <Text style={styles.optionLabel}>Default</Text>
-                  <Text style={styles.optionMeta}>Always available</Text>
+                  <Text style={styles.optionLabel}>{t('loadout.def')}</Text>
+                  <Text style={styles.optionMeta}>{t('loadout.always')}</Text>
                 </TouchableOpacity>
               )}
 
@@ -248,9 +267,9 @@ export function LoadoutCard({
                     </Text>
                     <Text style={styles.optionMeta}>
                       {(() => {
-                        const lvl = LEVEL_LABEL_BY_SLUG[item.slug];
-                        if (!lvl) return locked ? 'Locked — keep going to earn it' : '';
-                        return locked ? `${lvl} • Locked` : lvl;
+                        const lvl = levelLabelForSlug(item.slug);
+                        if (!lvl) return locked ? t('loadout.lockedKeep') : '';
+                        return locked ? t('loadout.lockedLevel', { lvl }) : lvl;
                       })()}
                     </Text>
                   </TouchableOpacity>
@@ -266,7 +285,7 @@ export function LoadoutCard({
                   disabled={saving}
                   onPress={withTapCue(close)}
                 >
-                  <Text style={styles.cancelLabel}>Cancel</Text>
+                  <Text style={styles.cancelLabel}>{t('common.cancel')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   accessibilityRole="button"
@@ -274,7 +293,9 @@ export function LoadoutCard({
                   disabled={saving}
                   onPress={withTapCue(() => void save())}
                 >
-                  <Text style={styles.saveLabel}>{saving ? 'Saving…' : 'Save'}</Text>
+                  <Text style={styles.saveLabel}>
+                    {saving ? t('loadout.saving') : t('common.save')}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -292,8 +313,8 @@ export function LoadoutCard({
         <View style={styles.sheetBackdrop}>
           <Pressable style={styles.sheetDismissArea} onPress={withTapCue(closeBadges)} />
           <View style={styles.sheet}>
-            <Text style={styles.sheetTitle}>Badges</Text>
-            <Text style={styles.badgeHint}>Select up to 3 badges to display on your profile.</Text>
+            <Text style={styles.sheetTitle}>{t('loadout.badges')}</Text>
+            <Text style={styles.badgeHint}>{t('loadout.badgeHint')}</Text>
 
             <View style={styles.badgePreviewRow}>
               {[0, 1, 2].map((i) => {
@@ -312,7 +333,9 @@ export function LoadoutCard({
               })}
             </View>
             {tempBadges.length > 0 ? (
-              <Text style={styles.badgeCount}>{tempBadges.length} / 3 selected</Text>
+              <Text style={styles.badgeCount}>
+                {t('loadout.badgeCount', { n: tempBadges.length })}
+              </Text>
             ) : null}
 
             <View style={styles.badgeSelectGrid}>
@@ -339,7 +362,7 @@ export function LoadoutCard({
                 );
               })}
               {earnedBadges.length === 0 ? (
-                <Text style={styles.badgeEmptyText}>No badges earned yet.</Text>
+                <Text style={styles.badgeEmptyText}>{t('loadout.badgeEmpty')}</Text>
               ) : null}
             </View>
 
@@ -352,7 +375,7 @@ export function LoadoutCard({
                 disabled={saving}
                 onPress={withTapCue(closeBadges)}
               >
-                <Text style={styles.cancelLabel}>Cancel</Text>
+                <Text style={styles.cancelLabel}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 accessibilityRole="button"
@@ -360,7 +383,9 @@ export function LoadoutCard({
                 disabled={saving}
                 onPress={withTapCue(() => void saveBadges())}
               >
-                <Text style={styles.saveLabel}>{saving ? 'Saving…' : 'Save'}</Text>
+                <Text style={styles.saveLabel}>
+                  {saving ? t('loadout.saving') : t('common.save')}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>

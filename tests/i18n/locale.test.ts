@@ -68,5 +68,70 @@ describe('resource fallback', () => {
     expect(Object.keys(localeResources.ar.settings).sort()).toEqual(
       Object.keys(localeResources.en.settings).sort(),
     );
+    // Phase 2 groups: Spanish mirrors English exactly; Arabic carries the
+    // same top-level groups (plural leaves may expand to the CLDR family).
+    const groups = [
+      'common',
+      'journey',
+      'achievements',
+      'history',
+      'editProfile',
+      'profile',
+      'build',
+      'custom',
+      'auth',
+      'errors',
+      'loadout',
+      'onboarding',
+      'journeyMap',
+    ] as const;
+    for (const group of groups) {
+      expect(Object.keys(localeResources.es[group]).sort()).toEqual(
+        Object.keys(localeResources.en[group]).sort(),
+      );
+      for (const key of Object.keys(localeResources.en[group])) {
+        expect((localeResources.ar[group] as Record<string, unknown>)[key]).toBeDefined();
+      }
+    }
+  });
+
+  it('every English board leaf resolves in Spanish and Arabic (plural families may differ)', () => {
+    const leaves = (node: unknown, prefix: string, out: string[] = []): string[] => {
+      if (typeof node === 'string') {
+        out.push(prefix);
+      } else if (Array.isArray(node)) {
+        node.forEach((_, index) => leaves('x', `${prefix}.${index}`, out));
+      } else if (node && typeof node === 'object') {
+        for (const [key, value] of Object.entries(node)) leaves(value, `${prefix}.${key}`, out);
+      }
+      return out;
+    };
+    const pluralBase = (path: string): string | null => {
+      const m = path.match(/^(.*)_(zero|one|two|few|many|other)$/);
+      return m ? m[1]! : null;
+    };
+    const arVariants = (base: string): string[] =>
+      ['zero', 'one', 'two', 'few', 'many', 'other'].map((v) => `${base}_${v}`);
+    const get = (obj: unknown, path: string): unknown =>
+      path.split('.').reduce<unknown>((acc, part) => {
+        if (Array.isArray(acc)) return acc[Number(part)];
+        if (acc && typeof acc === 'object') return (acc as Record<string, unknown>)[part];
+        return undefined;
+      }, obj);
+    for (const leaf of leaves(localeResources.en.board, 'board')) {
+      // Spanish uses the same plural set as English: exact match required.
+      expect(get(localeResources.es.board, leaf.replace(/^board\./, ''))).toBeDefined();
+      // Arabic may split one/other into the full CLDR family — or split an
+      // unpluralized English key the same way (e.g. weeklyBankedInDays).
+      const base = pluralBase(leaf) ?? leaf;
+      const exact = get(localeResources.ar.board, leaf.replace(/^board\./, ''));
+      if (exact !== undefined) {
+        continue;
+      }
+      const hit = arVariants(base).some(
+        (variant) => get(localeResources.ar.board, variant.replace(/^board\./, '')) !== undefined,
+      );
+      expect(hit).toBe(true);
+    }
   });
 });

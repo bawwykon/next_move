@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Animated, Easing, StyleSheet, Text } from 'react-native';
 
 import { chapterArt } from '@/features/assets/assetMap';
@@ -21,6 +22,7 @@ interface ChapterOverlayProps {
  * taps underneath (pointerEvents none while fading).
  */
 export function ChapterOverlay({ visible, chapterId }: ChapterOverlayProps) {
+  const { t } = useTranslation();
   const [progress] = useState(() => new Animated.Value(0));
   const chapter = CHAPTERS[chapterId - 1];
 
@@ -49,13 +51,13 @@ export function ChapterOverlay({ visible, chapterId }: ChapterOverlayProps) {
             source={art}
             style={styles.emblem}
             contentFit="contain"
-            accessibilityLabel="Chapter emblem"
+            accessibilityLabel={t('victory.chapterEmblem')}
           />
         ) : null}
-        <Text style={styles.kicker}>Chapter Unlocked</Text>
+        <Text style={styles.kicker}>{t('victory.chapterUnlocked')}</Text>
         <Text style={styles.chapterName}>{chapter?.name ?? `Chapter ${chapterId}`}</Text>
         <Text style={styles.line}>
-          You&apos;ve reached {chapter?.name ?? `Chapter ${chapterId}`} — your adventure is growing.
+          {t('victory.chapterReached', { name: chapter?.name ?? `Chapter ${chapterId}` })}
         </Text>
       </Animated.View>
     </Animated.View>

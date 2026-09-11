@@ -5,6 +5,7 @@
  */
 import { CHAPTERS, chapterForQuests } from '@/domain/journey/chapter';
 import type { ChapterDef } from '@/domain/journey/chapter';
+import type { TFunction } from 'i18next';
 
 export type ChapterNodeState = 'completed' | 'current' | 'locked';
 
@@ -19,15 +20,17 @@ export interface ChapterNode {
   meta: string | null;
 }
 
-const toSentence = (count: number, chapter: ChapterDef): string =>
-  `You've finished ${count} ${count === 1 ? 'quest' : 'quests'} — Chapter ${chapter.id} (${chapter.name}).`;
+const toSentence = (count: number, chapter: ChapterDef, t: TFunction): string =>
+  t('journeyMap.finished', { count, id: chapter.id, name: chapter.name });
 
-export function milestoneLine(questsInput: number, chapter: ChapterDef): string {
-  return toSentence(Math.max(0, Math.floor(questsInput)), chapter);
+export function milestoneLine(questsInput: number, chapter: ChapterDef, t: TFunction): string {
+  return toSentence(Math.max(0, Math.floor(questsInput)), chapter, t);
 }
 
-export function goalLine(chapter: ChapterDef): string {
-  return chapter.threshold === 0 ? 'The journey begins here' : `Reach ${chapter.threshold} quests`;
+export function goalLine(chapter: ChapterDef, t: TFunction): string {
+  return chapter.threshold === 0
+    ? t('journeyMap.beginsHere')
+    : t('journeyMap.reachQuests', { n: chapter.threshold });
 }
 
 /**
@@ -37,7 +40,7 @@ export function goalLine(chapter: ChapterDef): string {
  *   Mastery Peak is unbounded → full bar + capped meta copy
  * - chapters ahead → locked (empty bar, ∘)
  */
-export function journeyNodes(questsInput: number): ChapterNode[] {
+export function journeyNodes(questsInput: number, t: TFunction): ChapterNode[] {
   const progress = chapterForQuests(questsInput);
   return CHAPTERS.map((chapter, index) => {
     if (index < progress.currentIndex) {
@@ -54,7 +57,7 @@ export function journeyNodes(questsInput: number): ChapterNode[] {
         name: chapter.name,
         state: 'current',
         fraction: 1,
-        meta: 'The summit is yours — every next quest writes your own record.',
+        meta: t('journeyMap.summit'),
       };
     }
     const fraction = Math.min(1, Math.max(0, progress.questsSinceChapterStart / span));
@@ -63,7 +66,7 @@ export function journeyNodes(questsInput: number): ChapterNode[] {
       name: chapter.name,
       state: 'current',
       fraction,
-      meta: `${progress.questsSinceChapterStart} of ${span} quests to the next chapter`,
+      meta: t('victory.journeyProgress', { done: progress.questsSinceChapterStart, total: span }),
     };
   });
 }

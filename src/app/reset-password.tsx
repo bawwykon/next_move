@@ -1,5 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/AppButton';
@@ -13,9 +14,8 @@ import { useSessionStore } from '@/state/sessionStore';
 
 type Phase = 'exchanging' | 'error' | 'form';
 
-const MISSING_CODE_MESSAGE = 'This reset link is missing something — request a new one.';
-
 export default function ResetPasswordScreen() {
+  const { t } = useTranslation();
   const { code } = useLocalSearchParams<{ code?: string | string[] }>();
   const clearIntendedRoute = useSessionStore((state) => state.clearIntendedRoute);
   const rawCode = Array.isArray(code) ? code[0] : code;
@@ -32,21 +32,21 @@ export default function ResetPasswordScreen() {
     }
     void supabase.auth.exchangeCodeForSession(rawCode).then(({ error: exchangeError }) => {
       if (exchangeError) {
-        setError(getAuthErrorMessage(exchangeError));
+        setError(getAuthErrorMessage(exchangeError, t));
         setPhase('error');
         return;
       }
       setPhase('form');
     });
-  }, [rawCode, missingCode]);
+  }, [rawCode, missingCode, t]);
 
   const handleSave = async () => {
     if (!newPassword) {
-      setError('Enter a new password to continue.');
+      setError(t('auth.resetIntro'));
       return;
     }
     if (newPassword !== confirmPassword) {
-      setError('Those passwords don\u2019t match — check them again.');
+      setError(t('auth.passwordMismatch'));
       return;
     }
     setBusy(true);
@@ -54,7 +54,7 @@ export default function ResetPasswordScreen() {
     const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
     setBusy(false);
     if (updateError) {
-      setError(getAuthErrorMessage(updateError));
+      setError(getAuthErrorMessage(updateError, t));
       return;
     }
     clearIntendedRoute();
@@ -65,12 +65,10 @@ export default function ResetPasswordScreen() {
     <Screen>
       <View style={styles.header}>
         <Text style={styles.title}>
-          {phase === 'form' ? 'Set a new password' : 'Reset your password'}
+          {phase === 'form' ? t('auth.resetTitle') : t('auth.resetSubtitle')}
         </Text>
         <Text style={styles.subtitle}>
-          {phase === 'form'
-            ? 'Pick something you\u2019ll remember — and keep it yours.'
-            : 'We\u2019re opening your reset link\u2026'}
+          {phase === 'form' ? t('auth.resetHint') : t('auth.resetting')}
         </Text>
       </View>
       <View style={styles.form}>
@@ -78,34 +76,34 @@ export default function ResetPasswordScreen() {
         {phase === 'form' ? (
           <>
             <AppTextField
-              label="New password"
+              label={t('auth.newPassword')}
               value={newPassword}
               onChangeText={setNewPassword}
-              placeholder="At least 6 characters"
+              placeholder={t('auth.passwordHint')}
               secureTextEntry
               autoComplete="new-password"
             />
             <AppTextField
-              label="Confirm new password"
+              label={t('auth.confirmNew')}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
-              placeholder="Type it once more"
+              placeholder={t('auth.confirmPlaceholder')}
               secureTextEntry
               autoComplete="new-password"
             />
             {error ? <Text style={styles.error}>{error}</Text> : null}
-            <AppButton label="Save new password" onPress={handleSave} loading={busy} />
+            <AppButton label={t('auth.saveNew')} onPress={handleSave} loading={busy} />
           </>
         ) : null}
         {phase === 'error' ? (
           <>
-            <Text style={styles.error}>{missingCode ? MISSING_CODE_MESSAGE : error}</Text>
+            <Text style={styles.error}>{missingCode ? t('auth.resetBadLink') : error}</Text>
             <Pressable
               accessibilityRole="button"
               onPress={withTapCue(() => router.replace('/(auth)/forgot-password'))}
               style={styles.link}
             >
-              <Text style={styles.linkText}>Request a new reset link</Text>
+              <Text style={styles.linkText}>{t('auth.resetRequestNew')}</Text>
             </Pressable>
           </>
         ) : null}
@@ -114,7 +112,7 @@ export default function ResetPasswordScreen() {
           onPress={withTapCue(() => router.replace('/(auth)/login'))}
           style={styles.link}
         >
-          <Text style={styles.linkText}>Back to sign in</Text>
+          <Text style={styles.linkText}>{t('auth.backToSignIn')}</Text>
         </Pressable>
       </View>
     </Screen>

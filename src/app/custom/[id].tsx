@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useState } from 'react';
 import {
   Animated,
@@ -26,7 +27,7 @@ import {
   zoneForXp,
   type MeterZone,
 } from '@/domain/customWorkout/model';
-import { DIFFICULTY_ART_KEY, difficultyLabel } from '@/domain/exercises/difficulty';
+import { DIFFICULTY_ART_KEY } from '@/domain/exercises/difficulty';
 import type { QuestDifficulty } from '@/domain/recommendation/types';
 import { REST_DETAILED_ART, difficultyArt, exerciseArt } from '@/features/assets/assetMap';
 import { difficultyBadge } from '@/features/questBoard/badges';
@@ -41,6 +42,7 @@ import { withTapCue } from '@/lib/sounds';
  */
 export default function CustomQuestScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const params = useLocalSearchParams<{ id?: string }>();
   const workoutId = params.id;
 
@@ -110,8 +112,8 @@ export default function CustomQuestScreen() {
     return (
       <Screen>
         <View style={styles.center}>
-          <Text style={styles.errorTitle}>This quest is hiding.</Text>
-          <Text style={styles.errorLine}>Could not load its details. Try again in a moment.</Text>
+          <Text style={styles.errorTitle}>{t('custom.errorTitle')}</Text>
+          <Text style={styles.errorLine}>{t('custom.errorLine')}</Text>
           <TouchableOpacity
             accessibilityRole="button"
             style={styles.retryButton}
@@ -120,7 +122,7 @@ export default function CustomQuestScreen() {
               void load();
             })}
           >
-            <Text style={styles.retryLabel}>Retry</Text>
+            <Text style={styles.retryLabel}>{t('common.retry')}</Text>
           </TouchableOpacity>
         </View>
       </Screen>
@@ -131,7 +133,7 @@ export default function CustomQuestScreen() {
   // The zone badge reuses the catalog tiers' friendly labels/colors — the
   // projection is display-only, exactly like the builder's meter.
   const zone: MeterZone = zoneForXp(projectedXp(workout.segments, difficultyOf));
-  const badge = difficultyBadge(zone as QuestDifficulty);
+  const badge = difficultyBadge(zone as QuestDifficulty, t);
   const totalSec = totalDurationSec(workout.segments);
 
   return (
@@ -143,7 +145,7 @@ export default function CustomQuestScreen() {
           onPress={withTapCue(() => router.back())}
         >
           <Ionicons name="chevron-back" size={22} color={colors.text} />
-          <Text style={styles.backLabel}>Back</Text>
+          <Text style={styles.backLabel}>{t('common.back')}</Text>
         </TouchableOpacity>
 
         {/* BYQ-04b — the content scrolls; only the CTA footer stays fixed. */}
@@ -158,17 +160,18 @@ export default function CustomQuestScreen() {
               <Text style={styles.badgeLabel}>{badge.label}</Text>
             </View>
             <Text style={styles.meta}>
-              {Math.round(totalSec / 60)} min · +{projectedXp(workout.segments, difficultyOf)} XP{' '}
-              (projected)
+              {t('custom.projectedMeta', {
+                m: Math.round(totalSec / 60),
+                xp: projectedXp(workout.segments, difficultyOf),
+              })}
             </Text>
             <Text style={styles.description}>
-              Your own mix — {workout.segments.length} block
-              {workout.segments.length === 1 ? '' : 's'} in your order.
+              {t('custom.ownMix', { n: workout.segments.length })}
             </Text>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Your Quest</Text>
+            <Text style={styles.sectionTitle}>{t('custom.yourQuest')}</Text>
             {workout.segments.map((segment, index) => {
               if (segment.kind === 'rest') {
                 return (
@@ -177,12 +180,14 @@ export default function CustomQuestScreen() {
                       source={REST_DETAILED_ART}
                       style={styles.restSimpleIcon}
                       contentFit="contain"
-                      accessibilityLabel="Rest"
+                      accessibilityLabel={t('custom.restName')}
                     />
                     <Text style={[styles.segmentName, styles.restName]} numberOfLines={1}>
-                      Rest
+                      {t('custom.restName')}
                     </Text>
-                    <Text style={styles.segmentDuration}>{segment.durationSec}s</Text>
+                    <Text style={styles.segmentDuration}>
+                      {t('quest.seconds', { count: segment.durationSec })}
+                    </Text>
                   </View>
                 );
               }
@@ -203,16 +208,20 @@ export default function CustomQuestScreen() {
                       style={styles.diffIcon}
                       contentFit="contain"
                       accessibilityLabel={
-                        diff !== null ? `${difficultyLabel(diff)} difficulty` : undefined
+                        diff !== null
+                          ? t('quest.difficultyA11y', { level: t(`quest.difficultyName.${diff}`) })
+                          : undefined
                       }
                     />
                   ) : null}
-                  <Text style={styles.segmentDuration}>{segment.durationSec}s</Text>
+                  <Text style={styles.segmentDuration}>
+                    {t('quest.seconds', { count: segment.durationSec })}
+                  </Text>
                 </View>
               );
             })}
             <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Total</Text>
+              <Text style={styles.totalLabel}>{t('custom.total')}</Text>
               <Text style={styles.totalValue}>
                 {Math.floor(totalSec / 60)}:{String(totalSec % 60).padStart(2, '0')}
               </Text>
@@ -231,7 +240,7 @@ export default function CustomQuestScreen() {
               }),
             )}
           >
-            <Text style={styles.startLabel}>Start</Text>
+            <Text style={styles.startLabel}>{t('custom.start')}</Text>
             <Ionicons name="play" size={20} color={colors.background} />
           </TouchableOpacity>
           <View style={styles.secondaryRow}>
@@ -243,7 +252,7 @@ export default function CustomQuestScreen() {
               )}
             >
               <Ionicons name="create-outline" size={18} color={colors.calmStrong} />
-              <Text style={styles.secondaryLabel}>Edit</Text>
+              <Text style={styles.secondaryLabel}>{t('custom.edit')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               accessibilityRole="button"
@@ -251,7 +260,7 @@ export default function CustomQuestScreen() {
               onPress={withTapCue(() => setDeleteVisible(true))}
             >
               <Ionicons name="trash-outline" size={18} color={colors.danger} />
-              <Text style={[styles.secondaryLabel, styles.deleteLabel]}>Delete</Text>
+              <Text style={[styles.secondaryLabel, styles.deleteLabel]}>{t('custom.delete')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -265,24 +274,24 @@ export default function CustomQuestScreen() {
       >
         <View style={styles.sheetBackdrop}>
           <View style={styles.sheetCard}>
-            <Text style={styles.sheetTitle}>Delete “{title}”?</Text>
-            <Text style={styles.sheetBody}>
-              Past completions keep their XP — only the recipe is removed.
-            </Text>
+            <Text style={styles.sheetTitle}>{t('custom.deleteTitle', { title })}</Text>
+            <Text style={styles.sheetBody}>{t('custom.deleteBody')}</Text>
             <TouchableOpacity
               accessibilityRole="button"
               style={styles.sheetDelete}
               disabled={deleting}
               onPress={withTapCue(() => void onDelete())}
             >
-              <Text style={styles.sheetDeleteLabel}>{deleting ? 'Deleting…' : 'Delete'}</Text>
+              <Text style={styles.sheetDeleteLabel}>
+                {deleting ? t('custom.deleting') : t('custom.delete')}
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               accessibilityRole="button"
               style={styles.sheetCancel}
               onPress={withTapCue(() => setDeleteVisible(false))}
             >
-              <Text style={styles.sheetCancelLabel}>Cancel</Text>
+              <Text style={styles.sheetCancelLabel}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>

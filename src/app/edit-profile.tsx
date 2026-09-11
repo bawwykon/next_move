@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/AppButton';
@@ -16,6 +17,7 @@ const NAME_MAX = 16;
  * sections (title/portrait/frame pickers) hang off this same screen.
  */
 export default function EditProfileScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
 
   const [nameDraft, setNameDraft] = useState('');
@@ -62,7 +64,7 @@ export default function EditProfileScreen() {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      setError('You need to be signed in to save.');
+      setError(t('editProfile.needSignIn'));
       setSaving(false);
       return;
     }
@@ -72,7 +74,7 @@ export default function EditProfileScreen() {
       .update({ display_name: trimmed || 'Adventurer' })
       .eq('id', user.id);
     if (updateError) {
-      setError('Could not save. Give it one more try.');
+      setError(t('editProfile.saveFailed'));
       setSaving(false);
       return;
     }
@@ -89,37 +91,39 @@ export default function EditProfileScreen() {
           onPress={withTapCue(() => router.back())}
         >
           <Ionicons name="chevron-back" size={22} color={colors.text} />
-          <Text style={styles.backLabel}>Back</Text>
+          <Text style={styles.backLabel}>{t('common.back')}</Text>
         </TouchableOpacity>
 
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <Text style={styles.title}>Edit profile</Text>
+          <Text style={styles.title}>{t('editProfile.title')}</Text>
 
           <View style={styles.card}>
-            <Text style={styles.sectionLabel}>Display name</Text>
+            <Text style={styles.sectionLabel}>{t('editProfile.displayName')}</Text>
             <TextInput
               value={nameDraft}
               onChangeText={(text) => setNameDraft(text.slice(0, NAME_MAX))}
-              placeholder="Adventurer"
+              placeholder={t('editProfile.placeholder')}
               placeholderTextColor={colors.textMuted}
               maxLength={NAME_MAX}
               returnKeyType="done"
               style={styles.nameInput}
             />
-            <Text style={styles.hint}>
-              How you appear on the board. Leave blank for &quot;Adventurer&quot;.
-            </Text>
+            <Text style={styles.hint}>{t('editProfile.hint')}</Text>
           </View>
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
           <AppButton
-            label="Save"
+            label={t('common.save')}
             onPress={() => void handleSave()}
             disabled={!dirty}
             loading={saving}
           />
-          <AppButton label="Cancel" variant="secondary" onPress={withTapCue(() => router.back())} />
+          <AppButton
+            label={t('common.cancel')}
+            variant="secondary"
+            onPress={withTapCue(() => router.back())}
+          />
         </ScrollView>
       </View>
     </Screen>

@@ -1,6 +1,9 @@
+import type { TFunction } from 'i18next';
+
 import type { CompletionResult } from '@/domain/completion/types';
 import { STREAK_MILESTONE_DAYS, streakMilestoneXp } from '@/domain/streak/milestone';
 import { DAILY_BONUS_XP, WEEKLY_BONUS_XP } from '@/features/questBoard/earn';
+import { englishT } from '../../i18n/testLocale';
 
 import {
   breakdownRowSum,
@@ -16,6 +19,11 @@ import {
 const synced = (questId: string, result: CompletionResult): SyncedCompletion => ({
   questId,
   result,
+});
+
+let t: TFunction;
+beforeAll(async () => {
+  t = await englishT();
 });
 
 const fullResult: CompletionResult = {
@@ -61,7 +69,7 @@ const fullResult: CompletionResult = {
 
 describe('xpBreakdownRows', () => {
   it('returns Quest, Daily, Weekly, Streak rows in that fixed order', () => {
-    const rows = xpBreakdownRows(fullResult.xp);
+    const rows = xpBreakdownRows(fullResult.xp, t);
     expect(rows.map((row) => row.label)).toEqual([
       'Quest',
       'Daily bonus',
@@ -72,7 +80,7 @@ describe('xpBreakdownRows', () => {
   });
 
   it('drops zero-value stages so nothing paid out is hidden', () => {
-    const rows = xpBreakdownRows({ quest: 50, daily: 0, weekly: 0, streak: 20, total: 70 });
+    const rows = xpBreakdownRows({ quest: 50, daily: 0, weekly: 0, streak: 20, total: 70 }, t);
     expect(rows).toEqual([
       { label: 'Quest', xp: 50 },
       { label: 'Streak bonus', xp: 20 },
@@ -80,27 +88,33 @@ describe('xpBreakdownRows', () => {
   });
 
   it('returns no rows when every stage paid zero', () => {
-    expect(xpBreakdownRows({ quest: 0, daily: 0, weekly: 0, streak: 0, total: 0 })).toEqual([]);
+    expect(xpBreakdownRows({ quest: 0, daily: 0, weekly: 0, streak: 0, total: 0 }, t)).toEqual([]);
   });
 
   it('S9-02 audit: bonus rows equal the server payouts exactly (0020 mirrors)', () => {
-    const daily = xpBreakdownRows({
-      quest: 0,
-      daily: DAILY_BONUS_XP,
-      weekly: 0,
-      streak: 0,
-      total: DAILY_BONUS_XP,
-    });
+    const daily = xpBreakdownRows(
+      {
+        quest: 0,
+        daily: DAILY_BONUS_XP,
+        weekly: 0,
+        streak: 0,
+        total: DAILY_BONUS_XP,
+      },
+      t,
+    );
     expect(daily).toEqual([{ label: 'Daily bonus', xp: DAILY_BONUS_XP }]);
     expect(daily[0]?.xp).toBe(DAILY_BONUS_XP);
 
-    const weekly = xpBreakdownRows({
-      quest: 0,
-      daily: 0,
-      weekly: WEEKLY_BONUS_XP,
-      streak: 0,
-      total: WEEKLY_BONUS_XP,
-    });
+    const weekly = xpBreakdownRows(
+      {
+        quest: 0,
+        daily: 0,
+        weekly: WEEKLY_BONUS_XP,
+        streak: 0,
+        total: WEEKLY_BONUS_XP,
+      },
+      t,
+    );
     expect(weekly).toEqual([{ label: 'Weekly bonus', xp: WEEKLY_BONUS_XP }]);
     expect(weekly[0]?.xp).toBe(WEEKLY_BONUS_XP);
   });
@@ -108,7 +122,7 @@ describe('xpBreakdownRows', () => {
   it('S9-02 audit — the streak bonus row matches the 3/7/30/100 ladder payouts', () => {
     for (const days of STREAK_MILESTONE_DAYS) {
       const xp = streakMilestoneXp(days);
-      const rows = xpBreakdownRows({ quest: 0, daily: 0, weekly: 0, streak: xp, total: xp });
+      const rows = xpBreakdownRows({ quest: 0, daily: 0, weekly: 0, streak: xp, total: xp }, t);
       expect(rows).toEqual([{ label: 'Streak bonus', xp }]);
     }
   });
@@ -120,13 +134,13 @@ describe('xpBreakdownRows', () => {
       { quest: 0, daily: 0, weekly: 0, streak: 0, total: 0 },
     ];
     for (const xp of xps) {
-      expect(breakdownRowSum(xpBreakdownRows(xp))).toBe(xpBreakdownTotal(xp));
+      expect(breakdownRowSum(xpBreakdownRows(xp, t))).toBe(xpBreakdownTotal(xp));
     }
   });
 
   // BYQ-04 — custom quests label the base row with their own name.
   it('baseLabel renames only the Quest row (BYQ-04 custom quests)', () => {
-    const rows = xpBreakdownRows(fullResult.xp, 'Leg Day Supreme');
+    const rows = xpBreakdownRows(fullResult.xp, t, 'Leg Day Supreme');
     expect(rows.map((row) => row.label)).toEqual([
       'Leg Day Supreme',
       'Daily bonus',
@@ -138,9 +152,9 @@ describe('xpBreakdownRows', () => {
 
   it('baseLabel is ignored for zero-value quest rows and absent labels', () => {
     expect(
-      xpBreakdownRows({ quest: 0, daily: 75, weekly: 0, streak: 0, total: 75 }, 'Custom'),
+      xpBreakdownRows({ quest: 0, daily: 75, weekly: 0, streak: 0, total: 75 }, t, 'Custom'),
     ).toEqual([{ label: 'Daily bonus', xp: 75 }]);
-    expect(xpBreakdownRows({ quest: 48, daily: 0, weekly: 0, streak: 0, total: 48 })).toEqual([
+    expect(xpBreakdownRows({ quest: 48, daily: 0, weekly: 0, streak: 0, total: 48 }, t)).toEqual([
       { label: 'Quest', xp: 48 },
     ]);
   });
@@ -148,23 +162,23 @@ describe('xpBreakdownRows', () => {
 
 describe('masteryLevelTitle', () => {
   it('maps levels 1..5 to their titles', () => {
-    expect(masteryLevelTitle(1)).toBe('Novice');
-    expect(masteryLevelTitle(2)).toBe('Explorer');
-    expect(masteryLevelTitle(3)).toBe('Adept');
-    expect(masteryLevelTitle(4)).toBe('Expert');
-    expect(masteryLevelTitle(5)).toBe('Master');
+    expect(masteryLevelTitle(1, t)).toBe('Novice');
+    expect(masteryLevelTitle(2, t)).toBe('Explorer');
+    expect(masteryLevelTitle(3, t)).toBe('Adept');
+    expect(masteryLevelTitle(4, t)).toBe('Expert');
+    expect(masteryLevelTitle(5, t)).toBe('Master');
   });
 
   it('stays Master through the cap (10) and clamps out-of-range levels', () => {
-    expect(masteryLevelTitle(6)).toBe('Master');
-    expect(masteryLevelTitle(10)).toBe('Master');
-    expect(masteryLevelTitle(0)).toBe('Novice');
+    expect(masteryLevelTitle(6, t)).toBe('Master');
+    expect(masteryLevelTitle(10, t)).toBe('Master');
+    expect(masteryLevelTitle(0, t)).toBe('Novice');
   });
 });
 
 describe('masteryDeltas', () => {
   it('derives track labels, points gained and the level title', () => {
-    const deltas = masteryDeltas(fullResult.mastery);
+    const deltas = masteryDeltas(fullResult.mastery, t);
     expect(deltas[0]).toMatchObject({
       track: 'strength',
       trackLabel: 'Strength',
@@ -183,7 +197,7 @@ describe('masteryDeltas', () => {
   });
 
   it('handles an empty mastery list (no leveled tracks this run)', () => {
-    expect(masteryDeltas([])).toEqual([]);
+    expect(masteryDeltas([], t)).toEqual([]);
   });
 });
 
