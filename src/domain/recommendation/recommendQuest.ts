@@ -155,6 +155,27 @@ function questForDifficulty(
 }
 
 /**
+ * Day-pinned recommendation ("Today's Recommended Quest"): exactly one pick
+ * per local day, stable from midnight to midnight no matter how many quests
+ * are completed during the day. Achieved by freezing both inputs at the day
+ * boundary — completions stamped with `todayKey` are excluded (they count
+ * from tomorrow), and `now` is the day's local midnight so gap math and
+ * day-parity cannot flip mid-day. All quests stay available; this only pins
+ * the primary recommendation. Pure and deterministic.
+ */
+export function recommendQuestForDay(
+  todayKey: string,
+  dayStart: Date,
+  onboarding: OnboardingAnswers,
+  mastery: MasterySummary,
+  recentCompletions: CompletionRecord[],
+  catalog: QuestCatalogEntry[],
+): string | null {
+  const history = recentCompletions.filter((record) => record.dayKey < todayKey);
+  return recommendQuest(dayStart, onboarding, mastery, history, catalog);
+}
+
+/**
  * Ref 08 §8 — deterministic recommendation. Gentle return has priority #1;
  * otherwise rotation picks the category and the ladder picks the difficulty
  * within it. `onboarding` is accepted for signature parity with Ref 06 (plan

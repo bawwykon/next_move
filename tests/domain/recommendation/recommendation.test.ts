@@ -2,6 +2,7 @@ import {
   alternatives,
   gentleReturnRecommendation,
   recommendQuest,
+  recommendQuestForDay,
   recommendedDifficulty,
   rotationRecommendation,
 } from '../../../src/domain/recommendation/recommendQuest';
@@ -309,5 +310,103 @@ describe('planSummary', () => {
     for (const word of banned) {
       expect(allText.toLowerCase()).not.toContain(word);
     }
+  });
+});
+
+describe('recommendQuestForDay', () => {
+  const TODAY = '2026-09-11';
+  const dayStart = (key: string): Date => new Date(`${key}T00:00:00`);
+  const onDay = (questId: string, dayKey: string, hour = 8): CompletionRecord => {
+    const quest = catalog.find((entry) => entry.id === questId);
+    if (!quest) {
+      throw new Error(`unknown quest ${questId}`);
+    }
+    return {
+      questId,
+      category: quest.categories[0]!,
+      completedAt: `${dayKey}T${String(hour).padStart(2, '0')}:00:00.000Z`,
+      dayKey,
+    };
+  };
+
+  it('returns null for an empty catalog', () => {
+    expect(recommendQuestForDay(TODAY, dayStart(TODAY), onboarding, mastery, [], [])).toBeNull();
+  });
+
+  it('keeps the same pick morning to night even after completing it mid-day', () => {
+    const history = [onDay('q-s-e-1', '2026-09-08'), onDay('q-e-e', '2026-09-09')];
+    const morning = recommendQuestForDay(
+      TODAY,
+      dayStart(TODAY),
+      onboarding,
+      mastery,
+      history,
+      catalog,
+    );
+    expect(morning).not.toBeNull();
+    const withMidday = [...history, onDay(morning!, TODAY, 14)];
+    const evening = recommendQuestForDay(
+      TODAY,
+      dayStart(TODAY),
+      onboarding,
+      mastery,
+      withMidday,
+      catalog,
+    );
+    expect(evening).toBe(morning);
+  });
+
+  it('recomputes deterministically for the next day', () => {
+    const history = [onDay('q-s-e-1', '2026-09-08'), onDay('q-e-e', '2026-09-09')];
+    const today = recommendQuestForDay(
+      TODAY,
+      dayStart(TODAY),
+      onboarding,
+      mastery,
+      history,
+      catalog,
+    );
+    const tomorrowHistory = [...history, onDay(today!, TODAY, 18)];
+    const first = recommendQuestForDay(
+      '2026-09-12',
+      dayStart('2026-09-12'),
+      onboarding,
+      mastery,
+      tomorrowHistory,
+      catalog,
+    );
+    const second = recommendQuestForDay(
+      '2026-09-12',
+      dayStart('2026-09-12'),
+      onboarding,
+      mastery,
+      tomorrowHistory,
+      catalog,
+    );
+    expect(first).not.toBeNull();
+    expect(second).toBe(first);
+  });
+
+  it('holds a gentle-return pick steady across a 2+ day gap day', () => {
+    const history = [onDay('q-s-e-1', '2026-09-05')];
+    const morning = recommendQuestForDay(
+      '2026-09-11',
+      dayStart('2026-09-11'),
+      onboarding,
+      mastery,
+      history,
+      catalog,
+    );
+    // gap Sep 5 -> Sep 11 start-of-day exceeds 2 days: short easy mobility quest
+    expect(morning).toBe('q-m-e-1');
+    const evening = recommendQuestForDay(
+      '2026-09-11',
+      dayStart('2026-09-11'),
+      onboarding,
+      mastery,
+      [...history, onDay(morning!, '2026-09-11', 20)],
+      catalog,
+    );
+    expect(evening).toBe('q-m-e-1');
   });
 });

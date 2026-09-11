@@ -23,7 +23,7 @@ import {
 import { fetchActiveQuests, type ActiveQuest } from '@/data/repositories/quests';
 import { supabase } from '@/data/supabase';
 import { withTapCue } from '@/lib/sounds';
-import { alternatives, recommendQuest } from '@/domain/recommendation/recommendQuest';
+import { alternatives, recommendQuestForDay } from '@/domain/recommendation/recommendQuest';
 import type {
   CompletionRecord,
   MasterySummary,
@@ -193,18 +193,28 @@ export default function QuestBoardScreen() {
       dayKey: completion.dayKey ?? '',
     }));
 
-    const now = new Date();
     const onboardingAnswers = onboarding ?? DEFAULT_ONBOARDING;
-    const primaryId = recommendQuest(now, onboardingAnswers, masterySummary, records, catalog);
+    // Day-pinned: today's picks ignore today's completions, so neither the
+    // primary nor the alternatives reshuffle after the user finishes a quest
+    // (midnight rollover refreshes via todayKey).
+    const history = records.filter((record) => record.dayKey < todayKey);
+    const primaryId = recommendQuestForDay(
+      todayKey,
+      new Date(today.startMs),
+      onboardingAnswers,
+      masterySummary,
+      records,
+      catalog,
+    );
     if (!primaryId) {
       return null;
     }
     const recommended = byId.get(primaryId) ?? null;
-    const picks = alternatives(primaryId, records, masterySummary, catalog)
+    const picks = alternatives(primaryId, history, masterySummary, catalog)
       .map((id) => byId.get(id))
       .filter((quest): quest is ActiveQuest => quest !== undefined);
     return { recommended, picks };
-  }, [catalog, completions, mastery, onboarding]);
+  }, [catalog, completions, mastery, onboarding, todayKey, today.startMs]);
 
   const openQuest = useCallback(
     (quest: ActiveQuest) => {
