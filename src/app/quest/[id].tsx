@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Animated, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { Screen } from '@/components/ui/Screen';
-import { questDescription, questTitle } from '@/features/catalog/copy';
+import { exerciseName, questDescription, questTitle } from '@/features/catalog/copy';
 import { fetchQuestDetail, type QuestDetail, type QuestSegment } from '@/data/repositories/quests';
 import { dayKey } from '@/domain/streak/dayKey';
 import { DIFFICULTY_ART_KEY, exerciseDifficulty } from '@/domain/exercises/difficulty';
@@ -203,7 +203,10 @@ function SegmentRow({ segment }: { segment: QuestSegment }) {
           {segmentKindLabel(segment.kind, t)}
         </Text>
         <Text style={isRest ? styles.segmentRest : styles.segmentName}>
-          {isRest ? t('quest.takeBreather') : (segment.exerciseName ?? t('quest.moveFallback'))}
+          {isRest
+            ? t('quest.takeBreather')
+            : (exerciseName(segment.exerciseSlug, segment.exerciseName, t) ??
+              t('quest.moveFallback'))}
         </Text>
       </View>
       {!isRest && difficulty !== null ? (

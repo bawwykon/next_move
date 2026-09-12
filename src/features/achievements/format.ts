@@ -14,6 +14,7 @@ import {
   type AchievementCategory,
   type AchievementRow,
 } from '@/domain/achievements/merge';
+import { achievementDescription, achievementHint, achievementTitle } from '@/features/catalog/copy';
 
 export interface CategoryArt {
   icon: ComponentProps<typeof Ionicons>['name'];
@@ -53,7 +54,8 @@ export function unlockedLabel(unlockedAtISO: string, t: TFunction): string {
  */
 export function lockedRowStrings(row: AchievementRow, t: TFunction): string[] {
   const copy = lockedCopy(row.hint ?? null, t);
-  return [copy.emblem, row.title, copy.hint];
+  const hint = achievementHint(row.slug, copy.hint, t) ?? copy.hint;
+  return [copy.emblem, achievementTitle(row.slug, row.title, t), hint];
 }
 
 /**
@@ -61,7 +63,11 @@ export function lockedRowStrings(row: AchievementRow, t: TFunction): string[] {
  */
 export function unlockedRowStrings(row: AchievementRow, t: TFunction): string[] {
   const label = row.unlockedAt ? unlockedLabel(row.unlockedAt, t) : '';
-  return [row.title, row.description ?? '', label];
+  return [
+    achievementTitle(row.slug, row.title, t),
+    achievementDescription(row.slug, row.description, t) ?? '',
+    label,
+  ];
 }
 
 export { LOCKED_EMBLEM };

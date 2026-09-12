@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { UnlockOverview } from '@/features/victory/format';
+import { achievementCategory, achievementTitle } from '@/features/catalog/copy';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 
 interface UnlocksCardProps {
@@ -31,8 +32,8 @@ export function UnlocksCard({ overview }: UnlocksCardProps) {
             <View key={unlock.id} style={styles.row}>
               <Ionicons name="trophy-outline" size={20} color={colors.reward} />
               <View style={styles.rowCopy}>
-                <Text style={styles.rowName}>{unlock.title}</Text>
-                <Text style={styles.rowMeta}>{unlock.category}</Text>
+                <Text style={styles.rowName}>{achievementTitle(unlock.slug, unlock.title, t)}</Text>
+                <Text style={styles.rowMeta}>{achievementCategory(unlock.category, t)}</Text>
               </View>
             </View>
           ))}

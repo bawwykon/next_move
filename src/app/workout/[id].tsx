@@ -34,6 +34,7 @@ import {
   type WorkoutSegmentKind,
 } from '@/domain/timer/workoutEngine';
 import { REST_DETAILED_ART, exerciseArt } from '@/features/assets/assetMap';
+import { exerciseInstruction, exerciseName, exerciseSafety } from '@/features/catalog/copy';
 import { formatCountdown, formatTotalRemaining } from '@/features/timer/format';
 import { finishQuest } from '@/features/workout/finishQuest';
 import { decideOnForeground } from '@/features/workout/decideOnForeground';
@@ -310,6 +311,42 @@ export default function WorkoutScreen() {
     prevIndexRef.current = segmentIndex;
   }, [segmentIndex, workout]);
 
+  // CATALOG-01 — exercise copy resolves through the locale tables by slug,
+  // with the DB strings as fallback (custom/unknown content stays English).
+  const nameFor = useCallback(
+    (index: number): string | null => {
+      const slug = slugs[index] ?? null;
+      const fallback = names[index] ?? null;
+      if (!slug) {
+        return fallback;
+      }
+      return exerciseName(slug, fallback, t) ?? fallback;
+    },
+    [names, slugs, t],
+  );
+  const instructionFor = useCallback(
+    (index: number): string | null => {
+      const slug = slugs[index] ?? null;
+      const fallback = instructions[index] ?? null;
+      if (!slug) {
+        return fallback;
+      }
+      return exerciseInstruction(slug, fallback, t) ?? fallback;
+    },
+    [instructions, slugs, t],
+  );
+  const safetyFor = useCallback(
+    (index: number): string | null => {
+      const slug = slugs[index] ?? null;
+      const fallback = safetyNotes[index] ?? null;
+      if (!slug) {
+        return fallback;
+      }
+      return exerciseSafety(slug, fallback, t) ?? fallback;
+    },
+    [safetyNotes, slugs, t],
+  );
+
   // EC-10 — screen-reader announcements. Segment changes are announced once
   // (name + kind); the countdown is announced only at full-minute boundaries
   // ("3 minutes left") — never the ticking digits themselves.
@@ -326,9 +363,9 @@ export default function WorkoutScreen() {
     const label =
       seg.kind === 'rest'
         ? t('quest.segmentKind.rest')
-        : (names[segmentIndex] ?? t('quest.moveFallback'));
+        : (nameFor(segmentIndex) ?? t('quest.moveFallback'));
     AccessibilityInfo.announceForAccessibility(`${label} — ${segmentKindLabel(seg.kind, t)}`);
-  }, [names, segmentIndex, t, workout]);
+  }, [nameFor, segmentIndex, t, workout]);
 
   const announcedMinuteRef = useRef<number | null>(null);
   useEffect(() => {
@@ -386,7 +423,7 @@ export default function WorkoutScreen() {
   const segmentName = segment
     ? segment.kind === 'rest'
       ? t('workout.restA11y')
-      : (names[segmentIndex ?? -1] ?? t('quest.moveFallback'))
+      : (nameFor(segmentIndex ?? -1) ?? t('quest.moveFallback'))
     : null;
   const currentSlug =
     segment && segment.kind !== 'rest' ? (slugs[segmentIndex ?? -1] ?? null) : null;
@@ -394,14 +431,15 @@ export default function WorkoutScreen() {
   const nextName = next
     ? next.kind === 'rest'
       ? t('workout.restA11y')
-      : (names[(segmentIndex ?? -1) + 1] ?? t('quest.moveFallback'))
+      : (nameFor((segmentIndex ?? -1) + 1) ?? t('quest.moveFallback'))
     : null;
   const digits = remaining !== null ? formatCountdown(Math.ceil(remaining / 1000)) : null;
   const countdownDigit = countdown !== null ? String(countdown) : null;
   // WK-01 — the pause overlay shows the frozen segment's how-to + safety copy.
   const isRest = segment?.kind === 'rest';
-  const currentInstruction = segment && !isRest ? (instructions[segmentIndex ?? -1] ?? null) : null;
-  const currentSafetyNote = segment && !isRest ? (safetyNotes[segmentIndex ?? -1] ?? null) : null;
+  const currentInstruction =
+    segment && !isRest ? (instructionFor(segmentIndex ?? -1) ?? null) : null;
+  const currentSafetyNote = segment && !isRest ? (safetyFor(segmentIndex ?? -1) ?? null) : null;
   // Rest step fallback copy
   const restDescription = t('workout.restDescription');
   const restSafetyTip = t('workout.restSafetyTip');

@@ -25,6 +25,7 @@ import {
   lockedRowStrings,
   unlockedRowStrings,
 } from '@/features/achievements/format';
+import { achievementRarity } from '@/features/catalog/copy';
 import { RARITY_BORDER, rarityFor } from '@/domain/badges/rarity';
 import { badgeProgress } from '@/domain/badges/progress';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
@@ -226,7 +227,7 @@ export default function AchievementsScreen() {
                       >
                         {row.title}
                       </Text>
-                      <Text style={styles.gridRarity}>{rarity}</Text>
+                      <Text style={styles.gridRarity}>{achievementRarity(rarity, t)}</Text>
                       {isEquipped ? (
                         <Text style={styles.equippedLabel}>
                           {t('achievements.slot', { n: equippedIndex + 1 })}

@@ -30,6 +30,7 @@ import {
 import { DIFFICULTY_ART_KEY } from '@/domain/exercises/difficulty';
 import type { QuestDifficulty } from '@/domain/recommendation/types';
 import { REST_DETAILED_ART, difficultyArt, exerciseArt } from '@/features/assets/assetMap';
+import { exerciseName } from '@/features/catalog/copy';
 import { difficultyBadge } from '@/features/questBoard/badges';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 import { withTapCue } from '@/lib/sounds';
@@ -200,7 +201,8 @@ export default function CustomQuestScreen() {
                     <Image source={thumb} style={styles.segmentThumb} contentFit="contain" />
                   ) : null}
                   <Text style={styles.segmentName} numberOfLines={1}>
-                    {nameOf(segment.exerciseSlug)}
+                    {exerciseName(segment.exerciseSlug, nameOf(segment.exerciseSlug), t) ??
+                      nameOf(segment.exerciseSlug)}
                   </Text>
                   {icon !== null ? (
                     <Image

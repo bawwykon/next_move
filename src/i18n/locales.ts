@@ -286,6 +286,18 @@ const en = {
     slot: 'Slot {{n}}',
     lockedFallback: 'Some things reveal themselves in time.',
     unlockedDate: 'Unlocked {{mon}} {{d}}, {{y}}',
+    rarity: {
+      common: 'Common',
+      rare: 'Rare',
+      epic: 'Epic',
+      legendary: 'Legendary',
+    },
+    category: {
+      beginner: 'Beginner',
+      progress: 'Progress',
+      consistency: 'Consistency',
+      special: 'Special',
+    },
   },
   history: {
     loading: 'Loading your quest history…',
@@ -629,6 +641,201 @@ const en = {
         flavor: 'You did not climb the mountain — you became it. Your journey continues.',
       },
     },
+    achievements: {
+      'first-quest': {
+        title: 'First Quest',
+        description: 'Complete your first quest.',
+        hint: 'Take the first step.',
+      },
+      'first-level': {
+        title: 'First Level',
+        description: 'Reach level 2.',
+        hint: 'Every journey has its first summit.',
+      },
+      'first-week': {
+        title: 'First Week',
+        description: 'Complete quests on seven different days.',
+        hint: 'A week of small wins adds up.',
+      },
+      'workouts-50': {
+        title: '50 Workouts',
+        description: 'Complete 50 quests.',
+        hint: 'A number worth chasing.',
+      },
+      'workouts-100': {
+        title: '100 Workouts',
+        description: 'Complete 100 quests.',
+        hint: 'Three digits to your name.',
+      },
+      'workouts-250': {
+        title: '250 Workouts',
+        description: 'Complete 250 quests.',
+        hint: 'Your rhythm is your own.',
+      },
+      'streak-7': {
+        title: '7 Day Streak',
+        description: 'Keep a 7-day quest streak.',
+        hint: 'Seven small days, one strong chain.',
+      },
+      'streak-30': {
+        title: '30 Day Streak',
+        description: 'Keep a 30-day quest streak.',
+        hint: 'A full month of showing up.',
+      },
+      'streak-100': {
+        title: '100 Day Streak',
+        description: 'Keep a 100-day quest streak.',
+        hint: 'A hundred days of quiet consistency.',
+      },
+      phoenix: {
+        title: 'Phoenix',
+        description: 'Reach Level 25 in your fitness journey.',
+        hint: 'From the ashes of repetition, a disciplined habit rises.',
+      },
+      'early-bird': {
+        title: 'Early Bird',
+        description: 'Start 100 quests before 10:00 AM.',
+        hint: 'The day starts early for some.',
+      },
+      'night-owl': {
+        title: 'Night Owl',
+        description: 'Start 100 quests after 8:00 PM.',
+        hint: 'Night holds its own magic.',
+      },
+      'master-adventurer': {
+        title: 'Master Adventurer',
+        description: 'Reach level 100.',
+        hint: 'The summit waits for the patient.',
+      },
+      'founders-emblem': {
+        title: "Founder's Emblem",
+        description: 'Awarded to founding supporters.',
+        hint: 'Reserved for founders.',
+      },
+    },
+    exercises: {
+      'wall-push-up': {
+        name: 'Wall Push-Up',
+        instruction:
+          'Stand an arm\u2019s length from a wall with hands at shoulder height. Gently bend your elbows to bring your chest toward the wall, then push back to the start with control.',
+        safety:
+          'Keep your body in one straight line from head to heels and stop if you feel any strain in your shoulders.',
+      },
+      'glute-bridge': {
+        name: 'Glute Bridge',
+        instruction:
+          'Lie on your back with knees bent and feet flat on the floor. Press through your heels to lift your hips toward the ceiling, squeeze at the top, then lower with control.',
+        safety: 'Keep your shoulders and feet grounded and avoid arching your lower back.',
+      },
+      'bird-dog': {
+        name: 'Bird Dog',
+        instruction:
+          'Start on all fours with hands under your shoulders and knees under your hips. Reach one arm forward and the opposite leg back at the same time, hold briefly, then return and switch sides.',
+        safety: 'Keep your hips level and move slowly so you stay balanced.',
+      },
+      'seated-leg-raise': {
+        name: 'Seated Leg Raise',
+        instruction:
+          'Sit tall at the edge of a sturdy chair with hands at your sides. Lift one leg straight out in front, hold, then lower it slowly. Alternate legs.',
+        safety: 'Tighten your core and keep your back straight, using the chair seat for support.',
+      },
+      'wall-sit': {
+        name: 'Wall Sit',
+        instruction:
+          'Slide your back down a wall until your knees are bent at a comfortable angle, with feet flat and hips below your knees. Hold the position and breathe steadily.',
+        safety:
+          'Stop if you feel any sharp pressure in your knees, and place your feet slightly wider than your hips for stability.',
+      },
+      'march-in-place': {
+        name: 'March in Place',
+        instruction:
+          'Stand tall and lift your knees one at a time as if marching. Swing your arms gently and keep a steady rhythm.',
+        safety: 'Land softly through the whole foot and keep your chest lifted.',
+      },
+      'step-touch': {
+        name: 'Step Touch',
+        instruction:
+          'Step one foot out to the side and bring the other foot to meet it, then step back the other way. Keep a light, steady rhythm.',
+        safety: 'Keep your steps small and controlled on smooth, level ground.',
+      },
+      'gentle-hops': {
+        name: 'Gentle Hops',
+        instruction:
+          'Hop softly from one foot to the other with a light rhythm, landing quietly through the ball of the foot. Keep the hops low and controlled.',
+        safety: 'Skip the hops if your joints feel tender today and march instead.',
+      },
+      'seated-march': {
+        name: 'Seated March',
+        instruction:
+          'Sit tall with both feet flat. Lift one knee toward your chest, lower it, then lift the other, keeping a steady rhythm.',
+        safety: 'Hold the sides of the chair for balance and keep your back supported.',
+      },
+      'neck-shoulder-rolls': {
+        name: 'Neck and Shoulder Rolls',
+        instruction:
+          'Slowly roll your shoulders forward and back in a circle, then gently turn your head side to side. Keep the movement small and smooth.',
+        safety: 'Move within a comfortable range and never force your neck.',
+      },
+      'cat-cow': {
+        name: 'Cat Cow',
+        instruction:
+          'On all fours, round your back up toward the ceiling as you exhale, then gently lower and arch as you inhale. Move slowly with your breath.',
+        safety: 'Keep the motion comfortable and move only as far as feels good.',
+      },
+      'seated-hamstring-stretch': {
+        name: 'Seated Hamstring Stretch',
+        instruction:
+          'Sit with one leg extended and the other foot resting near your inner thigh. Hinge gently forward from the hips and hold, then switch sides.',
+        safety: 'Keep a soft bend in the extended knee and stop before it pulls sharply.',
+      },
+      'standing-quad-stretch': {
+        name: 'Standing Quad Stretch',
+        instruction:
+          'Stand tall and hold a wall or chair for balance. Bend one knee and bring your heel toward your glute, hold gently, then switch legs.',
+        safety: 'Keep both knees close together and stop if your hip feels tight.',
+      },
+      squat: {
+        name: 'Squat',
+        instruction:
+          'Lower your hips back and down until your thighs are roughly parallel, then press through your heels to stand.',
+        safety: 'Keep knees tracking over toes and your chest lifted.',
+      },
+      'push-up': {
+        name: 'Push-Up',
+        instruction:
+          'From a straight-arm plank, lower your chest to just above the floor, then push back up.',
+        safety: 'Keep your body in one line; don\u2019t let hips sag.',
+      },
+      lunges: {
+        name: 'Lunges',
+        instruction:
+          'Step one leg forward and lower both knees to about 90 degrees, then push back to standing.',
+        safety: 'Keep your front knee over your ankle.',
+      },
+      plank: {
+        name: 'Plank',
+        instruction: 'Hold a straight-arm or forearm plank with your body in one line.',
+        safety: 'Breathe steadily; stop if your lower back aches.',
+      },
+      'bicycle-crunch': {
+        name: 'Bicycle Crunch',
+        instruction:
+          'Lie on your back, lift your shoulders, and alternate bringing opposite elbow to knee in a pedaling motion.',
+        safety: 'Move slowly and keep your lower back pressed down.',
+      },
+      'mountain-climber': {
+        name: 'Mountain Climbers',
+        instruction:
+          'From a straight-arm plank, drive your knees toward your chest one at a time, keeping your hips low.',
+        safety: 'Keep shoulders over wrists; small, steady steps.',
+      },
+      burpees: {
+        name: 'Burpees',
+        instruction:
+          'From standing, squat down, step or jump back to a plank, return to the squat, then jump up.',
+        safety: 'Land softly with bent knees on the jump.',
+      },
+    },
   },
 };
 
@@ -871,6 +1078,18 @@ const es: typeof en = {
     slot: 'Hueco {{n}}',
     lockedFallback: 'Algunas cosas se revelan con el tiempo.',
     unlockedDate: 'Desbloqueado el {{d}} de {{mon}} de {{y}}',
+    rarity: {
+      common: 'Común',
+      rare: 'Raro',
+      epic: 'Épico',
+      legendary: 'Legendario',
+    },
+    category: {
+      beginner: 'Inicial',
+      progress: 'Progreso',
+      consistency: 'Constancia',
+      special: 'Especial',
+    },
   },
   history: {
     loading: 'Cargando tu historial de misiones…',
@@ -1216,6 +1435,202 @@ const es: typeof en = {
         flavor: 'No subiste la montaña — te convertiste en ella. Tu viaje continúa.',
       },
     },
+    achievements: {
+      'first-quest': {
+        title: 'Primera misión',
+        description: 'Completa tu primera misión.',
+        hint: 'Da el primer paso.',
+      },
+      'first-level': {
+        title: 'Primer nivel',
+        description: 'Alcanza el nivel 2.',
+        hint: 'Todo viaje tiene su primera cima.',
+      },
+      'first-week': {
+        title: 'Primera semana',
+        description: 'Completa misiones en siete días distintos.',
+        hint: 'Una semana de pequeñas victorias suma.',
+      },
+      'workouts-50': {
+        title: '50 entrenamientos',
+        description: 'Completa 50 misiones.',
+        hint: 'Un número que vale la pena.',
+      },
+      'workouts-100': {
+        title: '100 entrenamientos',
+        description: 'Completa 100 misiones.',
+        hint: 'Tres cifras a tu nombre.',
+      },
+      'workouts-250': {
+        title: '250 entrenamientos',
+        description: 'Completa 250 misiones.',
+        hint: 'Tu ritmo es solo tuyo.',
+      },
+      'streak-7': {
+        title: 'Racha de 7 días',
+        description: 'Mantén una racha de 7 días.',
+        hint: 'Siete días pequeños, una cadena fuerte.',
+      },
+      'streak-30': {
+        title: 'Racha de 30 días',
+        description: 'Mantén una racha de 30 días.',
+        hint: 'Un mes entero presente.',
+      },
+      'streak-100': {
+        title: 'Racha de 100 días',
+        description: 'Mantén una racha de 100 días.',
+        hint: 'Cien días de constancia tranquila.',
+      },
+      phoenix: {
+        title: 'Fénix',
+        description: 'Alcanza el nivel 25 en tu viaje fitness.',
+        hint: 'De las cenizas de la repetición nace un hábito disciplinado.',
+      },
+      'early-bird': {
+        title: 'Madrugador',
+        description: 'Empieza 100 misiones antes de las 10:00.',
+        hint: 'El día empieza temprano para algunos.',
+      },
+      'night-owl': {
+        title: 'Noctámbulo',
+        description: 'Empieza 100 misiones después de las 20:00.',
+        hint: 'La noche tiene su propia magia.',
+      },
+      'master-adventurer': {
+        title: 'Aventurero maestro',
+        description: 'Alcanza el nivel 100.',
+        hint: 'La cima espera a los pacientes.',
+      },
+      'founders-emblem': {
+        title: 'Emblema de fundador',
+        description: 'Otorgado a los primeros supporters.',
+        hint: 'Reservado a los fundadores.',
+      },
+    },
+    exercises: {
+      'wall-push-up': {
+        name: 'Flexión en pared',
+        instruction:
+          'Ponte a un brazo de distancia de la pared, con las manos a la altura de los hombros. Flexiona los codos con suavidad para acercar el pecho a la pared y vuelve al inicio con control.',
+        safety:
+          'Mantén el cuerpo en línea recta de pies a cabeza y para si sientes tensión en los hombros.',
+      },
+      'glute-bridge': {
+        name: 'Puente de glúteos',
+        instruction:
+          'Túmbate boca arriba con las rodillas flexionadas y los pies apoyados. Empuja con los talones para elevar la cadera hacia el techo, aprieta arriba y baja con control.',
+        safety: 'Mantén hombros y pies apoyados y evita arquear la zona lumbar.',
+      },
+      'bird-dog': {
+        name: 'Bird dog',
+        instruction:
+          'Apóyate en manos y rodillas, con las manos bajo los hombros y las rodillas bajo la cadera. Estira un brazo al frente y la pierna contraria hacia atrás a la vez, mantén un momento, vuelve y cambia de lado.',
+        safety: 'Mantén la cadera nivelada y muévete despacio para no perder el equilibrio.',
+      },
+      'seated-leg-raise': {
+        name: 'Elevación de pierna sentado',
+        instruction:
+          'Siéntate erguido al borde de una silla firme, con las manos a los lados. Levanta una pierna estirada al frente, mantén y baja despacio. Alterna las piernas.',
+        safety: 'Aprieta el abdomen, mantén la espalda recta y apóyate en el asiento.',
+      },
+      'wall-sit': {
+        name: 'Sentadilla en pared',
+        instruction:
+          'Desliza la espalda por la pared hasta flexionar las rodillas en un ángulo cómodo, con los pies apoyados y la cadera bajo las rodillas. Mantén la postura y respira con calma.',
+        safety:
+          'Para si sientes presión fuerte en las rodillas, y separa los pies un poco más que la cadera para estabilizarte.',
+      },
+      'march-in-place': {
+        name: 'Marcha en el sitio',
+        instruction:
+          'Ponte erguido y levanta las rodillas una a una como marchando. Mueve los brazos con suavidad y lleva un ritmo constante.',
+        safety: 'Apoya todo el pie con suavidad y mantén el pecho elevado.',
+      },
+      'step-touch': {
+        name: 'Paso lateral',
+        instruction:
+          'Da un paso lateral con un pie y junta el otro, luego vuelve hacia el otro lado. Lleva un ritmo ligero y constante.',
+        safety: 'Pasos cortos y controlados, sobre suelo liso y nivelado.',
+      },
+      'gentle-hops': {
+        name: 'Saltitos suaves',
+        instruction:
+          'Salta con suavidad de un pie al otro con ritmo ligero, cayendo en silencio sobre la parte delantera del pie. Saltos bajos y controlados.',
+        safety: 'Si las articulaciones están sensibles hoy, marcha en su lugar.',
+      },
+      'seated-march': {
+        name: 'Marcha sentado',
+        instruction:
+          'Siéntate erguido con los pies apoyados. Levanta una rodilla hacia el pecho, baja y levanta la otra, con ritmo constante.',
+        safety: 'Agárrate a los lados de la silla y mantén la espalda apoyada.',
+      },
+      'neck-shoulder-rolls': {
+        name: 'Círculos de cuello y hombros',
+        instruction:
+          'Gira los hombros despacio hacia adelante y atrás en círculo, luego gira la cabeza con suavidad de lado a lado. Movimiento pequeño y fluido.',
+        safety: 'Muévete en un rango cómodo y nunca fuerces el cuello.',
+      },
+      'cat-cow': {
+        name: 'Gato-vaca',
+        instruction:
+          'En cuatro apoyos, redondea la espalda hacia el techo al exhalar y baja y arquea con suavidad al inhalar. Muévete despacio con la respiración.',
+        safety: 'Mantén el movimiento cómodo, solo hasta donde se sienta bien.',
+      },
+      'seated-hamstring-stretch': {
+        name: 'Estiramiento de isquios sentado',
+        instruction:
+          'Siéntate con una pierna estirada y el otro pie cerca del muslo interior. Inclínate con suavidad desde la cadera, mantén y cambia de lado.',
+        safety: 'Mantén una leve flexión en la rodilla estirada y para antes de que tire fuerte.',
+      },
+      'standing-quad-stretch': {
+        name: 'Estiramiento de cuádriceps de pie',
+        instruction:
+          'Ponte erguido y agárrate a una pared o silla. Flexiona una rodilla llevando el talón al glúteo, mantén con suavidad y cambia de pierna.',
+        safety: 'Mantén ambas rodillas juntas y para si la cadera se tensa.',
+      },
+      squat: {
+        name: 'Sentadilla',
+        instruction:
+          'Baja la cadera hacia atrás y abajo hasta que los muslos queden casi paralelos, luego empuja con los talones para subir.',
+        safety: 'Rodillas alineadas con los pies y pecho elevado.',
+      },
+      'push-up': {
+        name: 'Flexión',
+        instruction:
+          'Desde plancha con brazos estirados, baja el pecho casi hasta el suelo y empuja para subir.',
+        safety: 'Cuerpo en línea; no dejes caer la cadera.',
+      },
+      lunges: {
+        name: 'Zancadas',
+        instruction:
+          'Da un paso largo al frente y baja ambas rodillas a unos 90 grados, luego empuja para volver.',
+        safety: 'Mantén la rodilla delantera sobre el tobillo.',
+      },
+      plank: {
+        name: 'Plancha',
+        instruction:
+          'Mantén una plancha con brazos estirados o antebrazos, con el cuerpo en línea.',
+        safety: 'Respira con calma; para si duele la zona lumbar.',
+      },
+      'bicycle-crunch': {
+        name: 'Abdominales bicicleta',
+        instruction:
+          'Túmbate boca arriba, levanta los hombros y alterna codo con rodilla contraria como pedaleando.',
+        safety: 'Muévete despacio, con la zona lumbar pegada al suelo.',
+      },
+      'mountain-climber': {
+        name: 'Escaladores',
+        instruction:
+          'Desde plancha con brazos estirados, lleva las rodillas al pecho una a una, con la cadera baja.',
+        safety: 'Hombros sobre las muñecas; pasos cortos y constantes.',
+      },
+      burpees: {
+        name: 'Burpees',
+        instruction:
+          'De pie, baja a sentadilla, lleva los pies atrás a plancha (con salto o paso), vuelve a la sentadilla y salta arriba.',
+        safety: 'Cae suave, con las rodillas flexionadas.',
+      },
+    },
   },
 };
 
@@ -1491,6 +1906,18 @@ const ar = {
     slot: 'الخانة {{n}}',
     lockedFallback: 'بعض الأشياء تكشف عن نفسها مع الوقت.',
     unlockedDate: 'تم الفتح {{d}} {{mon}} {{y}}',
+    rarity: {
+      common: 'شائع',
+      rare: 'نادر',
+      epic: 'ملحمي',
+      legendary: 'أسطوري',
+    },
+    category: {
+      beginner: 'البداية',
+      progress: 'التقدم',
+      consistency: 'الاستمرارية',
+      special: 'مميز',
+    },
   },
   history: {
     loading: 'جارٍ تحميل سجل مهامك…',
@@ -1841,6 +2268,199 @@ const ar = {
       '7': {
         name: 'قمة الإتقان',
         flavor: 'أنت لم تتسلق الجبل — بل أصبحته. رحلتك مستمرة.',
+      },
+    },
+    achievements: {
+      'first-quest': {
+        title: 'المهمة الأولى',
+        description: 'أكمل مهمتك الأولى.',
+        hint: 'اخطُ الخطوة الأولى.',
+      },
+      'first-level': {
+        title: 'المستوى الأول',
+        description: 'اصعد إلى المستوى 2.',
+        hint: 'لكل رحلة قمتها الأولى.',
+      },
+      'first-week': {
+        title: 'الأسبوع الأول',
+        description: 'أكمل مهام في سبعة أيام مختلفة.',
+        hint: 'أسبوع من الانتصارات الصغيرة يتراكم.',
+      },
+      'workouts-50': {
+        title: '50 تمرينًا',
+        description: 'أكمل 50 مهمة.',
+        hint: 'رقم يستحق السعي.',
+      },
+      'workouts-100': {
+        title: '100 تمرين',
+        description: 'أكمل 100 مهمة.',
+        hint: 'ثلاث خانات باسمك.',
+      },
+      'workouts-250': {
+        title: '250 تمرينًا',
+        description: 'أكمل 250 مهمة.',
+        hint: 'إيقاعك ملكك وحدك.',
+      },
+      'streak-7': {
+        title: 'سلسلة 7 أيام',
+        description: 'حافظ على سلسلة مهام 7 أيام.',
+        hint: 'سبعة أيام صغيرة، وسلسلة قوية واحدة.',
+      },
+      'streak-30': {
+        title: 'سلسلة 30 يومًا',
+        description: 'حافظ على سلسلة مهام 30 يومًا.',
+        hint: 'شهر كامل من الحضور.',
+      },
+      'streak-100': {
+        title: 'سلسلة 100 يوم',
+        description: 'حافظ على سلسلة مهام 100 يوم.',
+        hint: 'مئة يوم من الاستمرارية الهادئة.',
+      },
+      phoenix: {
+        title: 'العنقاء',
+        description: 'اصعد إلى المستوى 25 في رحلتك الرياضية.',
+        hint: 'من رماد التكرار تنهض عادة منضبطة.',
+      },
+      'early-bird': {
+        title: 'الطائر المبكر',
+        description: 'ابدأ 100 مهمة قبل العاشرة صباحًا.',
+        hint: 'اليوم يبدأ مبكرًا للبعض.',
+      },
+      'night-owl': {
+        title: 'بومة الليل',
+        description: 'ابدأ 100 مهمة بعد الثامنة مساءً.',
+        hint: 'لليل سحره الخاص.',
+      },
+      'master-adventurer': {
+        title: 'المغامر الأستاذ',
+        description: 'اصعد إلى المستوى 100.',
+        hint: 'القمة تنتظر الصبورين.',
+      },
+      'founders-emblem': {
+        title: 'شارة المؤسسين',
+        description: 'تُمنح للداعمين الأوائل.',
+        hint: 'محفوظة للمؤسسين.',
+      },
+    },
+    exercises: {
+      'wall-push-up': {
+        name: 'ضغط الحائط',
+        instruction:
+          'قف على بعد ذراع من الحائط ويداك بمستوى الكتفين. اثنِ مرفقيك بلطف لتقريب صدرك من الحائط ثم ادفع عائدًا للبداية بتحكم.',
+        safety: 'حافظ على جسمك في خط مستقيم من الرأس للكعبين وتوقف إذا شعرت بأي إجهاد في الكتفين.',
+      },
+      'glute-bridge': {
+        name: 'جسر الأرداف',
+        instruction:
+          'استلقِ على ظهرك مع ثني الركبتين والقدمين على الأرض. ادفع بكعبيك لرفع وركيك نحو السقف، واعصر في الأعلى ثم انزل بتحكم.',
+        safety: 'أبقِ كتفيك وقدميك ثابتتين وتجنب تقويس أسفل الظهر.',
+      },
+      'bird-dog': {
+        name: 'الطائر والكلب',
+        instruction:
+          'ابدأ على يديك وركبتيك، اليدان تحت الكتفين والركبتان تحت الوركين. مدّ ذراعًا للأمام والساق المعاكسة للخلف معًا، اثبت قليلًا ثم ارجع وبدّل الجهة.',
+        safety: 'حافظ على وركيك مستويين وتحرك ببطء لتحافظ على توازنك.',
+      },
+      'seated-leg-raise': {
+        name: 'رفع الساق جالسًا',
+        instruction:
+          'اجلس منتصبًا على حافة كرسي ثابت ويداك بجانبيك. ارفع ساقًا ممدودة للأمام، اثبت ثم أنزلها ببطء. بدّل الساقين.',
+        safety: 'اشدُد عضلات بطنك وحافظ على استقامة ظهرك مستعينًا بمقعد الكرسي.',
+      },
+      'wall-sit': {
+        name: 'الجلوس على الحائط',
+        instruction:
+          'انزل بظهرك على الحائط حتى تنثني ركبتاك بزاوية مريحة، والقدمان على الأرض والوركان تحت الركبتين. اثبت على الوضعية وتنفس بثبات.',
+        safety: 'توقف إذا شعرت بضغط حاد في الركبتين، وباعد بين قدميك أكثر من وركيك قليلًا للثبات.',
+      },
+      'march-in-place': {
+        name: 'المشي في المكان',
+        instruction:
+          'قف منتصبًا وارفع ركبتيك واحدة تلو الأخرى كأنك تمشي. حرّك ذراعيك بلطف وحافظ على إيقاع ثابت.',
+        safety: 'اهبط بنعومة على كامل القدم وحافظ على صدرك مرفوعًا.',
+      },
+      'step-touch': {
+        name: 'خطوة ولمس',
+        instruction:
+          'اخطُ بقدم للجانب وقرّب القدم الأخرى منها، ثم ارجع للجهة الأخرى. حافظ على إيقاع خفيف وثابت.',
+        safety: 'اجعل خطواتك صغيرة ومتحكمًا بها على أرض مستوية وناعمة.',
+      },
+      'gentle-hops': {
+        name: 'قفزات لطيفة',
+        instruction:
+          'اقفز بنعومة من قدم لأخرى بإيقاع خفيف، واهبط بهدوء على مقدمة القدم. اجعل القفزات منخفضة ومتحكمًا بها.',
+        safety: 'تخطَّ القفزات إذا كانت مفاصلك حساسة اليوم وامشِ بدلًا منها.',
+      },
+      'seated-march': {
+        name: 'المشي جالسًا',
+        instruction:
+          'اجلس منتصبًا والقدمان على الأرض. ارفع ركبة نحو صدرك وأنزلها ثم ارفع الأخرى، وحافظ على إيقاع ثابت.',
+        safety: 'تمسك بجانبي الكرسي للتوازن وحافظ على ظهرك مسنودًا.',
+      },
+      'neck-shoulder-rolls': {
+        name: 'تدوير الرقبة والكتفين',
+        instruction:
+          'دوّر كتفيك ببطء للأمام والخلف بحركة دائرية، ثم أدر رأسك بلطف يمينًا ويسارًا. اجعل الحركة صغيرة وسلسة.',
+        safety: 'تحرك ضمن مدى مريح ولا تجبر رقبتك أبدًا.',
+      },
+      'cat-cow': {
+        name: 'القطة والبقرة',
+        instruction:
+          'على يديك وركبتيك، قوّس ظهرك نحو السقف مع الزفير، ثم أنزله وقوّسه بلطف مع الشهيق. تحرك ببطء مع تنفسك.',
+        safety: 'اجعل الحركة مريحة ولا تتجاوز ما يشعرك بالراحة.',
+      },
+      'seated-hamstring-stretch': {
+        name: 'تمدد أوتار الركبة جالسًا',
+        instruction:
+          'اجلس مع مدّ ساق ووضع القدم الأخرى قرب الفخذ الداخلي. انحنِ بلطف من الوركين واثبت ثم بدّل الجهة.',
+        safety: 'حافظ على انثناء بسيط في الركبة الممدودة وتوقف قبل الشد الحاد.',
+      },
+      'standing-quad-stretch': {
+        name: 'تمدد الفخذ الأمامي واقفًا',
+        instruction:
+          'قف منتصبًا وتمسك بحائط أو كرسي للتوازن. اثنِ ركبة وقرّب كعبك من ردفك، اثبت بلطف ثم بدّل الساق.',
+        safety: 'أبقِ الركبتين متقاربتين وتوقف إذا شعرت بشد في الورك.',
+      },
+      squat: {
+        name: 'القرفصاء',
+        instruction:
+          'أنزل وركيك للخلف والأسفل حتى يصبح فخذاك متوازيين تقريبًا، ثم ادفع بكعبيك للوقوف.',
+        safety: 'أبقِ ركبتيك فوق أصابع قدميك وصدرك مرفوعًا.',
+      },
+      'push-up': {
+        name: 'الضغط',
+        instruction:
+          'من وضعية اللوح الخشبي بذراعين ممدودتين، أنزل صدرك قريبًا من الأرض ثم ادفع للأعلى.',
+        safety: 'حافظ على جسمك في خط واحد ولا تدع وركيك يتدليان.',
+      },
+      lunges: {
+        name: 'الطعنات',
+        instruction:
+          'اخطُ بساق للأمام وأنزل الركبتين لزاوية 90 درجة تقريبًا، ثم ادفع عائدًا للوقوف.',
+        safety: 'أبقِ الركبة الأمامية فوق الكاحل.',
+      },
+      plank: {
+        name: 'اللوح الخشبي',
+        instruction: 'اثبت على لوح خشبي بذراعين ممدودتين أو على الساعدين وجسمك في خط واحد.',
+        safety: 'تنفس بثبات وتوقف إذا آلمك أسفل ظهرك.',
+      },
+      'bicycle-crunch': {
+        name: 'طحن الدراجة',
+        instruction:
+          'استلقِ على ظهرك وارفع كتفيك، وقرّب بالتناوب المرفق المعاكس للركبة بحركة كالتجديف.',
+        safety: 'تحرك ببطء وحافظ على أسفل ظهرك مضغوطًا للأسفل.',
+      },
+      'mountain-climber': {
+        name: 'متسلقو الجبال',
+        instruction:
+          'من وضعية اللوح الخشبي بذراعين ممدودتين، ادفع ركبتيك نحو صدرك واحدة تلو الأخرى مع إبقاء الوركين منخفضين.',
+        safety: 'أبقِ الكتفين فوق الرسغين بخطوات صغيرة وثابتة.',
+      },
+      burpees: {
+        name: 'بيربيز',
+        instruction:
+          'من الوقوف، انزل للقرفصاء ثم اقفز أو اخطُ للخلف لوضعية اللوح، وارجع للقرفصاء ثم اقفز للأعلى.',
+        safety: 'اهبط بنعومة وركب مثنية عند القفز.',
       },
     },
   },

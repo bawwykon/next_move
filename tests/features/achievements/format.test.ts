@@ -6,6 +6,7 @@ import {
   ACHIEVEMENT_CATEGORY_ART,
 } from '@/features/achievements/format';
 import { mergeCatalogWithUnlocks, type AchievementCatalogRow } from '@/domain/achievements/merge';
+import { achievementHint, achievementTitle } from '@/features/catalog/copy';
 import { englishT } from '../../i18n/testLocale';
 import type { TFunction } from 'i18next';
 
@@ -145,9 +146,27 @@ describe('locked render surface (FR-ACH-4)', () => {
       const strings = lockedRowStrings(row, t);
       expect(strings).toHaveLength(3);
       expect(strings[0]).toBe(LOCKED_EMBLEM);
-      expect(strings[1]).toBe(row.title);
-      expect(strings[2]).toBe(row.hint);
+      // CATALOG-01 — display copy resolves through the locale tables;
+      // the test catalogue mirrors the seed titles, unknown slugs pass through.
+      expect(strings[1]).toBe(achievementTitle(row.slug, row.title, t));
+      expect(strings[2]).toBe(achievementHint(row.slug, row.hint ?? null, t) ?? row.hint);
     }
+  });
+
+  it('unknown slugs pass DB copy through untouched (custom/future content)', () => {
+    const strings = lockedRowStrings(
+      {
+        slug: 'custom-feat',
+        title: 'My Feat',
+        description: 'Did a thing.',
+        category: 'special',
+        rarity: null,
+        state: 'locked',
+        hint: 'A personal hint.',
+      },
+      t,
+    );
+    expect(strings).toEqual(['?', 'My Feat', 'A personal hint.']);
   });
 
   it('LEAK GUARD: none of the locked strings exposes the machine-readable rule syntax', () => {

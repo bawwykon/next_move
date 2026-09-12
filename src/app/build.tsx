@@ -36,6 +36,7 @@ import {
 } from '@/domain/customWorkout/model';
 import { DIFFICULTY_ART_KEY, type ExerciseDifficulty } from '@/domain/exercises/difficulty';
 import { difficultyArt, exerciseThumb, REST_DETAILED_ART } from '@/features/assets/assetMap';
+import { exerciseName } from '@/features/catalog/copy';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 import { withTapCue } from '@/lib/sounds';
 
@@ -402,7 +403,7 @@ const CatalogChip = memo(function CatalogChip({
         <Image source={thumb} style={styles.pickThumb} contentFit="contain" />
       ) : null}
       <Text style={styles.pickName} numberOfLines={1}>
-        {exercise.name}
+        {exerciseName(exercise.slug, exercise.name, t) ?? exercise.name}
       </Text>
       {icon !== null ? (
         <Image
@@ -455,7 +456,7 @@ const BuildRow = memo(function BuildRow({
         ) : null}
         <View style={styles.rowLeft}>
           <Text style={styles.rowName} numberOfLines={1}>
-            {name}
+            {isRest ? name : (exerciseName(segment.exerciseSlug, name, t) ?? name)}
           </Text>
           <View style={styles.chipRow}>
             {presets.map((preset) => (
