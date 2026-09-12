@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 
 import { Screen } from '@/components/ui/Screen';
+import { questTitle } from '@/features/catalog/copy';
 import { getOnboarding } from '@/data/repositories/profile';
 import {
   fetchCustomWorkouts,
@@ -294,11 +295,14 @@ export default function QuestBoardScreen() {
                   survived, so the quest can be picked up where it stopped. */}
               {checkpoint ? (
                 <ResumeBanner
-                  title={
-                    catalog?.find((quest) => quest.id === checkpoint.questId)?.title ??
-                    customs.find((custom) => custom.id === checkpoint.questId)?.name ??
-                    null
-                  }
+                  title={(() => {
+                    const quest = catalog?.find((q) => q.id === checkpoint.questId);
+                    const custom = customs.find((c) => c.id === checkpoint.questId);
+                    if (quest) {
+                      return questTitle(quest.slug, quest.title, t) ?? custom?.name ?? null;
+                    }
+                    return custom?.name ?? null;
+                  })()}
                   onResume={() => {
                     router.push({
                       pathname: '/workout/[id]',
@@ -558,7 +562,7 @@ function QuestCard({
       activeOpacity={0.85}
     >
       <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle}>{quest.title}</Text>
+        <Text style={styles.cardTitle}>{questTitle(quest.slug, quest.title, t)}</Text>
         <BadgePill difficulty={quest.difficulty} />
       </View>
       <Text style={styles.cardMeta}>
@@ -593,7 +597,7 @@ function QuestRow({
       activeOpacity={0.85}
     >
       <View style={styles.rowLeft}>
-        <Text style={styles.rowTitle}>{quest.title}</Text>
+        <Text style={styles.rowTitle}>{questTitle(quest.slug, quest.title, t)}</Text>
         <Text style={styles.rowMeta}>
           {formatDuration(quest.durationSec, t)} · {quest.xpReward} XP
         </Text>

@@ -51,7 +51,12 @@ export function ChapterUnlockCelebration({
   const { t } = useTranslation();
   const chapter = CHAPTERS[chapterId - 1] ?? null;
   const chapterName =
-    chapter !== null ? `Chapter ${chapter.id}: ${chapter.name}` : `Chapter ${chapterId}`;
+    chapter !== null
+      ? t('journeyMap.chapterTitle', {
+          id: chapter.id,
+          name: t(`catalog.chapters.${chapter.id}.name`, { defaultValue: chapter.name }),
+        })
+      : t('journeyMap.chapterTitle', { id: chapterId, name: '' });
   // Badge-pin art first (matches the journey map pins), emblem fallback.
   // Both are existing assetMap exports (not renamed).
   const badge = chapterBadgeArt(chapterId) ?? chapterArt(chapterId);

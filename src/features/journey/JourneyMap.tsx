@@ -3,6 +3,7 @@
  * Center-aligned adventure path with connected nodes.
  */
 import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { colors, fonts, spacing } from '@/lib/theme';
@@ -20,7 +21,8 @@ interface JourneyMapProps {
 }
 
 export function JourneyMap({ journeyQuestCount }: JourneyMapProps) {
-  const { chapters, currentChapter } = useJourneyState(journeyQuestCount);
+  const { t } = useTranslation();
+  const { chapters, currentChapter } = useJourneyState(journeyQuestCount, t);
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const selectedChapter =
@@ -42,7 +44,7 @@ export function JourneyMap({ journeyQuestCount }: JourneyMapProps) {
     <View style={styles.container}>
       {/* Title */}
       <View style={styles.header}>
-        <Text style={styles.title}>Your Journey</Text>
+        <Text style={styles.title}>{t('victory.yourJourney')}</Text>
         <Text style={styles.subtitle}>{journeyQuestCount} quests completed</Text>
       </View>
 

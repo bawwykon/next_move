@@ -281,7 +281,7 @@ export default function BuilderScreen() {
                   ))
                 )}
                 <Text style={styles.totalsLine}>
-                  {mmss(totalSec)} · {segments.length} block{segments.length === 1 ? '' : 's'}
+                  {t('build.totals', { time: mmss(totalSec), count: segments.length })}
                   {hint && !violations.includes('empty') ? `  ·  ${hint}` : ''}
                 </Text>
               </View>

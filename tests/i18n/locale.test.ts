@@ -84,6 +84,7 @@ describe('resource fallback', () => {
       'loadout',
       'onboarding',
       'journeyMap',
+      'catalog',
     ] as const;
     for (const group of groups) {
       expect(Object.keys(localeResources.es[group]).sort()).toEqual(

@@ -2,6 +2,9 @@
  * JOURNEY-01 — hardcoded chapter data (names, thresholds, flavors, requirements).
  * All display-only; no mutations, no I/O.
  */
+import type { TFunction } from 'i18next';
+
+import { chapterFlavor, chapterName } from '@/features/catalog/copy';
 
 export interface ChapterData {
   id: number;
@@ -65,6 +68,24 @@ export const CHAPTER_DATA: readonly ChapterData[] = Object.freeze([
 
 export function chapterDataById(id: number): ChapterData | null {
   return CHAPTER_DATA[id - 1] ?? null;
+}
+
+/**
+ * CATALOG-01 — localized chapter rows. Thresholds/ids stay reference-identical;
+ * name/flavor/requirement follow the locale (requirement derives from the
+ * journeyMap keys so counts stay numeric). Reference table stays English.
+ */
+export function localizeChapterData(t: TFunction): ChapterData[] {
+  return CHAPTER_DATA.map((chapter) => ({
+    id: chapter.id,
+    name: chapterName(chapter.id, chapter.name, t),
+    threshold: chapter.threshold,
+    flavor: chapterFlavor(chapter.id, chapter.flavor, t),
+    requirement:
+      chapter.threshold === 0
+        ? t('journeyMap.firstRequirement')
+        : t('journeyMap.reachToUnlock', { n: chapter.threshold }),
+  }));
 }
 
 export function nextChapterThreshold(currentThreshold: number): number | null {

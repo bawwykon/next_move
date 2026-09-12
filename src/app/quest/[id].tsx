@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Animated, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { Screen } from '@/components/ui/Screen';
+import { questDescription, questTitle } from '@/features/catalog/copy';
 import { fetchQuestDetail, type QuestDetail, type QuestSegment } from '@/data/repositories/quests';
 import { dayKey } from '@/domain/streak/dayKey';
 import { DIFFICULTY_ART_KEY, exerciseDifficulty } from '@/domain/exercises/difficulty';
@@ -68,7 +69,7 @@ export default function QuestDetailScreen() {
     }
     router.push({
       pathname: '/workout/[id]',
-      params: { id: detail.id, title: detail.title },
+      params: { id: detail.id, title: detail.title, slug: detail.slug },
     });
   }, [detail, router]);
 
@@ -109,7 +110,7 @@ export default function QuestDetailScreen() {
               showsVerticalScrollIndicator={false}
             >
               <View style={styles.header}>
-                <Text style={styles.title}>{detail.title}</Text>
+                <Text style={styles.title}>{questTitle(detail.slug, detail.title, t)}</Text>
                 <Badge difficulty={detail.difficulty} />
                 <Text style={styles.meta}>
                   {formatDuration(detail.durationSec, t)} · +{detail.xpReward} XP
@@ -134,7 +135,9 @@ export default function QuestDetailScreen() {
                   </View>
                 ) : null}
                 {detail.description ? (
-                  <Text style={styles.description}>{detail.description}</Text>
+                  <Text style={styles.description}>
+                    {questDescription(detail.slug, detail.description, t)}
+                  </Text>
                 ) : null}
               </View>
 

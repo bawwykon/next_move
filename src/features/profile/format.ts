@@ -10,6 +10,7 @@ import type { TFunction } from 'i18next';
 import { masteryProgress, masteryLevelForPoints, xpProgress } from '@/domain/xp/level';
 import { COSMETIC_SLOTS, resolveEquipped, type CosmeticSlot } from '@/domain/cosmetics/loadout';
 import { nextStreakMilestone } from '@/domain/streak/milestone';
+import { questTitle } from '@/features/catalog/copy';
 import { masteryLevelTitle, masteryTrackLabel } from '@/features/victory/format';
 
 /** Thousands-grouped, locale-independent (tests pin the exact grouping). */
@@ -225,14 +226,24 @@ export interface HistoryItem {
 /**
  * Quest-history display lines. Skips nothing: every fetched completion maps
  * to a row (title may be null only when the join missed — never dropped).
+ * Titles resolve through the catalog tables via `t` (CATALOG-01); rows
+ * without a slug keep the DB title as-is.
  */
 export function historyLines(
-  rows: readonly { questTitle: string | null; dayKey: string | null; xp: number }[],
+  rows: readonly {
+    questTitle: string | null;
+    questSlug?: string | null;
+    dayKey: string | null;
+    xp: number;
+  }[],
   todayKey: string,
   t: TFunction,
 ): HistoryItem[] {
   return rows.map((row) => ({
-    questTitle: row.questTitle,
+    questTitle:
+      row.questSlug != null
+        ? (questTitle(row.questSlug, row.questTitle, t) ?? row.questTitle)
+        : row.questTitle,
     dayLabel: dayLabel(row.dayKey, todayKey, t),
     xp: row.xp,
   }));

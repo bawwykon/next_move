@@ -63,7 +63,12 @@ export default function WorkoutScreen() {
 
   const router = useRouter();
   const { t } = useTranslation();
-  const params = useLocalSearchParams<{ id?: string; title?: string; source?: string }>();
+  const params = useLocalSearchParams<{
+    id?: string;
+    title?: string;
+    slug?: string;
+    source?: string;
+  }>();
   const questId = params.id;
   // BYQ-04 — source=custom loads the SAVED custom definition (work-only
   // segments, exactly as built) instead of a catalog quest.
@@ -213,11 +218,12 @@ export default function WorkoutScreen() {
         params: {
           questId: completedQuestId,
           title: params.title,
+          ...(params.slug ? { slug: params.slug } : {}),
           ...(isCustom ? { source: 'custom' } : {}),
         },
       });
     },
-    [params.title, router, workout, isCustom],
+    [params.title, params.slug, router, workout, isCustom],
   );
 
   // WK-01 — pause freezes in place; resume shifts the start forward by the

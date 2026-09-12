@@ -378,6 +378,8 @@ const en = {
     needMore: 'Add {{n}} more short block(s) — at least {{min}} min total.',
     pickToStart: 'Pick exercises below to start building.',
     projectedXp: 'Projected XP',
+    totals_one: '{{time}} · {{count}} block',
+    totals_other: '{{time}} · {{count}} blocks',
     zoneEasy: 'Easy',
     zoneNormal: 'Normal',
     zoneHard: 'Hard',
@@ -563,6 +565,70 @@ const en = {
     chapterTitle: 'Chapter {{id}} · {{name}}',
     hideToken: 'Hide player token',
     showToken: 'Show player token',
+    firstRequirement: 'Complete 1 quest',
+  },
+  catalog: {
+    quests: {
+      'morning-stretch': {
+        title: 'Morning Stretch',
+        description:
+          'Wake up your whole body with a gentle stretch routine that eases you into the day.',
+      },
+      'first-steps': {
+        title: 'First Steps',
+        description:
+          'A friendly introduction to daily movement with easy marching and walking steps.',
+      },
+      'desk-break': {
+        title: 'Desk Break',
+        description: 'Quick, desk-friendly moves to refresh your body between tasks.',
+      },
+      'home-circuit': {
+        title: 'Home Circuit',
+        description: 'A beginner-friendly bodyweight circuit you can complete in your living room.',
+      },
+      'steady-flow': {
+        title: 'Steady Flow',
+        description: 'Slow, controlled movements and steady breathing to build focus and calm.',
+      },
+      'power-walk': {
+        title: 'Power Walk',
+        description: 'Brisk walking intervals that build your stamina step by step.',
+      },
+      'core-basics': {
+        title: 'Core Basics',
+        description: 'Foundation moves that strengthen your middle from the ground up.',
+      },
+      'full-body-flow': {
+        title: 'Full Body Flow',
+        description: 'A flowing sequence that gently moves every major joint.',
+      },
+      'interval-boost': {
+        title: 'Interval Boost',
+        description: 'Structured work and rest intervals that lift your conditioning.',
+      },
+      'strength-builder': {
+        title: 'Strength Builder',
+        description: 'A structured circuit that builds whole-body strength safely.',
+      },
+      'interval-peak': {
+        title: 'Interval Peak',
+        description:
+          'Three rounds of intervals, each a little harder than the last — the toughest endurance climb.',
+      },
+    },
+    chapters: {
+      '1': { name: 'The First Step', flavor: 'Every journey begins with a single move.' },
+      '2': { name: 'Training Grounds', flavor: 'Foundations are built in sweat.' },
+      '3': { name: 'Into the Wild', flavor: 'The path gets harder — so do you.' },
+      '4': { name: 'Crossing the Bridge', flavor: 'Halfway is not the finish line.' },
+      '5': { name: 'The Ascent', flavor: 'The air gets thin, but your will is thicker.' },
+      '6': { name: 'Fortress of Discipline', flavor: 'Consistency is the strongest armor.' },
+      '7': {
+        name: 'Mastery Peak',
+        flavor: 'You did not climb the mountain — you became it. Your journey continues.',
+      },
+    },
   },
 };
 
@@ -897,6 +963,8 @@ const es: typeof en = {
     needMore: 'Añade {{n}} bloque(s) cortos más — al menos {{min}} min en total.',
     pickToStart: 'Elige ejercicios abajo para empezar.',
     projectedXp: 'XP previsto',
+    totals_one: '{{time}} · {{count}} bloque',
+    totals_other: '{{time}} · {{count}} bloques',
     zoneEasy: 'Fácil',
     zoneNormal: 'Normal',
     zoneHard: 'Difícil',
@@ -1082,6 +1150,72 @@ const es: typeof en = {
     chapterTitle: 'Capítulo {{id}} · {{name}}',
     hideToken: 'Ocultar ficha de jugador',
     showToken: 'Mostrar ficha de jugador',
+    firstRequirement: 'Completa 1 misión',
+  },
+  catalog: {
+    quests: {
+      'morning-stretch': {
+        title: 'Estiramiento matutino',
+        description:
+          'Despierta todo tu cuerpo con una rutina suave de estiramientos para empezar el día.',
+      },
+      'first-steps': {
+        title: 'Primeros pasos',
+        description:
+          'Una introducción amable al movimiento diario con marcha suave y pasos fáciles.',
+      },
+      'desk-break': {
+        title: 'Pausa de escritorio',
+        description: 'Movimientos rápidos sin levantarte para refrescar el cuerpo entre tareas.',
+      },
+      'home-circuit': {
+        title: 'Circuito en casa',
+        description: 'Un circuito de peso corporal para principiantes que puedes hacer en tu sala.',
+      },
+      'steady-flow': {
+        title: 'Flujo constante',
+        description:
+          'Movimientos lentos y controlados con respiración pausada para enfocarte y calmarte.',
+      },
+      'power-walk': {
+        title: 'Caminata enérgica',
+        description: 'Intervalos de caminata rápida que mejoran tu resistencia paso a paso.',
+      },
+      'core-basics': {
+        title: 'Base del core',
+        description: 'Movimientos base que fortalecen tu zona media desde cero.',
+      },
+      'full-body-flow': {
+        title: 'Flujo corporal total',
+        description: 'Una secuencia fluida que mueve con suavidad cada articulación importante.',
+      },
+      'interval-boost': {
+        title: 'Impulso por intervalos',
+        description: 'Intervalos estructurados de trabajo y descanso que elevan tu condición.',
+      },
+      'strength-builder': {
+        title: 'Constructor de fuerza',
+        description:
+          'Un circuito estructurado que desarrolla la fuerza de todo el cuerpo con seguridad.',
+      },
+      'interval-peak': {
+        title: 'Pico de intervalos',
+        description:
+          'Tres rondas de intervalos, cada una un poco más dura — el reto de resistencia más exigente.',
+      },
+    },
+    chapters: {
+      '1': { name: 'El primer paso', flavor: 'Todo viaje empieza con un solo movimiento.' },
+      '2': { name: 'Campo de entrenamiento', flavor: 'Los cimientos se construyen con sudor.' },
+      '3': { name: 'Hacia lo salvaje', flavor: 'El camino se endurece — y tú también.' },
+      '4': { name: 'Cruzando el puente', flavor: 'La mitad no es la meta.' },
+      '5': { name: 'El ascenso', flavor: 'El aire escasea, pero tu voluntad es más fuerte.' },
+      '6': { name: 'Fortaleza de la disciplina', flavor: 'La constancia es la mejor armadura.' },
+      '7': {
+        name: 'Cima de la maestría',
+        flavor: 'No subiste la montaña — te convertiste en ella. Tu viaje continúa.',
+      },
+    },
   },
 };
 
@@ -1462,6 +1596,8 @@ const ar = {
     needMore: 'أضف {{n}} مقاطع قصيرة أخرى — {{min}} دقائق على الأقل.',
     pickToStart: 'اختر التمارين أدناه للبدء.',
     projectedXp: 'النقاط المتوقعة',
+    totals_one: '{{time}} · مقطع واحد',
+    totals_other: '{{time}} · {{count}} مقاطع',
     zoneEasy: 'سهل',
     zoneNormal: 'عادي',
     zoneHard: 'صعب',
@@ -1646,6 +1782,67 @@ const ar = {
     chapterTitle: 'الفصل {{id}} · {{name}}',
     hideToken: 'إخفاء قطعة اللاعب',
     showToken: 'إظهار قطعة اللاعب',
+    firstRequirement: 'أكمل مهمة واحدة',
+  },
+  catalog: {
+    quests: {
+      'morning-stretch': {
+        title: 'تمدد الصباح',
+        description: 'أيقظ جسمك كله بروتين تمدد لطيف يهيئك ليومك.',
+      },
+      'first-steps': {
+        title: 'الخطوات الأولى',
+        description: 'مقدمة لطيفة للحركة اليومية بخطوات مشي سهلة.',
+      },
+      'desk-break': {
+        title: 'استراحة المكتب',
+        description: 'حركات سريعة من مكانك لتنشيط جسمك بين المهام.',
+      },
+      'home-circuit': {
+        title: 'دائرة المنزل',
+        description: 'دائرة تمارين بوزن الجسم للمبتدئين يمكنك إتمامها في غرفة المعيشة.',
+      },
+      'steady-flow': {
+        title: 'التدفق الهادئ',
+        description: 'حركات بطيئة ومتحكم بها مع تنفس ثابت لبناء التركيز والهدوء.',
+      },
+      'power-walk': {
+        title: 'المشي السريع',
+        description: 'فترات مشي نشيطة تبني قدرتك على التحمل خطوة بخطوة.',
+      },
+      'core-basics': {
+        title: 'أساسيات الجذع',
+        description: 'حركات أساسية تقوي منتصف جسمك من الأساس.',
+      },
+      'full-body-flow': {
+        title: 'تدفق الجسم الكامل',
+        description: 'تسلسل انسيابي يحرك بلطف كل مفصل رئيسي.',
+      },
+      'interval-boost': {
+        title: 'دفعة الفترات',
+        description: 'فترات منظمة من العمل والراحة ترفع لياقتك.',
+      },
+      'strength-builder': {
+        title: 'باني القوة',
+        description: 'دائرة منظمة تبني قوة الجسم كله بأمان.',
+      },
+      'interval-peak': {
+        title: 'قمة الفترات',
+        description: 'ثلاث جولات من الفترات، كل واحدة أصعب قليلًا — أقسى تحدٍّ للتحمل.',
+      },
+    },
+    chapters: {
+      '1': { name: 'الخطوة الأولى', flavor: 'كل رحلة تبدأ بخطوة واحدة.' },
+      '2': { name: 'ساحة التدريب', flavor: 'الأسس تُبنى بالعرق.' },
+      '3': { name: 'نحو البرية', flavor: 'الطريق يزداد صعوبة — وأنت أيضًا.' },
+      '4': { name: 'عبور الجسر', flavor: 'المنتصف ليس خط النهاية.' },
+      '5': { name: 'الصعود', flavor: 'الهواء يخفّ، لكن إرادتك أقوى.' },
+      '6': { name: 'قلعة الانضباط', flavor: 'الاستمرارية أقوى درع.' },
+      '7': {
+        name: 'قمة الإتقان',
+        flavor: 'أنت لم تتسلق الجبل — بل أصبحته. رحلتك مستمرة.',
+      },
+    },
   },
 };
 

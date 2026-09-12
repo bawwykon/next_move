@@ -4,9 +4,10 @@
  * chapter states (completed/current/locked) with progress fractions.
  */
 import { useMemo } from 'react';
+import type { TFunction } from 'i18next';
 
 import { chapterForQuests } from '@/domain/journey/chapter';
-import { CHAPTER_DATA, nextChapterThreshold, type ChapterData } from './journeyData';
+import { localizeChapterData, nextChapterThreshold, type ChapterData } from './journeyData';
 
 export type ChapterState = 'completed' | 'current' | 'locked';
 
@@ -27,13 +28,14 @@ export interface JourneyState {
   totalQuests: number;
 }
 
-export function useJourneyState(journeyQuestCount: number): JourneyState {
+export function useJourneyState(journeyQuestCount: number, t: TFunction): JourneyState {
   return useMemo(() => {
     const progress = chapterForQuests(journeyQuestCount);
     const currentThreshold = progress.current.threshold;
     const nextThreshold = nextChapterThreshold(currentThreshold);
+    const chaptersData = localizeChapterData(t);
 
-    const chapters: JourneyChapter[] = CHAPTER_DATA.map((data) => {
+    const chapters: JourneyChapter[] = chaptersData.map((data) => {
       const isCompleted = data.threshold < currentThreshold;
       const isCurrent = data.threshold === currentThreshold;
 
@@ -75,5 +77,5 @@ export function useJourneyState(journeyQuestCount: number): JourneyState {
     const currentChapter = chapters.find((c) => c.state === 'current') ?? null;
 
     return { chapters, currentChapter, totalQuests: journeyQuestCount };
-  }, [journeyQuestCount]);
+  }, [journeyQuestCount, t]);
 }

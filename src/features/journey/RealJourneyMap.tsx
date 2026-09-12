@@ -144,7 +144,7 @@ interface RealJourneyMapProps {
 
 export function RealJourneyMap({ journeyQuestCount, refreshing, onRefresh }: RealJourneyMapProps) {
   const { t } = useTranslation();
-  const { chapters, currentChapter } = useJourneyState(journeyQuestCount);
+  const { chapters, currentChapter } = useJourneyState(journeyQuestCount, t);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [showPlayerToken, setShowPlayerToken] = useState(true);
   const scrollViewRef = useRef<ScrollView>(null);

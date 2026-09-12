@@ -21,7 +21,11 @@ export interface ChapterNode {
 }
 
 const toSentence = (count: number, chapter: ChapterDef, t: TFunction): string =>
-  t('journeyMap.finished', { count, id: chapter.id, name: chapter.name });
+  t('journeyMap.finished', {
+    count,
+    id: chapter.id,
+    name: t(`catalog.chapters.${chapter.id}.name`, { defaultValue: chapter.name }),
+  });
 
 export function milestoneLine(questsInput: number, chapter: ChapterDef, t: TFunction): string {
   return toSentence(Math.max(0, Math.floor(questsInput)), chapter, t);

@@ -7,6 +7,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { AppButton } from '@/components/ui/AppButton';
 import { Screen } from '@/components/ui/Screen';
 import { track } from '@/data/analytics';
+import { questTitle } from '@/features/catalog/copy';
 import { celebrateStep, initialCelebrationState } from '@/features/victory/celebration';
 import { ChapterUnlockCelebration } from '@/features/journey/ChapterUnlockCelebration';
 import { ConfettiBurst } from '@/features/victory/confetti';
@@ -31,7 +32,12 @@ import { useCompletionStore } from '@/state/completionStore';
 export default function VictoryScreen() {
   const router = useRouter();
   const { t } = useTranslation();
-  const params = useLocalSearchParams<{ questId?: string; title?: string; source?: string }>();
+  const params = useLocalSearchParams<{
+    questId?: string;
+    title?: string;
+    slug?: string;
+    source?: string;
+  }>();
   const questId = params.questId;
   // BYQ-04 — custom quests label the breakdown's base row with their own name.
   const baseLabel =
@@ -157,7 +163,8 @@ export default function VictoryScreen() {
     skipCelebration();
   };
 
-  const headline = params.title ?? t('victory.headlineFallback');
+  const headline =
+    questTitle(params.slug, params.title ?? null, t) ?? t('victory.headlineFallback');
 
   return (
     <Screen>
