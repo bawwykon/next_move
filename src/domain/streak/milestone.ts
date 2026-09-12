@@ -1,18 +1,18 @@
 /**
  * S9-01 — the streak milestone ladder for countdown copy. MIRROR of the server
- * engine (supabase/migrations/0020_complete_quest.sql §Streak milestone): a
- * FRESH 3/7/30/100-day streak pays 50/150/500/1500 XP, once per milestone
- * (unique (profile_id, reward_day) is the server's gate). The client never
- * awards anything — it only derives the NEXT milestone from the same ladder,
- * so the countdown can never drift from what the server will actually pay.
- * Pure: no clocks injected, plain day counts.
+ * engine (supabase/migrations/0020_complete_quest.sql — Streak milestone): a
+ * FRESH 3/7/30/100/200/365-day streak pays 50/150/500/1500/3500/6000 XP, once
+ * per milestone (unique (profile_id, reward_day) is the server's gate). The
+ * client never awards anything — it only derives the NEXT milestone from the
+ * same ladder, so the countdown can never drift from what the server will
+ * actually pay. Pure: no clocks injected, plain day counts.
  */
-export const STREAK_MILESTONE_DAYS: readonly number[] = [3, 7, 30, 100];
+export const STREAK_MILESTONE_DAYS: readonly number[] = [3, 7, 30, 100, 200, 365];
 
 /** XP per ladder rung — kept index-aligned with STREAK_MILESTONE_DAYS. */
-export const STREAK_MILESTONE_XP: readonly number[] = [50, 150, 500, 1500];
+export const STREAK_MILESTONE_XP: readonly number[] = [50, 150, 500, 1500, 3500, 6000];
 
-/** Server mirror of `case v_granted when 3 then 50 ... else 1500`. */
+/** Server mirror of the v_granted case ladder (3→50 … 365→6000). */
 export function streakMilestoneXp(days: number): number {
   const index = STREAK_MILESTONE_DAYS.indexOf(days);
   return index === -1 ? 0 : (STREAK_MILESTONE_XP[index] ?? 0);

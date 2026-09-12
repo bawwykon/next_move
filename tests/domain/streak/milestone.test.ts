@@ -20,8 +20,8 @@ describe('streakMilestoneXp', () => {
   });
 
   it('keeps the ladder and the payouts index-aligned', () => {
-    expect(STREAK_MILESTONE_DAYS).toEqual([3, 7, 30, 100]);
-    expect(STREAK_MILESTONE_XP).toEqual([50, 150, 500, 1500]);
+    expect(STREAK_MILESTONE_DAYS).toEqual([3, 7, 30, 100, 200, 365]);
+    expect(STREAK_MILESTONE_XP).toEqual([50, 150, 500, 1500, 3500, 6000]);
     expect(STREAK_MILESTONE_DAYS.length).toBe(STREAK_MILESTONE_XP.length);
   });
 });
@@ -44,11 +44,20 @@ describe('nextStreakMilestone', () => {
     expect(nextStreakMilestone(3)).toEqual({ days: 7, xp: 150, daysTo: 4 });
     expect(nextStreakMilestone(7)).toEqual({ days: 30, xp: 500, daysTo: 23 });
     expect(nextStreakMilestone(30)).toEqual({ days: 100, xp: 1500, daysTo: 70 });
+    expect(nextStreakMilestone(100)).toEqual({ days: 200, xp: 3500, daysTo: 100 });
+    expect(nextStreakMilestone(200)).toEqual({ days: 365, xp: 6000, daysTo: 165 });
+  });
+
+  it('prices the endless rungs ~17 XP per streak-day, matching the old curve', () => {
+    expect(streakMilestoneXp(200)).toBe(3500);
+    expect(streakMilestoneXp(365)).toBe(6000);
+    expect(nextStreakMilestone(199)).toEqual({ days: 200, xp: 3500, daysTo: 1 });
+    expect(nextStreakMilestone(364)).toEqual({ days: 365, xp: 6000, daysTo: 1 });
   });
 
   it('has nothing to count down to at or past the top of the ladder', () => {
-    expect(nextStreakMilestone(100)).toBeNull();
-    expect(nextStreakMilestone(101)).toBeNull();
+    expect(nextStreakMilestone(365)).toBeNull();
+    expect(nextStreakMilestone(366)).toBeNull();
     expect(nextStreakMilestone(1000)).toBeNull();
   });
 

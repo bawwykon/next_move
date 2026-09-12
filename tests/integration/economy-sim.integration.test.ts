@@ -3,7 +3,8 @@
  * engine (0020_complete_quest) pays out exactly the FR/economy contract:
  *  - daily bonus (+150) on the first completion of each local day only
  *  - weekly bonus (+1000) exactly on the 3rd completion of a Monâ€“Sun week
- *  - streak-milestone payouts on a fresh 3/7/30/100-day streak (50/150/500/1500)
+ *  - streak-milestone payouts on a fresh 3/7/30/100/200/365-day streak
+ *    (50/150/500/1500/3500/6000)
  *  - level curve boundaries, incl. the 100 â†’ 101 transition (10,000 XP span)
  *  - mastery +30/+15 per touched track (250-point levels; AT-02H)
  *  - achievement triggers at their exact boundaries: quests 50/100, streak 7,
@@ -33,7 +34,15 @@ const SERVICE_ROLE_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU';
 
 type Payload = {
-  xp: { quest: number; daily: number; weekly: number; streak: number; total: number };
+  xp: {
+    quest: number;
+    daily: number;
+    weekly: number;
+    first: number;
+    perfect: number;
+    streak: number;
+    total: number;
+  };
   level: { before: number; after: number; title: string };
   achievements: { slug: string }[];
   cosmetics: { slug: string }[];
@@ -42,11 +51,15 @@ type Payload = {
 // Server contract mirrors (apply_completion_progression + seed.sql).
 const DAILY_XP = 150;
 const WEEKLY_XP = 1000;
+const FIRST_CLEAR_XP = 50;
+const PERFECT_WEEK_XP = 1500;
 const MILESTONES: readonly { days: number; xp: number }[] = [
   { days: 3, xp: 50 },
   { days: 7, xp: 150 },
   { days: 30, xp: 500 },
   { days: 100, xp: 1500 },
+  { days: 200, xp: 3500 },
+  { days: 365, xp: 6000 },
 ];
 const LEVEL_XP_FOR = (level: number): number => 50 * level * (level - 1); // 50*L*(L-1)
 const EPOC = '2026-07-06'; // a Monday; week windows align with day offsets
@@ -211,12 +224,13 @@ describe('economy simulation sweep (live supabase)', () => {
   };
 
   /**
-   * INVARIANT MIRROR â€” recompute the server snapshot from the raw event
-   * stream (quest reward + day keys only), replicating 0020 exactly:
+   * INVARIANT MIRROR — recompute the server snapshot from the raw event
+   * stream (quest reward + day keys only), replicating 0043 exactly:
    * quest XP per completion, daily +150 only on the first per-day completion,
-   * weekly +1000 only on the 3rd completion per Monâ€“Sun window (offset
-   * week = floor(day/7)), ladder payouts only when the streak lands exactly
-   * on a rung day, and level via the closed form 50*L*(L-1).
+   * weekly +1000 only on the 3rd completion per Mon–Sun window (offset
+   * week = floor(day/7)), first-clear +50 per quest row, perfect-week +1500
+   * on the 7th distinct day of a window, ladder payouts only when the streak
+   * lands exactly on a rung day, and level via the closed form 50*L*(L-1).
    */
   const mirrorState = (events: SimEvent[]): Record<string, unknown> => {
     const sorted = [...events].sort((a, b) => a.atDay - b.atDay);
@@ -225,20 +239,36 @@ describe('economy simulation sweep (live supabase)', () => {
     let questXp = 0;
     let daily = 0;
     let weekly = 0;
+    let first = 0;
+    let perfect = 0;
     let streakXp = 0;
     let run = 0;
     let longest = 0;
     let prevDay: number | null = null;
     const weekCounts = new Map<number, number>();
+    const weekDays = new Map<number, Set<number>>();
+    const cleared = new Set<string>();
 
     for (const ev of sorted) {
       questXp += rewardOf(ev.questId);
       if (prevDay !== ev.atDay) daily += DAILY_XP;
+      if (!cleared.has(ev.questId)) {
+        cleared.add(ev.questId);
+        first += FIRST_CLEAR_XP;
+      }
 
       const week = Math.floor(ev.atDay / 7);
       const count = (weekCounts.get(week) ?? 0) + 1;
       weekCounts.set(week, count);
       if (count === 3) weekly += WEEKLY_XP;
+      let days = weekDays.get(week);
+      if (!days) {
+        days = new Set<number>();
+        weekDays.set(week, days);
+      }
+      const hadFull = days.size === 7;
+      days.add(ev.atDay);
+      if (!hadFull && days.size === 7) perfect += PERFECT_WEEK_XP;
 
       run = prevDay === null || prevDay === ev.atDay - 1 ? run + 1 : 1;
       if (run > longest) longest = run;
@@ -248,7 +278,7 @@ describe('economy simulation sweep (live supabase)', () => {
       prevDay = ev.atDay;
     }
 
-    const totalXp = questXp + daily + weekly + streakXp;
+    const totalXp = questXp + daily + weekly + first + perfect + streakXp;
     let level = 1;
     while (LEVEL_XP_FOR(level + 1) <= totalXp) level += 1;
     return {
@@ -413,8 +443,9 @@ describe('economy simulation sweep (live supabase)', () => {
     expect(last!.level.after).toBe(101);
     expect(last!.level.title).toBe('Legend');
     const prof = await profileRow();
-    // 504000 + 5*400 quest + 5*150 daily + 1000 weekly (3rd of the window) + 50 (streak-3 rung).
-    expect(prof.total_xp).toBe(504_000 + 5 * 400 + 5 * DAILY_XP + WEEKLY_XP + 50);
+    // 504000 + 5*400 quest + 5*150 daily + 1000 weekly (3rd of the window) + 50 (streak-3
+    // rung) + 50 (first-clear: questHard fresh after the reset wipe).
+    expect(prof.total_xp).toBe(504_000 + 5 * 400 + 5 * DAILY_XP + WEEKLY_XP + 50 + 50);
     expect(prof.level).toBe(101);
     expect(await ownedCount('master-adventurer')).toBe(1);
   }, 60000);

@@ -26,6 +26,10 @@ export interface XpBreakdown {
   quest: number;
   daily: number;
   weekly: number;
+  /** First-clear +50 (0043). Absent in pre-0043 stored payloads — read as 0. */
+  first: number;
+  /** Perfect-week +1500 (0043). Absent in pre-0043 stored payloads — read as 0. */
+  perfect: number;
   streak: number;
   total: number;
 }
@@ -103,6 +107,12 @@ export function isCompletionResult(value: unknown): value is CompletionResult {
   const xpKeys: (keyof XpBreakdown)[] = ['quest', 'daily', 'weekly', 'streak', 'total'];
   if (!xpKeys.every((key) => isFiniteNumber(xp[key]))) {
     return false;
+  }
+  // 0043 lines are optional: payloads stored before the migration lack them.
+  for (const key of ['first', 'perfect'] as const) {
+    if (xp[key] !== undefined && !isFiniteNumber(xp[key])) {
+      return false;
+    }
   }
 
   if (!isRecord(level)) {

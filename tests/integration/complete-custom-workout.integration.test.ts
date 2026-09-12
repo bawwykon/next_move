@@ -30,7 +30,15 @@ const SERVICE_ROLE_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU';
 
 type Payload = {
-  xp: { quest: number; daily: number; weekly: number; streak: number; total: number };
+  xp: {
+    quest: number;
+    daily: number;
+    weekly: number;
+    first: number;
+    perfect: number;
+    streak: number;
+    total: number;
+  };
   level: { before: number; after: number; title: string };
   mastery: {
     track: string;
@@ -194,7 +202,8 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
     // 16 blocks x weight 1 = 16 pts -> round-half-up(48) = 48.
     expect(payload.xp.quest).toBe(100); // beginner workout now yields Easy / 100 XP
     expect(payload.xp.daily).toBe(150);
-    expect(payload.xp.total).toBe(250);
+    expect(payload.xp.first).toBe(50); // first custom ever shares the sentinel row
+    expect(payload.xp.total).toBe(300);
   });
 
   it('classification: all beginner exercises = Easy / 100 XP', async () => {
@@ -306,7 +315,8 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
     ]);
     const payload = (await call(wid, event(d, 'rest-mix-w', 480))).payload!;
     expect(payload.xp.quest).toBe(400);
-    expect(payload.xp.total).toBe(payload.xp.quest + payload.xp.daily);
+    expect(payload.xp.first).toBe(50);
+    expect(payload.xp.total).toBe(payload.xp.quest + payload.xp.daily + payload.xp.first);
     const row = await admin
       .from('quest_completions')
       .select('duration_sec')

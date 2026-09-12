@@ -16,7 +16,7 @@ const rpc = jest.fn();
 const client = { rpc } as unknown as SupabaseClient<Database>;
 
 const payload = (): CompletionResult => ({
-  xp: { quest: 50, daily: 75, weekly: 0, streak: 0, total: 125 },
+  xp: { quest: 50, daily: 75, weekly: 0, first: 0, perfect: 0, streak: 0, total: 125 },
   level: { before: 1, after: 1, title: 'Beginner' },
   mastery: [
     {

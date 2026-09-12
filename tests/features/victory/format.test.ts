@@ -27,7 +27,7 @@ beforeAll(async () => {
 });
 
 const fullResult: CompletionResult = {
-  xp: { quest: 50, daily: 25, weekly: 75, streak: 10, total: 160 },
+  xp: { quest: 50, daily: 25, weekly: 75, first: 0, perfect: 0, streak: 10, total: 160 },
   level: { before: 2, after: 3, title: 'Explorer' },
   mastery: [
     {
@@ -80,7 +80,10 @@ describe('xpBreakdownRows', () => {
   });
 
   it('drops zero-value stages so nothing paid out is hidden', () => {
-    const rows = xpBreakdownRows({ quest: 50, daily: 0, weekly: 0, streak: 20, total: 70 }, t);
+    const rows = xpBreakdownRows(
+      { quest: 50, daily: 0, weekly: 0, first: 0, perfect: 0, streak: 20, total: 70 },
+      t,
+    );
     expect(rows).toEqual([
       { label: 'Quest', xp: 50 },
       { label: 'Streak bonus', xp: 20 },
@@ -88,7 +91,27 @@ describe('xpBreakdownRows', () => {
   });
 
   it('returns no rows when every stage paid zero', () => {
-    expect(xpBreakdownRows({ quest: 0, daily: 0, weekly: 0, streak: 0, total: 0 }, t)).toEqual([]);
+    expect(
+      xpBreakdownRows(
+        { quest: 0, daily: 0, weekly: 0, first: 0, perfect: 0, streak: 0, total: 0 },
+        t,
+      ),
+    ).toEqual([]);
+  });
+
+  it('renders First clear and Perfect week rows in fixed order (0043)', () => {
+    const rows = xpBreakdownRows(
+      { quest: 100, daily: 150, weekly: 0, first: 50, perfect: 1500, streak: 0, total: 1800 },
+      t,
+    );
+    expect(rows.map((row) => row.label)).toEqual([
+      'Quest',
+      'First clear',
+      'Daily bonus',
+      'Perfect week',
+    ]);
+    expect(rows.map((row) => row.xp)).toEqual([100, 50, 150, 1500]);
+    expect(breakdownRowSum(rows)).toBe(1800);
   });
 
   it('S9-02 audit: bonus rows equal the server payouts exactly (0020 mirrors)', () => {
@@ -97,6 +120,8 @@ describe('xpBreakdownRows', () => {
         quest: 0,
         daily: DAILY_BONUS_XP,
         weekly: 0,
+        first: 0,
+        perfect: 0,
         streak: 0,
         total: DAILY_BONUS_XP,
       },
@@ -110,6 +135,8 @@ describe('xpBreakdownRows', () => {
         quest: 0,
         daily: 0,
         weekly: WEEKLY_BONUS_XP,
+        first: 0,
+        perfect: 0,
         streak: 0,
         total: WEEKLY_BONUS_XP,
       },
@@ -119,19 +146,22 @@ describe('xpBreakdownRows', () => {
     expect(weekly[0]?.xp).toBe(WEEKLY_BONUS_XP);
   });
 
-  it('S9-02 audit — the streak bonus row matches the 3/7/30/100 ladder payouts', () => {
+  it('S9-02 audit — the streak bonus row matches the ladder payouts', () => {
     for (const days of STREAK_MILESTONE_DAYS) {
       const xp = streakMilestoneXp(days);
-      const rows = xpBreakdownRows({ quest: 0, daily: 0, weekly: 0, streak: xp, total: xp }, t);
+      const rows = xpBreakdownRows(
+        { quest: 0, daily: 0, weekly: 0, first: 0, perfect: 0, streak: xp, total: xp },
+        t,
+      );
       expect(rows).toEqual([{ label: 'Streak bonus', xp }]);
     }
   });
 
   it('the visible rows always sum to the authoritative total', () => {
     const xps = [
-      { quest: 50, daily: 25, weekly: 75, streak: 100, total: 250 },
-      { quest: 50, daily: 0, weekly: 0, streak: 0, total: 50 },
-      { quest: 0, daily: 0, weekly: 0, streak: 0, total: 0 },
+      { quest: 50, daily: 25, weekly: 75, first: 0, perfect: 0, streak: 100, total: 250 },
+      { quest: 50, daily: 0, weekly: 0, first: 0, perfect: 0, streak: 0, total: 50 },
+      { quest: 0, daily: 0, weekly: 0, first: 0, perfect: 0, streak: 0, total: 0 },
     ];
     for (const xp of xps) {
       expect(breakdownRowSum(xpBreakdownRows(xp, t))).toBe(xpBreakdownTotal(xp));
@@ -152,11 +182,18 @@ describe('xpBreakdownRows', () => {
 
   it('baseLabel is ignored for zero-value quest rows and absent labels', () => {
     expect(
-      xpBreakdownRows({ quest: 0, daily: 75, weekly: 0, streak: 0, total: 75 }, t, 'Custom'),
+      xpBreakdownRows(
+        { quest: 0, daily: 75, weekly: 0, first: 0, perfect: 0, streak: 0, total: 75 },
+        t,
+        'Custom',
+      ),
     ).toEqual([{ label: 'Daily bonus', xp: 75 }]);
-    expect(xpBreakdownRows({ quest: 48, daily: 0, weekly: 0, streak: 0, total: 48 }, t)).toEqual([
-      { label: 'Quest', xp: 48 },
-    ]);
+    expect(
+      xpBreakdownRows(
+        { quest: 48, daily: 0, weekly: 0, first: 0, perfect: 0, streak: 0, total: 48 },
+        t,
+      ),
+    ).toEqual([{ label: 'Quest', xp: 48 }]);
   });
 });
 

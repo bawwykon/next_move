@@ -23,9 +23,11 @@ export interface XpBreakdownRow {
 
 const BREAKDOWN_KEYS = {
   quest: 'victory.breakdownQuest',
+  first: 'victory.breakdownFirst',
   daily: 'victory.breakdownDaily',
   weekly: 'victory.breakdownWeekly',
   streak: 'victory.breakdownStreak',
+  perfect: 'victory.breakdownPerfect',
 } as const;
 
 /**
@@ -33,17 +35,25 @@ const BREAKDOWN_KEYS = {
  * Zero-value stages are dropped; the total row is separate (below), so the
  * rows + total never hide a grant. BYQ-04 — baseLabel renames the base stage
  * row to the custom quest's own name. Labels via `t` (I18N-01).
+ * Pre-0043 payloads lack first/perfect lines — read as 0.
  */
 export function xpBreakdownRows(
   xp: XpBreakdown,
   t: TFunction,
   baseLabel?: string,
 ): XpBreakdownRow[] {
-  const order: ('quest' | 'daily' | 'weekly' | 'streak')[] = ['quest', 'daily', 'weekly', 'streak'];
+  const order: ('quest' | 'first' | 'daily' | 'weekly' | 'streak' | 'perfect')[] = [
+    'quest',
+    'first',
+    'daily',
+    'weekly',
+    'streak',
+    'perfect',
+  ];
   return order
     .map((stage) => ({
       label: stage === 'quest' && baseLabel ? baseLabel : t(BREAKDOWN_KEYS[stage]),
-      xp: xp[stage],
+      xp: xp[stage] ?? 0,
     }))
     .filter((row) => row.xp > 0);
 }

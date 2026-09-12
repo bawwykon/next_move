@@ -51,7 +51,7 @@ const event = (questId: string, idem: string) => ({
 });
 
 const resultFor = (total: number): CompletionResult => ({
-  xp: { quest: 50, daily: total - 50, weekly: 0, streak: 0, total },
+  xp: { quest: 50, daily: total - 50, weekly: 0, first: 0, perfect: 0, streak: 0, total },
   level: { before: 1, after: 1, title: 'Beginner' },
   mastery: [],
   journey: { quests: 1, chapter_before: 1, chapter_after: 1, next_threshold: 10 },

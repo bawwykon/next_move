@@ -220,6 +220,8 @@ const en = {
     breakdownDaily: 'Daily bonus',
     breakdownWeekly: 'Weekly bonus',
     breakdownStreak: 'Streak bonus',
+    breakdownFirst: 'First clear',
+    breakdownPerfect: 'Perfect week',
     skillLevels: 'Skill levels',
     masteryTitle: {
       novice: 'Novice',
@@ -1054,6 +1056,8 @@ const es: typeof en = {
     breakdownDaily: 'Bonus diario',
     breakdownWeekly: 'Bonus semanal',
     breakdownStreak: 'Bonus de racha',
+    breakdownFirst: 'Primera vez',
+    breakdownPerfect: 'Semana perfecta',
     skillLevels: 'Niveles de habilidad',
     masteryTitle: {
       novice: 'Novato',
@@ -1929,6 +1933,8 @@ const ar = {
     breakdownDaily: 'مكافأة يومية',
     breakdownWeekly: 'مكافأة أسبوعية',
     breakdownStreak: 'مكافأة الاستمرارية',
+    breakdownFirst: 'أول إنجاز',
+    breakdownPerfect: 'أسبوع مثالي',
     skillLevels: 'مستويات المهارة',
     masteryTitle: {
       novice: 'مبتدئ',

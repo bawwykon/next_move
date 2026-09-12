@@ -29,7 +29,15 @@ const SERVICE_ROLE_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU';
 
 type Payload = {
-  xp: { quest: number; daily: number; weekly: number; streak: number; total: number };
+  xp: {
+    quest: number;
+    daily: number;
+    weekly: number;
+    first: number;
+    perfect: number;
+    streak: number;
+    total: number;
+  };
   level: { before: number; after: number; title: string };
   mastery: {
     track: string;
@@ -235,7 +243,15 @@ describe('complete_quest RPC (live local supabase)', () => {
     const payload = result.payload!;
     console.log('GOLDEN payload:', JSON.stringify(payload));
 
-    expect(payload.xp).toEqual({ quest: 100, daily: 0, weekly: 0, streak: 0, total: 100 });
+    expect(payload.xp).toEqual({
+      quest: 100,
+      daily: 0,
+      weekly: 0,
+      first: 0,
+      perfect: 0,
+      streak: 0,
+      total: 100,
+    });
     expect(payload.level).toEqual({ before: 1, after: 2, title: 'Beginner' });
     expect(payload.journey).toEqual({
       quests: 1,
@@ -335,8 +351,27 @@ describe('complete_quest RPC (live local supabase)', () => {
     expect(two.xp.daily).toBe(0);
     expect(three.xp.daily).toBe(150);
     expect(two.xp.quest).toBe(100);
-    expect(one.xp.total).toBe(250);
+    expect(one.xp.total).toBe(300);
     console.log('DAILY:', JSON.stringify([one.xp, two.xp, three.xp]));
+  });
+
+  it('first-clear: +50 on the first completion of a quest, never again', async () => {
+    await resetProgression();
+    const d1 = day(14);
+    const d2 = day(15);
+    const one = await callOk(easyEvent(d1, 'first-1', 8));
+    expect(one.xp.first).toBe(50);
+    expect(one.xp.total).toBe(100 + 150 + 50);
+    // Same quest again (even another day): no second first-clear.
+    const two = await callOk(easyEvent(d2, 'first-2', 8));
+    expect(two.xp.first).toBe(0);
+    expect(two.xp.total).toBe(100 + 150);
+    // A different quest still earns its own first-clear (3rd completion of
+    // the week also trips the weekly bonus here — asserted explicitly).
+    const other = await callOk(hardEvent(d2, 'first-3', 9));
+    expect(other.xp.first).toBe(50);
+    expect(other.xp.weekly).toBe(1000);
+    expect(other.xp.total).toBe(400 + 0 + 1000 + 50);
   });
 
   it('weekly bonus: +1000 exactly on the 3rd completion within a Mon-Sun week', async () => {
@@ -351,6 +386,24 @@ describe('complete_quest RPC (live local supabase)', () => {
     const c4 = await callOk(easyEvent(thu, 'week-4', 8));
     expect([c1, c2, c3, c4].map((c) => c.xp.weekly)).toEqual([0, 0, 1000, 0]);
     console.log('WEEKLY:', [c1, c2, c3, c4].map((c) => c.xp.weekly).join(','));
+  });
+
+  it('perfect week: +1500 exactly when the 7th distinct Mon-Sun day completes', async () => {
+    await resetProgression();
+    // Mon 2026-07-13 .. Sun 2026-07-19: one easy quest each day.
+    const results: Payload[] = [];
+    for (let i = 0; i < 7; i += 1) {
+      results.push(await callOk(easyEvent(day(7 + i), `perfect-${i}`, 8)));
+    }
+    expect(results.map((r) => r.xp.perfect)).toEqual([0, 0, 0, 0, 0, 0, 1500]);
+    // The 7th: quest 100 + daily 150 + streak day-7 milestone 150 + perfect 1500.
+    const seventh = results[6]!;
+    expect(seventh.xp.total).toBe(100 + 150 + 1500 + 150);
+    expect(seventh.xp.streak).toBe(150);
+    // An 8th completion the same week pays no second perfect week.
+    const extra = await callOk(easyEvent(day(13), 'perfect-8', 9));
+    expect(extra.xp.perfect).toBe(0);
+    console.log('PERFECT:', results.map((r) => r.xp.perfect).join(','));
   });
 
   it('streak: climbs 1,2,3 (milestone day 3 = +50, rewards row), a gap resets with longest preserved', async () => {
@@ -388,11 +441,13 @@ describe('complete_quest RPC (live local supabase)', () => {
   it('level curve: easy quest lands level 2 with title Beginner and exact totals', async () => {
     await resetProgression();
     const d = day(30);
+    await seedSameDayCompletion(d); // consume daily + first-clear: payoff stays 100/100
     const r = await callOk(easyEvent(d, 'lvl-1', 8));
     expect(r.level.after).toBe(2);
     expect(r.level.title).toBe('Beginner');
     expect(r.level.before).toBe(1);
     expect(r.xp.quest).toBe(100);
+    expect(r.xp.first).toBe(0);
     expect(r.xp.total).toBe(100 + r.xp.daily);
     console.log('LEVEL:', JSON.stringify(r.level), 'total', r.xp.total);
 
@@ -404,14 +459,26 @@ describe('complete_quest RPC (live local supabase)', () => {
   it('sum across three hard quests in one week reproduces the running total exactly', async () => {
     await resetProgression();
     const daysArr = [day(24), day(25), day(26)];
-    const xpParts: { quest: number; daily: number; weekly: number; streak: number }[] = [];
+    const xpParts: {
+      quest: number;
+      daily: number;
+      weekly: number;
+      first: number;
+      perfect: number;
+      streak: number;
+    }[] = [];
     for (let i = 0; i < daysArr.length; i += 1) {
       const d = daysArr[i]!;
       const r = await call(hardEvent(d, `comb-${i}`, 8));
       expect(r.error).toBeNull();
       xpParts.push(r.payload!.xp);
     }
-    const finalTotal = xpParts.reduce((sum, p) => sum + p.quest + p.daily + p.weekly + p.streak, 0);
+    // Same quest three times: first-clear pays exactly once (first event).
+    expect(xpParts.map((p) => p.first)).toEqual([50, 0, 0]);
+    const finalTotal = xpParts.reduce(
+      (sum, p) => sum + p.quest + p.daily + p.weekly + p.first + p.perfect + p.streak,
+      0,
+    );
     const profile = await profileRow();
     expect(profile.total_xp).toBe(finalTotal);
     expect(profile.journey_quests).toBe(3);
@@ -622,7 +689,9 @@ describe('complete_quest RPC (live local supabase)', () => {
     expect(r.level.after).toBe(5);
     expect(r.level.title).toBe('Apprentice');
     const profile = await profileRow();
-    expect(profile.total_xp).toBe(1200);
+    // Seeded 800 + 400 quest + 0 daily (seeded) + 50 first-clear (fresh quest).
+    expect(r.xp.first).toBe(50);
+    expect(profile.total_xp).toBe(1250);
     expect(profile.level).toBe(5);
   });
 
@@ -670,6 +739,7 @@ describe('complete_quest RPC (live local supabase)', () => {
   it('first-level: crossing level 2 unlocks first-level exactly once', async () => {
     await resetProgression();
     const d = day(52);
+    await seedSameDayCompletion(d); // consume daily + first-clear: payoff stays 100/100
     const r = await callOk(easyEvent(d, 'first-level-1', 8));
     expect(r.level.before).toBe(1);
     expect(r.level.after).toBe(2);

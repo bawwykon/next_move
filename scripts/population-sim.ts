@@ -5,8 +5,9 @@
  * write for progression data). After each user's stream the script recomputes
  * the expected state from its raw events (a faithful mirror of
  * apply_completion_progression: quest XP, daily +150 first-of-day, weekly
- * +1000 on the 3rd of a Mon-Sun window,
- * streak ladder rungs 3/7/30/100, mastery +30/+15 per touch, level curve
+ * +1000 on the 3rd of a Mon-Sun window, first-clear +50 per quest row,
+ * perfect-week +1500 on the 7th distinct day of a week,
+ * streak ladder rungs 3/7/30/100/200/365, mastery +30/+15 per touch, level curve
  * 50·L·(L−1)) and asserts ZERO drift against server.profiles/mastery.
  *
  *   npm run population:sim           # 100 users × 30 days
@@ -50,11 +51,15 @@ const EPOC = '2026-07-06'; // Monday — weekly windows align with 0020's isodow
 const DAY_MS = 86_400_000;
 const DAILY_XP = 150;
 const WEEKLY_XP = 1000;
+const FIRST_CLEAR_XP = 50;
+const PERFECT_WEEK_XP = 1500;
 const MILESTONES: readonly { days: number; xp: number }[] = [
   { days: 3, xp: 50 },
   { days: 7, xp: 150 },
   { days: 30, xp: 500 },
   { days: 100, xp: 1500 },
+  { days: 200, xp: 3500 },
+  { days: 365, xp: 6000 },
 ];
 const LEVEL_XP_FOR = (level: number): number => 50 * level * (level - 1);
 
@@ -105,7 +110,14 @@ interface Mirror {
   longestStreak: number;
   journey: number;
   mastery: Record<string, number>;
-  parts: { questXp: number; daily: number; weekly: number; streakXp: number };
+  parts: {
+    questXp: number;
+    daily: number;
+    weekly: number;
+    first: number;
+    perfect: number;
+    streakXp: number;
+  };
   timeline: { day: number; run: number; streakPay: number }[];
 }
 
@@ -114,12 +126,16 @@ function runMirror(events: SimEvent[], quests: Map<string, Quest>): Mirror {
   let total = 0;
   let daily = 0;
   let weekly = 0;
+  let first = 0;
+  let perfect = 0;
   let streakXp = 0;
   let run = 0;
   let longest = 0;
   let prevDay: number | null = null;
   const mastery: Record<string, number> = {};
   const weekCounts = new Map<number, number>();
+  const weekDays = new Map<number, Set<number>>();
+  const clearedQuests = new Set<string>();
   const paidRungs = new Set<number>(); // rungs are once-per-tier per profile
   const timeline: { day: number; run: number; streakPay: number }[] = [];
 
@@ -129,6 +145,10 @@ function runMirror(events: SimEvent[], quests: Map<string, Quest>): Mirror {
       throw new Error(`catalog drift: unknown quest ${ev.questId}`);
     }
     total += quest.xpReward;
+    if (!clearedQuests.has(ev.questId)) {
+      clearedQuests.add(ev.questId);
+      first += FIRST_CLEAR_XP;
+    }
     // Mastery (FR-MAS-2, AT-02H 3x): +30 only for the server's fixed track list
     // (strength/endurance/mobility); 'discipline' as a quest category earns
     // no +30 — the +15 discipline grant is unconditional per completion.
@@ -147,6 +167,16 @@ function runMirror(events: SimEvent[], quests: Map<string, Quest>): Mirror {
     weekCounts.set(week, count);
     if (count === 3) {
       weekly += WEEKLY_XP;
+    }
+    let days = weekDays.get(week);
+    if (!days) {
+      days = new Set<number>();
+      weekDays.set(week, days);
+    }
+    const hadFullWeek = days.size === 7;
+    days.add(ev.dayOffset);
+    if (!hadFullWeek && days.size === 7) {
+      perfect += PERFECT_WEEK_XP;
     }
 
     const runBefore = run;
@@ -169,7 +199,7 @@ function runMirror(events: SimEvent[], quests: Map<string, Quest>): Mirror {
     prevDay = ev.dayOffset;
   }
 
-  const totalXp = total + daily + weekly + streakXp;
+  const totalXp = total + daily + weekly + first + perfect + streakXp;
   let level = 1;
   while (LEVEL_XP_FOR(level + 1) <= totalXp) {
     level += 1;
@@ -181,7 +211,7 @@ function runMirror(events: SimEvent[], quests: Map<string, Quest>): Mirror {
     longestStreak: longest,
     journey: events.length,
     mastery,
-    parts: { questXp: total, daily, weekly, streakXp },
+    parts: { questXp: total, daily, weekly, first, perfect, streakXp },
     timeline,
   };
 }
@@ -367,7 +397,7 @@ async function main(): Promise<void> {
       drift.push(`user ${userIndex} (${email}): ${diffs.join(', ')}`);
       if (prof) {
         console.log(
-          `  debug user ${userIndex}: server=${JSON.stringify(prof)} mirrorXp=${mirror.parts.questXp}+${mirror.parts.daily}+${mirror.parts.weekly}+${mirror.parts.streakXp}=${mirror.totalXp}`,
+          `  debug user ${userIndex}: server=${JSON.stringify(prof)} mirrorXp=${mirror.parts.questXp}+${mirror.parts.daily}+${mirror.parts.weekly}+${mirror.parts.first}+${mirror.parts.perfect}+${mirror.parts.streakXp}=${mirror.totalXp}`,
         );
         console.log(
           `  debug streak timeline: ${mirror.timeline

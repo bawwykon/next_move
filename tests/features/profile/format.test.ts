@@ -86,11 +86,13 @@ describe('streakMilestoneLine (S9-02, shared with the board pill)', () => {
     expect(streakMilestoneLine(7, t)).toBe('23 days to a 30-day bonus');
     expect(streakMilestoneLine(29, t)).toBe('1 day to a 30-day bonus');
     expect(streakMilestoneLine(99, t)).toBe('1 day to a 100-day bonus');
+    expect(streakMilestoneLine(100, t)).toBe('100 days to a 200-day bonus');
+    expect(streakMilestoneLine(200, t)).toBe('165 days to a 365-day bonus');
   });
 
   it('says nothing once the ladder is exhausted', () => {
-    expect(streakMilestoneLine(100, t)).toBeNull();
-    expect(streakMilestoneLine(101, t)).toBeNull();
+    expect(streakMilestoneLine(365, t)).toBeNull();
+    expect(streakMilestoneLine(366, t)).toBeNull();
   });
 
   it('resolves Arabic without the plural resolver (Hermes-safe explicit path)', async () => {
@@ -99,7 +101,9 @@ describe('streakMilestoneLine (S9-02, shared with the board pill)', () => {
     expect(streakMilestoneLine(5, ta, 'ar')).toBe('يومان على مكافأة 7 أيام');
     expect(streakMilestoneLine(29, ta, 'ar')).toBe('يوم واحد على مكافأة 30 يومًا');
     expect(streakMilestoneLine(99, ta, 'ar')).toBe('يوم واحد على مكافأة 100 يومًا');
-    expect(streakMilestoneLine(100, ta, 'ar')).toBeNull();
+    expect(streakMilestoneLine(199, ta, 'ar')).toBe('يوم واحد على مكافأة 200 يومًا');
+    expect(streakMilestoneLine(364, ta, 'ar')).toBe('يوم واحد على مكافأة 365 يومًا');
+    expect(streakMilestoneLine(365, ta, 'ar')).toBeNull();
   });
 
   it('matches the board pill wording exactly (unified string)', () => {
