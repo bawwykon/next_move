@@ -102,11 +102,15 @@ export interface StreakPillCopy {
  * countdown (identical wording to the Profile row); a dead streak shares the
  * Profile's full two-sentence invitation (FR-STR-2).
  */
-export function streakPillCopy(current: number, t: TFunction): StreakPillCopy {
+export function streakPillCopy(
+  current: number,
+  t: TFunction,
+  locale: string = 'en',
+): StreakPillCopy {
   if (current > 0) {
     return {
       main: t('board.streakActive', { count: current }),
-      milestone: streakMilestoneLine(current, t),
+      milestone: streakMilestoneLine(current, t, locale),
     };
   }
   return {

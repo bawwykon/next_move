@@ -8,6 +8,14 @@
  *   the native RTL flags and reloads (Android only applies RTL on restart).
  * - Locale is device-local (AsyncStorage only, never synced to profiles).
  */
+// I18N-AR — Hermes (Android) ships incomplete Intl.PluralRules, so Arabic
+// quantities silently fell back to the 'other' form ("3 يومًا" for 3 أيام).
+// Force-install CLDR plural data for our three locales before i18next runs.
+import '@formatjs/intl-pluralrules/polyfill-force.js';
+import '@formatjs/intl-pluralrules/locale-data/ar.js';
+import '@formatjs/intl-pluralrules/locale-data/en.js';
+import '@formatjs/intl-pluralrules/locale-data/es.js';
+
 import { I18nManager } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createInstance, type i18n as I18nInstance } from 'i18next';

@@ -104,7 +104,7 @@ function frameAvatarStyle(slug: string | null): {
  */
 export default function ProfileScreen() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const email = useSessionStore((state) => state.session?.user?.email ?? '');
   const signOut = useSessionStore((state) => state.signOut);
 
@@ -283,7 +283,7 @@ export default function ProfileScreen() {
     [profile, t],
   );
   // S9-02 — shared milestone countdown (same wording as the board pill).
-  const milestoneLine = streakMilestoneLine(profile?.currentStreak ?? 0, t);
+  const milestoneLine = streakMilestoneLine(profile?.currentStreak ?? 0, t, i18n.language);
   const masteryRowsView = useMemo(() => masteryRows(mastery, t), [mastery, t]);
   const historyView = useMemo(() => historyLines(history, todayKey, t), [history, todayKey, t]);
 

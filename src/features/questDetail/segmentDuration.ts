@@ -9,5 +9,8 @@ export function formatSegmentDuration(sec: number, t: TFunction): string {
   const minutes = Math.floor(safe / 60);
   const rest = safe % 60;
   const head = t('board.minutes', { count: minutes });
-  return rest > 0 ? `${head} ${t('quest.seconds', { count: rest })}` : head;
+  // I18N-AR — Arabic joins time units with و ("دقيقة واحدة و30 ثانية").
+  return rest > 0
+    ? `${head}${t('quest.durationJoin')}${t('quest.seconds', { count: rest })}`
+    : head;
 }

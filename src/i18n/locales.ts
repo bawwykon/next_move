@@ -203,6 +203,7 @@ const en = {
     difficultyA11y: '{{level}} difficulty',
     seconds_one: '{{count}}s',
     seconds_other: '{{count}}s',
+    durationJoin: ' ',
   },
   victory: {
     headlineFallback: 'Great work!',
@@ -1036,6 +1037,7 @@ const es: typeof en = {
     difficultyA11y: 'Dificultad: {{level}}',
     seconds_one: '{{count}}s',
     seconds_other: '{{count}}s',
+    durationJoin: ' ',
   },
   victory: {
     headlineFallback: '¡Buen trabajo!',
@@ -1871,6 +1873,17 @@ const ar = {
     streakMilestone_many: '{{count}} يومًا على مكافأة {{days}} يومًا',
     streakMilestone_other: '{{count}} يومًا على مكافأة {{days}} يومًا',
     streakIdle: 'مغامرتك بانتظارك. مهمتك التالية جاهزة.',
+    // I18N-AR — explicit day-words + templates selected in code (no
+    // resolver dependence): {{days}} inside the stock templates can't
+    // inflect, and "N على مكافأة N" reads redundantly at streak 0.
+    dayLength_zero: 'لا أيام',
+    dayLength_one: 'يوم واحد',
+    dayLength_two: 'يومان',
+    dayLength_few: '{{count}} أيام',
+    dayLength_many: '{{count}} يومًا',
+    dayLength_other: '{{count}} يومًا',
+    streakMilestoneAr: '{{a}} على مكافأة {{b}}',
+    streakMilestoneSame: 'أكمل {{b}} متتالية لتحصل على المكافأة',
   },
   quest: {
     back: 'رجوع',
@@ -1900,6 +1913,7 @@ const ar = {
     seconds_few: '{{count}} ثوانٍ',
     seconds_many: '{{count}} ثانية',
     seconds_other: '{{count}} ثانية',
+    durationJoin: ' و',
   },
   victory: {
     headlineFallback: 'عمل رائع!',
@@ -2370,7 +2384,7 @@ const ar = {
       'first-week': {
         title: 'الأسبوع الأول',
         description: 'أكمل مهام في سبعة أيام مختلفة.',
-        hint: 'أسبوع من الانتصارات الصغيرة يتراكم.',
+        hint: 'أسبوع من الانتصارات الصغيرة تتراكم.',
       },
       'workouts-50': {
         title: '50 تمرينًا',

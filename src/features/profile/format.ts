@@ -82,13 +82,50 @@ export function streakCopy(current: number, longest: number, t: TFunction): Stre
  * (0011/0020): whole days until the next paid milestone, null once the top
  * (100-day) rung is passed. Encouragement-only phrasing (FR-STR-2).
  * Copy comes from the locale tables via `t` (I18N-01).
+ *
+ * I18N-AR — pass locale='ar' to use the explicit-suffix Arabic path: Hermes
+ * lacks full Intl.PluralRules so the resolver can't be trusted with Arabic's
+ * six plural forms, and the stock template can't inflect its embedded
+ * {{days}}. At streak 0 (daysTo === days) Arabic uses a dedicated
+ * non-redundant phrasing instead of "N على مكافأة N".
  */
-export function streakMilestoneLine(current: number, t: TFunction): string | null {
+export function streakMilestoneLine(
+  current: number,
+  t: TFunction,
+  locale: string = 'en',
+): string | null {
   const next = nextStreakMilestone(current);
   if (!next) {
     return null;
   }
+  if (locale === 'ar') {
+    const a = arabicDayWord(next.daysTo, t);
+    const b = arabicDayWord(next.days, t);
+    if (next.daysTo === next.days) {
+      return t('board.streakMilestoneSame', { b });
+    }
+    return t('board.streakMilestoneAr', { a, b });
+  }
   return t('board.streakMilestone', { count: next.daysTo, days: next.days });
+}
+
+/** Explicit CLDR-faithful Arabic day-word (no resolver dependence). */
+function arabicDayWord(n: number, t: TFunction): string {
+  const count = Math.max(0, Math.floor(n));
+  const mod100 = count % 100;
+  const suffix =
+    count === 0
+      ? 'zero'
+      : count === 1
+        ? 'one'
+        : count === 2
+          ? 'two'
+          : mod100 >= 3 && mod100 <= 10
+            ? 'few'
+            : mod100 >= 11 && mod100 <= 99
+              ? 'many'
+              : 'other';
+  return t(`board.dayLength_${suffix}`, { count });
 }
 
 export interface MasteryDisplayRow {

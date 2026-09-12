@@ -3,6 +3,7 @@ import type { TFunction } from 'i18next';
 import { segmentKindLabel } from '@/features/questDetail/segmentKind';
 import { formatSegmentDuration } from '@/features/questDetail/segmentDuration';
 import { segmentsTotal } from '@/features/questDetail/segmentsTotal';
+import { localeResources } from '@/i18n/locales';
 import { englishT } from '../../i18n/testLocale';
 
 let t: TFunction;
@@ -42,6 +43,12 @@ describe('formatSegmentDuration', () => {
     expect(formatSegmentDuration(0, t)).toBe('0s');
     expect(formatSegmentDuration(-5, t)).toBe('0s');
     expect(formatSegmentDuration(60.4, t)).toBe('1 min');
+  });
+
+  it('joins minutes and seconds per locale (Arabic uses و)', async () => {
+    expect(formatSegmentDuration(90, t)).toBe('1 min 30s');
+    expect(localeResources.ar.quest.durationJoin).toBe(' و');
+    expect(localeResources.es.quest.durationJoin).toBe(' ');
   });
 });
 

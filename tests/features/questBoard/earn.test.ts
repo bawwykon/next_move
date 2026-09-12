@@ -9,11 +9,13 @@ import {
   streakPillCopy,
   weeklyEarnCopy,
 } from '@/features/questBoard/earn';
-import { englishT } from '../../i18n/testLocale';
+import { englishT, arabicT } from '../../i18n/testLocale';
 
 let t: TFunction;
+let ta: TFunction;
 beforeAll(async () => {
   t = await englishT();
+  ta = await arabicT();
 });
 
 describe('dailyChallengeProgress', () => {
@@ -121,6 +123,11 @@ describe('streakPillCopy', () => {
     expect(streakPillCopy(100, t).milestone).toBeNull();
     expect(streakPillCopy(0, t).milestone).toBeNull();
     expect(streakPillCopy(0, t).main).toBe('Your adventure is waiting. Your next quest is ready.');
+  });
+
+  it('forwards the locale for the explicit Arabic milestone path', () => {
+    expect(streakPillCopy(2, ta, 'ar').milestone).toBe('يوم واحد على مكافأة 3 أيام');
+    expect(streakPillCopy(2, t).milestone).toBe('1 day to a 3-day bonus');
   });
 
   it('keeps tone familiar and positive (§7.5), no banned words', () => {

@@ -74,7 +74,7 @@ const DEFAULT_ONBOARDING: OnboardingAnswers = {
 
 export default function QuestBoardScreen() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { profile, streak, mastery, completions, status, refresh } = useCharacterStore();
   // S4-03 — persisted checkpoint for the resume banner (FR-TIMER-7).
   const checkpoint = useWorkoutStore((state) => state.checkpoint);
@@ -230,7 +230,7 @@ export default function QuestBoardScreen() {
   const { greeting, line } = greetingForHour(new Date().getHours(), t);
   const displayName = profile?.displayName ?? 'Adventurer';
   const streakCount = streak?.current ?? 0;
-  const streakPill = streakPillCopy(streakCount, t);
+  const streakPill = streakPillCopy(streakCount, t, i18n.language);
 
   return (
     <Screen>

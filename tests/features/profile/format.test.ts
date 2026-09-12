@@ -19,12 +19,14 @@ import {
   xpBar,
 } from '@/features/profile/format';
 import { streakPillCopy } from '@/features/questBoard/earn';
-import { englishT } from '../../i18n/testLocale';
+import { arabicT, englishT } from '../../i18n/testLocale';
 import type { TFunction } from 'i18next';
 
 let t: TFunction;
+let ta: TFunction;
 beforeAll(async () => {
   t = await englishT();
+  ta = await arabicT();
 });
 
 const CATALOG = [
@@ -89,6 +91,15 @@ describe('streakMilestoneLine (S9-02, shared with the board pill)', () => {
   it('says nothing once the ladder is exhausted', () => {
     expect(streakMilestoneLine(100, t)).toBeNull();
     expect(streakMilestoneLine(101, t)).toBeNull();
+  });
+
+  it('resolves Arabic without the plural resolver (Hermes-safe explicit path)', async () => {
+    // Fresh start: dedicated non-redundant phrasing, not "3 على مكافأة 3".
+    expect(streakMilestoneLine(0, ta, 'ar')).toBe('أكمل 3 أيام متتالية لتحصل على المكافأة');
+    expect(streakMilestoneLine(5, ta, 'ar')).toBe('يومان على مكافأة 7 أيام');
+    expect(streakMilestoneLine(29, ta, 'ar')).toBe('يوم واحد على مكافأة 30 يومًا');
+    expect(streakMilestoneLine(99, ta, 'ar')).toBe('يوم واحد على مكافأة 100 يومًا');
+    expect(streakMilestoneLine(100, ta, 'ar')).toBeNull();
   });
 
   it('matches the board pill wording exactly (unified string)', () => {
