@@ -563,19 +563,28 @@ export const XpMeter = memo(function XpMeter({ xp, overflow }: { xp: number; ove
         {[ZONE_MARKS.easy, ZONE_MARKS.normal, ZONE_MARKS.hard].map((mark) => (
           <View
             key={mark}
-            style={[styles.zoneMark, { left: `${(mark / METER_SCALE_XP) * 100}%` }]}
+            style={[styles.zoneMark, { start: `${(mark / METER_SCALE_XP) * 100}%` }]}
           />
         ))}
       </View>
       <View style={styles.zoneLabels}>
-        {(['easy', 'normal', 'hard'] as const).map((z) => (
-          <Text
-            key={z}
-            style={[styles.zoneLabelText, { left: `${(ZONE_MARKS[z] / METER_SCALE_XP) * 100}%` }]}
-          >
-            {zoneLabels[z]}
-          </Text>
-        ))}
+        {(['easy', 'normal', 'hard'] as const).map((z) =>
+          z === 'hard' ? (
+            <Text key={z} style={[styles.zoneLabelText, styles.zoneLabelEnd]}>
+              {zoneLabels[z]}
+            </Text>
+          ) : (
+            <Text
+              key={z}
+              style={[
+                styles.zoneLabelText,
+                { start: `${(ZONE_MARKS[z] / METER_SCALE_XP) * 100}%` },
+              ]}
+            >
+              {zoneLabels[z]}
+            </Text>
+          ),
+        )}
       </View>
     </View>
   );
@@ -843,6 +852,12 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodyBold.family,
     fontSize: 10,
     transform: [{ translateX: -14 }],
+  },
+  // I18N-03 — the hard zone ends at 100% of the track, so a start-anchored
+  // label always overflows (worse in RTL). Pin it to the inline end instead.
+  zoneLabelEnd: {
+    end: 0,
+    transform: [{ translateX: 0 }],
   },
   ctaRow: {
     flexDirection: 'row',
