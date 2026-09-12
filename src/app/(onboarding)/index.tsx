@@ -94,10 +94,10 @@ export default function OnboardingScreen() {
   const handleComplete = async () => {
     setSaving(true);
     setError(null);
-    const message = await completeOnboarding(completedAnswers(wizard));
+    const code = await completeOnboarding(completedAnswers(wizard));
     setSaving(false);
-    if (message) {
-      setError(message);
+    if (code) {
+      setError(code === 'signed_out' ? t('errors.signedOut') : t('errors.saveFailed'));
       return;
     }
     router.replace('/(tabs)/quest-board');

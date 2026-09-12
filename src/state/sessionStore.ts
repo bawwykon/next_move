@@ -3,7 +3,11 @@ import { create } from 'zustand';
 
 import { supabase } from '@/data/supabase';
 import { track } from '@/data/analytics';
-import { getOnboarded, saveOnboarding } from '@/data/repositories/profile';
+import {
+  getOnboarded,
+  saveOnboarding,
+  type OnboardingSaveError,
+} from '@/data/repositories/profile';
 import type { OnboardingPayload } from '@/features/onboarding/wizardController';
 import { getAuthErrorCode, type AuthErrorCode } from '@/lib/auth-errors';
 import { consumeManualSignOut, markManualSignOut, readCapturedTabPath } from '@/lib/intended-route';
@@ -19,7 +23,7 @@ interface SessionStore {
   signIn: (email: string, password: string) => Promise<AuthErrorCode | null>;
   signUp: (email: string, password: string) => Promise<AuthErrorCode | null>;
   signOut: () => Promise<void>;
-  completeOnboarding: (payload: OnboardingPayload) => Promise<string | null>;
+  completeOnboarding: (payload: OnboardingPayload) => Promise<OnboardingSaveError | null>;
   setIntendedRoute: (route: string) => void;
   clearIntendedRoute: () => void;
 }

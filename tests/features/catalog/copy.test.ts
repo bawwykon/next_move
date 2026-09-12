@@ -12,6 +12,8 @@ import {
   achievementTitle,
   chapterFlavor,
   chapterName,
+  cosmeticName,
+  cosmeticType,
   exerciseInstruction,
   exerciseName,
   exerciseSafety,
@@ -144,5 +146,18 @@ describe('chapterName / chapterFlavor / localizeChapterData', () => {
     }
     expect(localized[0]!.requirement).toBe('Complete 1 quest');
     expect(localized[1]!.requirement).toBe('Reach 10 quests to unlock');
+  });
+});
+
+describe('cosmeticName / cosmeticType', () => {
+  it('resolves known slugs, passes unknown through', () => {
+    expect(cosmeticName('frame-level-05', 'Level 5 Frame', t)).toBe('Level 5 Frame');
+    expect(cosmeticName('nameplate-level-100', 'x', t)).toBe('Legendary Nameplate');
+    expect(cosmeticName('unknown-skin', 'Mystery Skin', t)).toBe('Mystery Skin');
+    expect(cosmeticName(null, 'Default', t)).toBe('Default');
+    expect(cosmeticName(null, null, t)).toBeNull();
+    expect(cosmeticType('frame', t)).toBe('Frame');
+    expect(cosmeticType('nameplate', t)).toBe('Nameplate');
+    expect(cosmeticType('wardrobe', t)).toBe('wardrobe');
   });
 });

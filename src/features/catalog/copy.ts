@@ -153,3 +153,29 @@ export function achievementCategory(category: string, t: TFunction): string {
   const key = CATEGORY_KEYS[category];
   return key ? t(key) : category;
 }
+
+/** Localized cosmetic name by slug, falling back to the DB name. */
+export function cosmeticName(
+  slug: string | null | undefined,
+  fallback: string | null,
+  t: TFunction,
+): string | null {
+  if (!slug) {
+    return fallback;
+  }
+  return catalogString(`catalog.cosmetics.${slug}.name`, fallback, t);
+}
+
+const COSMETIC_TYPE_KEYS: Record<string, string> = {
+  frame: 'catalog.cosmeticTypes.frame',
+  nameplate: 'catalog.cosmeticTypes.nameplate',
+  portrait: 'catalog.cosmeticTypes.portrait',
+  title: 'catalog.cosmeticTypes.title',
+  background: 'catalog.cosmeticTypes.background',
+};
+
+/** Localized cosmetic type; unknown values pass through untouched. */
+export function cosmeticType(type: string, t: TFunction): string {
+  const key = COSMETIC_TYPE_KEYS[type];
+  return key ? t(key) : type;
+}

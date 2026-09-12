@@ -2,11 +2,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import type { CosmeticRow } from '@/data/repositories/cosmetics';
 import { catalogBySlot, DEFAULT_SLOT_SLUGS, type CosmeticSlot } from '@/domain/cosmetics/loadout';
 import { achievementArt, cosmeticArt, nameplateArt } from '@/features/assets/assetMap';
+import { cosmeticName } from '@/features/catalog/copy';
 import { pickerRowStrings } from '@/features/profile/format';
 import { withTapCue } from '@/lib/sounds';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
@@ -64,18 +66,20 @@ function slotValue(
   slot: CosmeticSlot,
   items: readonly CosmeticRow[],
   fallback: string,
+  t: TFunction,
 ): string {
+  const localize = (slug: string | null, name: string | null): string =>
+    cosmeticName(slug, name, t) ?? name ?? fallback;
   const id = equipped[slot];
   if (id === null) {
     const defaultSlug = DEFAULT_SLOT_SLUGS[slot];
-    return defaultSlug
-      ? (items.find((item) => item.slug === defaultSlug)?.name ?? fallback)
-      : fallback;
+    const found = defaultSlug ? items.find((item) => item.slug === defaultSlug) : undefined;
+    return found ? localize(found.slug, found.name) : fallback;
   }
   const byId = items.find((item) => item.id === id);
-  if (byId) return byId.name;
+  if (byId) return localize(byId.slug, byId.name);
   const bySlug = items.find((item) => item.slug === id);
-  if (bySlug) return bySlug.name;
+  if (bySlug) return localize(bySlug.slug, bySlug.name);
   return fallback;
 }
 
@@ -186,7 +190,7 @@ export function LoadoutCard({
           >
             <Text style={styles.loadoutSlot}>{slotLabel(slot)}</Text>
             <Text style={styles.loadoutName}>
-              {slotValue(equipped, slot, catalog, t('loadout.def'))}
+              {slotValue(equipped, slot, catalog, t('loadout.def'), t)}
             </Text>
             <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
           </TouchableOpacity>
@@ -232,7 +236,7 @@ export function LoadoutCard({
               )}
 
               {bySlot[openSlot].map((item) => {
-                const strings = pickerRowStrings(item);
+                const strings = pickerRowStrings(item, t);
                 const locked = !item.owned;
                 const art =
                   openSlot === 'nameplate' ? nameplateArt(item.slug) : cosmeticArt(item.slug);

@@ -2,12 +2,16 @@ import { supabase } from '@/data/supabase';
 import type { OnboardingAnswers } from '@/domain/recommendation/types';
 import type { OnboardingPayload } from '@/features/onboarding/wizardController';
 
-export async function saveOnboarding(payload: OnboardingPayload): Promise<string | null> {
+export type OnboardingSaveError = 'signed_out' | 'save_failed';
+
+export async function saveOnboarding(
+  payload: OnboardingPayload,
+): Promise<OnboardingSaveError | null> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return 'You need to be signed in to save your plan.';
+    return 'signed_out';
   }
 
   const { error: onboardingError } = await supabase.from('onboarding').upsert(
@@ -22,7 +26,7 @@ export async function saveOnboarding(payload: OnboardingPayload): Promise<string
     { onConflict: 'profile_id' },
   );
   if (onboardingError) {
-    return onboardingError.message;
+    return 'save_failed';
   }
 
   // PH3-01 — persist the display name if the user typed one.
@@ -36,7 +40,7 @@ export async function saveOnboarding(payload: OnboardingPayload): Promise<string
     .update(profileUpdate)
     .eq('id', user.id);
   if (profileError) {
-    return profileError.message;
+    return 'save_failed';
   }
 
   return null;

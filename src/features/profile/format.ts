@@ -10,7 +10,7 @@ import type { TFunction } from 'i18next';
 import { masteryProgress, masteryLevelForPoints, xpProgress } from '@/domain/xp/level';
 import { COSMETIC_SLOTS, resolveEquipped, type CosmeticSlot } from '@/domain/cosmetics/loadout';
 import { nextStreakMilestone } from '@/domain/streak/milestone';
-import { questTitle } from '@/features/catalog/copy';
+import { cosmeticName, questTitle } from '@/features/catalog/copy';
 import { masteryLevelTitle, masteryTrackLabel } from '@/features/victory/format';
 
 /** Thousands-grouped, locale-independent (tests pin the exact grouping). */
@@ -188,9 +188,15 @@ export const LOCKED_PICKER_EMBLEM = '?';
  * unowned items show the emblem + name. This is the leak-guard surface: the
  * rules that DERIVED ownership live server-side and are never projected, so
  * this output can carry nothing but names and the "?" mark.
+ * Names resolve through the catalog tables when a slug + `t` are provided
+ * (CATALOG-01); otherwise the given name renders as-is.
  */
-export function pickerRowStrings(item: { owned: boolean; name: string }): readonly string[] {
-  return item.owned ? [item.name] : [LOCKED_PICKER_EMBLEM, item.name];
+export function pickerRowStrings(
+  item: { owned: boolean; name: string; slug?: string },
+  t?: TFunction,
+): readonly string[] {
+  const name = item.slug && t ? (cosmeticName(item.slug, item.name, t) ?? item.name) : item.name;
+  return item.owned ? [name] : [LOCKED_PICKER_EMBLEM, name];
 }
 
 /**
