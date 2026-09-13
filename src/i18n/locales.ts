@@ -662,6 +662,18 @@ const en = {
         description:
           'Three rounds of intervals, each a little harder than the last — the toughest endurance climb.',
       },
+      'hero-stretch': {
+        title: "Hero's Rise",
+        description: 'Rise like a hero: back-strengthening holds meet gentle stretches.',
+      },
+      'lateral-power': {
+        title: 'Lateral Flow',
+        description: 'Side-to-side leg power — lunges, squats, and steady rests.',
+      },
+      'total-balance': {
+        title: 'Total Body Balance',
+        description: 'Superman holds and side lunges for head-to-toe steadiness.',
+      },
     },
     chapters: {
       '1': { name: 'The First Step', flavor: 'Every journey begins with a single move.' },
@@ -1561,6 +1573,20 @@ const es: typeof en = {
         title: 'Pico de intervalos',
         description:
           'Tres rondas de intervalos, cada una un poco más dura — el reto de resistencia más exigente.',
+      },
+      'hero-stretch': {
+        title: 'El despertar del héroe',
+        description:
+          'Levántate como un héroe: posturas que fortalecen la espalda y estiramientos suaves.',
+      },
+      'lateral-power': {
+        title: 'Flujo lateral',
+        description:
+          'Potencia de piernas de lado a lado — zancadas, sentadillas y pausas estables.',
+      },
+      'total-balance': {
+        title: 'Equilibrio total',
+        description: 'Superman y zancadas laterales para la estabilidad de todo el cuerpo.',
       },
     },
     chapters: {
@@ -2521,6 +2547,18 @@ const ar = {
       'interval-peak': {
         title: 'قمة الفترات',
         description: 'ثلاث جولات من الفترات، كل واحدة أصعب قليلًا — أقسى تحدٍّ للتحمل.',
+      },
+      'hero-stretch': {
+        title: 'نهوض البطل',
+        description: 'انهض كبطل: تمارين تقوي الظهر مع تمدد لطيف.',
+      },
+      'lateral-power': {
+        title: 'التدفق الجانبي',
+        description: 'قوة الساقين من جانب لآخر — اندفاع وقرفصاء وفترات راحة ثابتة.',
+      },
+      'total-balance': {
+        title: 'توازن الجسم الكامل',
+        description: 'تمارين سوبرمان والاندفاع الجانبي لثبات الجسم كله.',
       },
     },
     chapters: {

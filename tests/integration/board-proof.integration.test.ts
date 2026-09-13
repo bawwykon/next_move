@@ -57,11 +57,11 @@ describe('board data path (local supabase)', () => {
     profileId = data.user.id;
   });
 
-  it('returns 11 active quests sorted by difficulty then slug, with segment counts', async () => {
+  it('returns 14 active quests sorted by difficulty then slug, with segment counts', async () => {
     const result = await questsRepo.fetchActiveQuests();
     expect(result.error).toBeNull();
     const quests = result.data!;
-    expect(quests).toHaveLength(11);
+    expect(quests).toHaveLength(14);
 
     expect(quests.map((quest) => quest.difficulty)).toEqual([
       'easy',
@@ -69,6 +69,9 @@ describe('board data path (local supabase)', () => {
       'easy',
       'easy',
       'easy',
+      'easy',
+      'normal',
+      'normal',
       'normal',
       'normal',
       'normal',
@@ -77,10 +80,10 @@ describe('board data path (local supabase)', () => {
       'hard',
     ]);
     const slugs = quests.map((quest) => quest.slug);
-    expect(slugs.slice(0, 5)).toEqual(slugs.slice(0, 5).sort());
-    expect(slugs.slice(5, 8)).toEqual(slugs.slice(5, 8).sort());
-    expect(slugs.slice(8, 11)).toEqual(slugs.slice(8, 11).sort());
-    expect(slugs[10]).toBe('strength-builder'); // hard tier sorts by slug: boost, peak, builder
+    expect(slugs.slice(0, 6)).toEqual(slugs.slice(0, 6).sort());
+    expect(slugs.slice(6, 11)).toEqual(slugs.slice(6, 11).sort());
+    expect(slugs.slice(11, 14)).toEqual(slugs.slice(11, 14).sort());
+    expect(slugs[13]).toBe('strength-builder'); // hard tier sorts by slug: boost, peak, builder
 
     const morningStretch = quests.find((quest) => quest.slug === 'morning-stretch')!;
     expect(morningStretch.segmentCount).toBe(8);
@@ -91,6 +94,13 @@ describe('board data path (local supabase)', () => {
     for (const quest of quests) {
       expect(quest.segmentCount).toBeGreaterThan(0);
       expect(quest.totalDurationSec).toBeGreaterThan(0);
+      // Live invariant: segment rows must sum to the declared duration —
+      // the RPC ±15% timer gate reads duration_sec, so drift blocks completion.
+      expect(quest.totalDurationSec).toBe(quest.durationSec);
+    }
+    // Big-3 quests carry the two new exercises into authored content.
+    for (const slug of ['hero-stretch', 'lateral-power', 'total-balance']) {
+      expect(slugs).toContain(slug);
     }
   });
 

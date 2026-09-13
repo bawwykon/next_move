@@ -156,7 +156,8 @@ insert into public.exercise_library (slug, name, instruction, safety_note, categ
   ('side-lunge', 'Side Lunge', 'Step wide to one side, bend knee and sink hips back while keeping trailing leg straight. Push through heel to return.', 'Keep front heel grounded and chest open.', '{"strength","mobility"}', 'Take a shallower step or hold a chair for support.', 'intermediate')
 on conflict (slug) do nothing;
 
--- quest definitions (AT-02I — three difficulty tiers)
+-- quest definitions (AT-02I — three difficulty tiers; +3 big-3 quests: hero-stretch,
+-- lateral-power, total-balance)
 insert into public.quests (slug, title, description, difficulty, xp_reward, duration_sec, categories) values
   ('morning-stretch', 'Morning Stretch', 'Wake up your whole body with a gentle stretch routine that eases you into the day.', 'easy', 100, 480, '{"mobility"}'),
   ('first-steps', 'First Steps', 'A friendly introduction to daily movement with easy marching and walking steps.', 'easy', 100, 480, '{"endurance"}'),
@@ -168,7 +169,10 @@ insert into public.quests (slug, title, description, difficulty, xp_reward, dura
   ('full-body-flow', 'Full Body Flow', 'A flowing sequence that gently moves every major joint.', 'normal', 200, 540, '{"mobility"}'),
   ('interval-boost', 'Interval Boost', 'Structured work and rest intervals that lift your conditioning.', 'hard', 400, 600, '{"endurance"}'),
   ('strength-builder', 'Strength Builder', 'A structured circuit that builds whole-body strength safely.', 'hard', 400, 615, '{"strength"}'),
-  ('interval-peak', 'Interval Peak', 'Three rounds of intervals, each a little harder than the last — the toughest endurance climb.', 'hard', 400, 660, '{"endurance"}')
+  ('interval-peak', 'Interval Peak', 'Three rounds of intervals, each a little harder than the last — the toughest endurance climb.', 'hard', 400, 660, '{"endurance"}'),
+  ('hero-stretch', 'Hero''s Rise', 'Rise like a hero: back-strengthening holds meet gentle stretches.', 'easy', 100, 480, '{"mobility"}'),
+  ('lateral-power', 'Lateral Flow', 'Side-to-side leg power — lunges, squats, and steady rests.', 'normal', 200, 570, '{"strength"}'),
+  ('total-balance', 'Total Body Balance', 'Superman holds and side lunges for head-to-toe steadiness.', 'normal', 200, 600, '{"strength"}')
 on conflict (slug) do nothing;
 
 -- BYQ-02: inactive sentinel quest anchoring custom-workout completions
@@ -186,7 +190,7 @@ where quest_id in (
   select id from public.quests where slug in (
     'morning-stretch', 'first-steps', 'desk-break', 'home-circuit', 'steady-flow',
     'power-walk', 'core-basics', 'full-body-flow', 'interval-boost', 'strength-builder',
-    'interval-peak'
+    'interval-peak', 'hero-stretch', 'lateral-power', 'total-balance'
   )
 );
 
@@ -327,7 +331,49 @@ join (
     ('interval-peak', 13, 'rest', null, 30),
     ('interval-peak', 14, 'work', 'lunges', 45),
     ('interval-peak', 15, 'rest', null, 30),
-    ('interval-peak', 16, 'cooldown', 'seated-hamstring-stretch', 60)
+    ('interval-peak', 16, 'cooldown', 'seated-hamstring-stretch', 60),
+
+    ('hero-stretch', 1, 'warmup', 'cat-cow', 60),
+    ('hero-stretch', 2, 'work', 'superman', 30),
+    ('hero-stretch', 3, 'rest', null, 30),
+    ('hero-stretch', 4, 'work', 'glute-bridge', 45),
+    ('hero-stretch', 5, 'rest', null, 30),
+    ('hero-stretch', 6, 'work', 'superman', 45),
+    ('hero-stretch', 7, 'rest', null, 30),
+    ('hero-stretch', 8, 'work', 'bird-dog', 45),
+    ('hero-stretch', 9, 'rest', null, 30),
+    ('hero-stretch', 10, 'work', 'superman', 45),
+    ('hero-stretch', 11, 'rest', null, 30),
+    ('hero-stretch', 12, 'cooldown', 'seated-hamstring-stretch', 60),
+
+    ('lateral-power', 1, 'warmup', 'march-in-place', 60),
+    ('lateral-power', 2, 'work', 'side-lunge', 45),
+    ('lateral-power', 3, 'rest', null, 30),
+    ('lateral-power', 4, 'work', 'squat', 60),
+    ('lateral-power', 5, 'rest', null, 30),
+    ('lateral-power', 6, 'work', 'side-lunge', 60),
+    ('lateral-power', 7, 'rest', null, 30),
+    ('lateral-power', 8, 'work', 'lunges', 60),
+    ('lateral-power', 9, 'rest', null, 30),
+    ('lateral-power', 10, 'work', 'side-lunge', 45),
+    ('lateral-power', 11, 'rest', null, 30),
+    ('lateral-power', 12, 'work', 'glute-bridge', 30),
+    ('lateral-power', 13, 'cooldown', 'standing-quad-stretch', 60),
+
+    ('total-balance', 1, 'warmup', 'cat-cow', 60),
+    ('total-balance', 2, 'work', 'superman', 45),
+    ('total-balance', 3, 'rest', null, 30),
+    ('total-balance', 4, 'work', 'side-lunge', 45),
+    ('total-balance', 5, 'rest', null, 30),
+    ('total-balance', 6, 'work', 'bird-dog', 60),
+    ('total-balance', 7, 'rest', null, 30),
+    ('total-balance', 8, 'work', 'superman', 60),
+    ('total-balance', 9, 'rest', null, 30),
+    ('total-balance', 10, 'work', 'side-lunge', 60),
+    ('total-balance', 11, 'rest', null, 30),
+    ('total-balance', 12, 'work', 'plank', 30),
+    ('total-balance', 13, 'rest', null, 30),
+    ('total-balance', 14, 'cooldown', 'seated-hamstring-stretch', 60)
 ) as s(slug, position, kind, exercise_slug, duration_sec)
 on s.slug = q.slug
 left join public.exercise_library e on e.slug = s.exercise_slug;
