@@ -52,12 +52,7 @@ import {
 } from '@/features/assets/assetMap';
 import { difficultyBadge, difficultyDescriptor } from '@/features/questBoard/badges';
 import { isCompletedToday } from '@/features/questBoard/completedToday';
-import {
-  WEEKLY_BONUS_XP,
-  dailyCellCopy,
-  dailyChallengeProgress,
-  streakPillCopy,
-} from '@/features/questBoard/earn';
+import { WEEKLY_BONUS_XP, dailyCellCopy, dailyChallengeProgress } from '@/features/questBoard/earn';
 import { formatDuration } from '@/features/questBoard/format';
 import { greetingForHour } from '@/features/questBoard/greeting';
 import { weeklyChallengeProgress } from '@/features/questBoard/weekly';
@@ -78,7 +73,7 @@ const DEFAULT_ONBOARDING: OnboardingAnswers = {
 
 export default function QuestBoardScreen() {
   const router = useRouter();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { profile, streak, mastery, completions, status, refresh } = useCharacterStore();
   // S4-03 — persisted checkpoint for the resume banner (FR-TIMER-7).
   const checkpoint = useWorkoutStore((state) => state.checkpoint);
@@ -237,10 +232,9 @@ export default function QuestBoardScreen() {
     [router],
   );
 
-  const { greeting, line } = greetingForHour(new Date().getHours(), t);
+  const { greeting } = greetingForHour(new Date().getHours(), t);
   const displayName = profile?.displayName ?? 'Adventurer';
   const streakCount = streak?.current ?? 0;
-  const streakPill = streakPillCopy(streakCount, t, i18n.language);
 
   // Big-3 NEXT-MILESTONE — the anchor card below the greeting. Null until
   // the profile snapshot lands; the domain never returns empty.
@@ -292,7 +286,6 @@ export default function QuestBoardScreen() {
                 <Text style={styles.greeting}>
                   {greeting}, {displayName}.
                 </Text>
-                <Text style={styles.greetingLine}>{line}</Text>
                 {/* Big-3 NEXT-MILESTONE — the closest reward anchor. */}
                 {milestone && milestoneText ? (
                   <View style={styles.milestoneCard}>
@@ -318,23 +311,16 @@ export default function QuestBoardScreen() {
                 <View style={styles.dailyMessageCard}>
                   <Text style={styles.dailyMessageText}>{t(dailyMessageKey(todayKey))}</Text>
                 </View>
-                <View style={styles.pillRow}>
-                  {/* S9-01 — countdown to the next server streak milestone.
-                      Null past the top of the ladder or on a dead streak. */}
-                  {streakPill.milestone ? (
-                    <View style={styles.streakPill}>
-                      <Text style={styles.streakText}>{streakPill.milestone}</Text>
-                    </View>
-                  ) : null}
-                  {/* S5-05 — completions are queued offline; the server
-                      (never the client) computes XP/streak/mastery. */}
-                  {pendingCount > 0 ? (
+                {/* S5-05 — completions are queued offline; the server
+                    (never the client) computes XP/streak/mastery. */}
+                {pendingCount > 0 ? (
+                  <View style={styles.pillRow}>
                     <View style={styles.syncingPill}>
                       <Ionicons name="sync" size={14} color={colors.textMuted} />
                       <Text style={styles.syncingText}>{t('board.syncing')}</Text>
                     </View>
-                  ) : null}
-                </View>
+                  </View>
+                ) : null}
               </View>
 
               {/* S4-03 / FR-TIMER-7 — app was killed mid-workout: the checkpoint
@@ -770,11 +756,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.display.family,
     fontSize: 26,
   },
-  greetingLine: {
-    color: colors.textMuted,
-    fontFamily: fonts.body.family,
-    fontSize: 14,
-  },
   dailyMessageCard: {
     alignSelf: 'stretch',
     backgroundColor: colors.surface,
@@ -795,18 +776,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     marginTop: spacing.sm,
-  },
-  streakPill: {
-    alignSelf: 'flex-start',
-    backgroundColor: colors.surface,
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-  },
-  streakText: {
-    color: colors.rewardStrong,
-    fontFamily: fonts.bodyBold.family,
-    fontSize: 13,
   },
   syncingPill: {
     alignSelf: 'flex-start',
