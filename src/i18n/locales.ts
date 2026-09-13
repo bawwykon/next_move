@@ -225,9 +225,8 @@ const en = {
     skillLevels: 'Skill levels',
     masteryTitle: {
       novice: 'Novice',
-      explorer: 'Explorer',
+      apprentice: 'Apprentice',
       adept: 'Adept',
-      expert: 'Expert',
       master: 'Master',
     },
     yourJourney: 'Your journey',
@@ -300,6 +299,7 @@ const en = {
       progress: 'Progress',
       consistency: 'Consistency',
       special: 'Special',
+      mastery: 'Mastery',
     },
   },
   history: {
@@ -717,6 +717,26 @@ const en = {
         description: 'Awarded to founding supporters.',
         hint: 'Reserved for founders.',
       },
+      'mastery-strength-10': {
+        title: 'Strength Master',
+        description: 'Reach Strength mastery level 10.',
+        hint: 'The iron remembers your name.',
+      },
+      'mastery-endurance-10': {
+        title: 'Endurance Master',
+        description: 'Reach Endurance mastery level 10.',
+        hint: 'Mile by mile, unstoppable.',
+      },
+      'mastery-mobility-10': {
+        title: 'Mobility Master',
+        description: 'Reach Mobility mastery level 10.',
+        hint: 'Move well, move often.',
+      },
+      'mastery-discipline-10': {
+        title: 'Discipline Master',
+        description: 'Reach Discipline mastery level 10.',
+        hint: 'Showing up is the skill.',
+      },
     },
     exercises: {
       'wall-push-up': {
@@ -1073,9 +1093,8 @@ const es: typeof en = {
     skillLevels: 'Niveles de habilidad',
     masteryTitle: {
       novice: 'Novato',
-      explorer: 'Explorador',
+      apprentice: 'Aprendiz',
       adept: 'Adepto',
-      expert: 'Experto',
       master: 'Maestro',
     },
     yourJourney: 'Tu viaje',
@@ -1149,6 +1168,7 @@ const es: typeof en = {
       progress: 'Progreso',
       consistency: 'Constancia',
       special: 'Especial',
+      mastery: 'Maestría',
     },
   },
   history: {
@@ -1568,6 +1588,26 @@ const es: typeof en = {
         description: 'Otorgado a los primeros supporters.',
         hint: 'Reservado a los fundadores.',
       },
+      'mastery-strength-10': {
+        title: 'Maestro de fuerza',
+        description: 'Alcanza el nivel 10 de maestría de Fuerza.',
+        hint: 'El hierro recuerda tu nombre.',
+      },
+      'mastery-endurance-10': {
+        title: 'Maestro de resistencia',
+        description: 'Alcanza el nivel 10 de maestría de Resistencia.',
+        hint: 'Kilómetro a kilómetro, imparable.',
+      },
+      'mastery-mobility-10': {
+        title: 'Maestro de movilidad',
+        description: 'Alcanza el nivel 10 de maestría de Movilidad.',
+        hint: 'Muévete bien, muévete a menudo.',
+      },
+      'mastery-discipline-10': {
+        title: 'Maestro de disciplina',
+        description: 'Alcanza el nivel 10 de maestría de Disciplina.',
+        hint: 'Volver cada día es la habilidad.',
+      },
     },
     exercises: {
       'wall-push-up': {
@@ -1962,9 +2002,8 @@ const ar = {
     skillLevels: 'مستويات المهارة',
     masteryTitle: {
       novice: 'مبتدئ',
-      explorer: 'مستكشف',
+      apprentice: 'متدرب',
       adept: 'متمرس',
-      expert: 'خبير',
       master: 'أستاذ',
     },
     yourJourney: 'رحلتك',
@@ -2045,6 +2084,7 @@ const ar = {
       progress: 'التقدم',
       consistency: 'الاستمرارية',
       special: 'مميز',
+      mastery: 'إتقان',
     },
   },
   history: {
@@ -2470,6 +2510,26 @@ const ar = {
         title: 'شارة المؤسسين',
         description: 'تُمنح للداعمين الأوائل.',
         hint: 'محفوظة للمؤسسين.',
+      },
+      'mastery-strength-10': {
+        title: 'أستاذ القوة',
+        description: 'بلغ المستوى 10 في إتقان القوة.',
+        hint: 'الحديد يتذكر اسمك.',
+      },
+      'mastery-endurance-10': {
+        title: 'أستاذ التحمل',
+        description: 'بلغ المستوى 10 في إتقان التحمل.',
+        hint: 'خطوة بخطوة، لا يمكن إيقافك.',
+      },
+      'mastery-mobility-10': {
+        title: 'أستاذ المرونة',
+        description: 'بلغ المستوى 10 في إتقان المرونة.',
+        hint: 'تحرك جيدًا وتحرك كثيرًا.',
+      },
+      'mastery-discipline-10': {
+        title: 'أستاذ الانضباط',
+        description: 'بلغ المستوى 10 في إتقان الانضباط.',
+        hint: 'العودة كل يوم هي المهارة.',
       },
     },
     exercises: {

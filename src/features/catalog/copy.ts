@@ -146,6 +146,7 @@ const CATEGORY_KEYS: Record<string, string> = {
   progress: 'achievements.category.progress',
   consistency: 'achievements.category.consistency',
   special: 'achievements.category.special',
+  mastery: 'achievements.category.mastery',
 };
 
 /** Localized achievement category; unknown values pass through untouched. */

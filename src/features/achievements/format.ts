@@ -27,6 +27,7 @@ export const ACHIEVEMENT_CATEGORY_ART: Record<AchievementCategory, CategoryArt> 
   progress: { icon: 'trending-up', iconColor: '#FCD34D', blobColor: '#3B2E12' },
   consistency: { icon: 'flame', iconColor: '#FDBA74', blobColor: '#3B2312' },
   special: { icon: 'star', iconColor: '#C4B5FD', blobColor: '#2B1B3E' },
+  mastery: { icon: 'medal', iconColor: '#FCD34D', blobColor: '#2A230F' },
 };
 
 /**

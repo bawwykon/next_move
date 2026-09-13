@@ -6,7 +6,7 @@
  *  - streak-milestone payouts on a fresh 3/7/30/100/200/365-day streak
  *    (50/150/500/1500/3500/6000)
  *  - level curve boundaries, incl. the 100 â†’ 101 transition (10,000 XP span)
- *  - mastery +30/+15 per touched track (250-point levels; AT-02H)
+ *  - mastery +30/+15 per touched track (1..20 rank ladder; 0047)
  *  - achievement triggers at their exact boundaries: quests 50/100, streak 7,
  *    phoenix (level 25: rule level=25), early-bird (UTC hour < 10)
  *  - INVARIANT: a simulated long session (101 consecutive days) is recomputed

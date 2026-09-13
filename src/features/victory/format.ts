@@ -82,22 +82,31 @@ export interface MasteryDelta {
 }
 
 /**
- * FR-MAS-2/3 — per-track mastery titles. 1 Novice, 2 Explorer, 3 Adept,
- * 4 Expert, 5 through the cap (10) Master. Copy via `t` (I18N-01).
+ * Big-3 MASTERY-LEVELS — per-track mastery ranks. 1 Novice, 2–4 Apprentice,
+ * 5–9 Adept, 10–20 Master (Level 10 awards the track's Master Badge).
+ * Copy via `t` (I18N-01).
  */
 const MASTERY_TITLE_KEYS = {
-  1: 'victory.masteryTitle.novice',
-  2: 'victory.masteryTitle.explorer',
-  3: 'victory.masteryTitle.adept',
-  4: 'victory.masteryTitle.expert',
-  5: 'victory.masteryTitle.master',
+  novice: 'victory.masteryTitle.novice',
+  apprentice: 'victory.masteryTitle.apprentice',
+  adept: 'victory.masteryTitle.adept',
+  master: 'victory.masteryTitle.master',
 } as const;
 
-export const MASTERY_CAP = 10;
+export const MASTERY_CAP = 20;
 
 export function masteryLevelTitle(level: number, t: TFunction): string {
-  const clamped = Math.min(Math.max(level, 1), 5) as keyof typeof MASTERY_TITLE_KEYS;
-  return t(MASTERY_TITLE_KEYS[clamped] ?? MASTERY_TITLE_KEYS[1]);
+  const clamped = Math.floor(level);
+  if (clamped >= 10) {
+    return t(MASTERY_TITLE_KEYS.master);
+  }
+  if (clamped >= 5) {
+    return t(MASTERY_TITLE_KEYS.adept);
+  }
+  if (clamped >= 2) {
+    return t(MASTERY_TITLE_KEYS.apprentice);
+  }
+  return t(MASTERY_TITLE_KEYS.novice);
 }
 
 export function masteryTrackLabel(track: QuestCategory, t: TFunction): string {

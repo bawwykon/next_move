@@ -44,19 +44,19 @@ describe('achievements data path (live local supabase)', () => {
     profileId = data.user.id;
   });
 
-  it('fetches the full catalogue: 13 rows, non-empty copy fields, unique slugs', async () => {
+  it('fetches the full catalogue: 18 rows, non-empty copy fields, unique slugs', async () => {
     const result = await achievementsRepo.fetchAchievementCatalog();
     expect(result.error).toBeNull();
     const catalog = result.data!;
-    expect(catalog).toHaveLength(14);
+    expect(catalog).toHaveLength(18);
     for (const row of catalog) {
       expect(row.slug).toBeTruthy();
       expect(row.title).toBeTruthy();
       expect(row.description).toBeTruthy();
       expect(row.hint).toBeTruthy();
-      expect(['beginner', 'progress', 'consistency', 'special']).toContain(row.category);
+      expect(['beginner', 'progress', 'consistency', 'special', 'mastery']).toContain(row.category);
     }
-    expect(new Set(catalog.map((row) => row.slug)).size).toBe(14);
+    expect(new Set(catalog.map((row) => row.slug)).size).toBe(18);
     console.log('catalog:', catalog.map((row) => row.slug).join(' | '));
   });
 
@@ -88,7 +88,7 @@ describe('achievements data path (live local supabase)', () => {
     }
 
     const locked = catalog.filter((row) => !slugs.has(row.slug)).length;
-    expect(locked).toBe(14 - unlocks.length);
+    expect(locked).toBe(18 - unlocks.length);
     console.log(
       `demo: unlocked=${unlocks.length} locked=${locked} -> ${unlocks.map((u) => u.slug).join(' | ')}`,
     );

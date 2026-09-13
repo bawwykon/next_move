@@ -624,33 +624,57 @@ describe('complete_quest RPC (live local supabase)', () => {
     expect(await sqlFn('chapter_for_quests', { quests: 0 })).toBe(1);
   });
 
-  it('mastery levels: mastery_level_for_points at 0/250/500 (and cap 10)', async () => {
+  it('mastery levels: mastery_level_for_points on the 1..20 ladder (0047)', async () => {
     const cases = [
       { points: 0, level: 1 },
-      { points: 249, level: 1 },
-      { points: 250, level: 2 },
-      { points: 499, level: 2 },
-      { points: 500, level: 3 },
-      { points: 2499, level: 10 },
-      { points: 2500, level: 10 },
+      { points: 99, level: 1 },
+      { points: 100, level: 2 },
+      { points: 250, level: 3 },
+      { points: 375, level: 4 },
+      { points: 500, level: 5 },
+      { points: 1000, level: 6 },
+      { points: 2000, level: 10 },
+      { points: 6999, level: 19 },
+      { points: 7000, level: 20 },
     ];
     for (const c of cases) {
       expect(await sqlFn('mastery_level_for_points', { points: c.points })).toBe(c.level);
     }
 
     await resetProgression();
-    // End-to-end: 220 seeded mobility points +30 from a completed quest -> 250 -> level 2 (AT-02H).
+    // End-to-end: 70 seeded mobility points +30 from a completed quest -> 100 -> level 2 (0047).
     const seedPts = await admin
       .from('mastery')
-      .insert({ profile_id: profileId, track: 'mobility', points: 220 });
+      .insert({ profile_id: profileId, track: 'mobility', points: 70 });
     expect(seedPts.error).toBeNull();
     const d = day(47);
-    const r = await callOk(easyEvent(d, 'mas-220', 8));
+    const r = await callOk(easyEvent(d, 'mas-70', 8));
     const mobility = r.mastery.find((m) => m.track === 'mobility')!;
-    expect(mobility.points_before).toBe(220);
-    expect(mobility.points_after).toBe(250);
+    expect(mobility.points_before).toBe(70);
+    expect(mobility.points_after).toBe(100);
     expect(mobility.level_before).toBe(1);
     expect(mobility.level_after).toBe(2);
+  });
+
+  it('mastery badges: crossing track L10 unlocks the mastery-*-10 badge (0047)', async () => {
+    await resetProgression();
+    // Discipline accrues on every completion (+15), so 1990 seeded + 15
+    // lands exactly on the L10 line (2000) and must unlock the badge once.
+    const seedPts = await admin
+      .from('mastery')
+      .insert({ profile_id: profileId, track: 'discipline', points: 1990 });
+    expect(seedPts.error).toBeNull();
+    const d = day(50);
+    const r = await callOk(easyEvent(d, 'mas-badge', 8));
+    const discipline = r.mastery.find((m) => m.track === 'discipline')!;
+    expect(discipline.points_before).toBe(1990);
+    expect(discipline.points_after).toBe(2005);
+    expect(discipline.level_before).toBe(9);
+    expect(discipline.level_after).toBe(10);
+    expect(r.achievements.map((a) => a.slug)).toContain('mastery-discipline-10');
+    // Exactly-once: a second completion must not re-unlock it.
+    const next = await callOk(easyEvent(d, 'mas-badge-2', 9));
+    expect(next.achievements.map((a) => a.slug)).not.toContain('mastery-discipline-10');
   });
 
   it('titles: level_title matches FR-XP-3 at 5/10/25/50/100 (end-to-end via RPC)', async () => {

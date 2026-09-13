@@ -56,19 +56,41 @@ export function levelTitle(levelInput: number): string {
 }
 
 /**
- * FR-MAS-2 — mastery level from points: floor(points/250) + 1, capped at 10
- * (mirror of `mastery_level_for_points`, 0020).
+ * Big-3 MASTERY-LEVELS — mastery rank ladder 1..20 per track. Thresholds are
+ * the cumulative points at which each level begins (exact mirror of
+ * `mastery_level_for_points`, 0047). Anchors: L2 at 100, L5 at 500, L10 at
+ * 2000 (awards the track's Master Badge); L11+ advance 500 per level to a
+ * 7000-point L20 cap (~8 months of single-track daily focus).
+ * Ranks: 1 Novice, 2–4 Apprentice, 5–9 Adept, 10–20 Master.
  */
+export const MASTERY_LEVEL_STARTS: readonly number[] = Object.freeze([
+  0, 100, 250, 375, 500, 1000, 1250, 1500, 1750, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500,
+  6000, 6500, 7000,
+]);
+
+export const MASTERY_MAX_LEVEL = 20;
+
+/** Span of the final band (L20 is unbounded above; the bar renders full). */
+export const MASTERY_CAP_SPAN = 500;
+
 export function masteryLevelForPoints(pointsInput: number): number {
   const points = Math.max(0, Math.floor(pointsInput));
-  return Math.min(10, Math.floor(points / 250) + 1);
+  let level = 1;
+  for (let index = 0; index < MASTERY_LEVEL_STARTS.length; index += 1) {
+    if (points >= (MASTERY_LEVEL_STARTS[index] ?? 0)) {
+      level = index + 1;
+    } else {
+      break;
+    }
+  }
+  return level;
 }
 
 export interface MasteryProgress {
   level: number;
-  /** Points remaining in the current level's 250-point band, clamped. */
+  /** Points accumulated inside the current level's band. */
   into: number;
-  /** The current level's fixed 250-point band. */
+  /** The current level's band span (500 at the cap, rendered full). */
   needed: number;
   /** into / needed, clamped to [0, 1]. */
   fraction: number;
@@ -77,6 +99,12 @@ export interface MasteryProgress {
 export function masteryProgress(pointsInput: number): MasteryProgress {
   const points = Math.max(0, Math.floor(pointsInput));
   const level = masteryLevelForPoints(points);
-  const into = Math.min(250, Math.max(0, points - 250 * (level - 1)));
-  return { level, into, needed: 250, fraction: into / 250 };
+  if (level >= MASTERY_MAX_LEVEL) {
+    return { level, into: MASTERY_CAP_SPAN, needed: MASTERY_CAP_SPAN, fraction: 1 };
+  }
+  const start = MASTERY_LEVEL_STARTS[level - 1] ?? 0;
+  const next = MASTERY_LEVEL_STARTS[level] ?? start;
+  const needed = Math.max(1, next - start);
+  const into = Math.min(needed, Math.max(0, points - start));
+  return { level, into, needed, fraction: into / needed };
 }

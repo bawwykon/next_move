@@ -198,17 +198,19 @@ describe('xpBreakdownRows', () => {
 });
 
 describe('masteryLevelTitle', () => {
-  it('maps levels 1..5 to their titles', () => {
+  it('maps ranks Novice / Apprentice / Adept / Master', () => {
     expect(masteryLevelTitle(1, t)).toBe('Novice');
-    expect(masteryLevelTitle(2, t)).toBe('Explorer');
-    expect(masteryLevelTitle(3, t)).toBe('Adept');
-    expect(masteryLevelTitle(4, t)).toBe('Expert');
-    expect(masteryLevelTitle(5, t)).toBe('Master');
+    expect(masteryLevelTitle(2, t)).toBe('Apprentice');
+    expect(masteryLevelTitle(3, t)).toBe('Apprentice');
+    expect(masteryLevelTitle(4, t)).toBe('Apprentice');
+    expect(masteryLevelTitle(5, t)).toBe('Adept');
+    expect(masteryLevelTitle(9, t)).toBe('Adept');
+    expect(masteryLevelTitle(10, t)).toBe('Master');
   });
 
-  it('stays Master through the cap (10) and clamps out-of-range levels', () => {
-    expect(masteryLevelTitle(6, t)).toBe('Master');
-    expect(masteryLevelTitle(10, t)).toBe('Master');
+  it('stays Master through the cap (20) and clamps out-of-range levels', () => {
+    expect(masteryLevelTitle(11, t)).toBe('Master');
+    expect(masteryLevelTitle(20, t)).toBe('Master');
     expect(masteryLevelTitle(0, t)).toBe('Novice');
   });
 });
@@ -228,7 +230,7 @@ describe('masteryDeltas', () => {
     expect(deltas[1]).toMatchObject({
       trackLabel: 'Mobility',
       pointsGained: 50,
-      levelTitle: 'Explorer',
+      levelTitle: 'Apprentice',
       leveledUp: true,
     });
   });

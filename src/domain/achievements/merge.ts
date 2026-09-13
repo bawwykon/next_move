@@ -6,7 +6,7 @@
  * exclude it at the SQL level and strip it in mapping) — the locked row
  * presents the vague hint only (FR-ACH-4).
  */
-export type AchievementCategory = 'beginner' | 'progress' | 'consistency' | 'special';
+export type AchievementCategory = 'beginner' | 'progress' | 'consistency' | 'special' | 'mastery';
 
 export interface AchievementCatalogRow {
   slug: string;

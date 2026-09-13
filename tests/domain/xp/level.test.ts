@@ -77,28 +77,46 @@ describe('levelTitle (FR-XP-3 ladder, server mirror)', () => {
   });
 });
 
-describe('masteryLevelForPoints (floor(points/250)+1, cap 10)', () => {
-  it('levels every 250 points and caps at 10', () => {
+describe('masteryLevelForPoints (Big-3 ladder 1..20, server mirror 0047)', () => {
+  it('pins every band edge and the L20 cap', () => {
     expect(masteryLevelForPoints(0)).toBe(1);
-    expect(masteryLevelForPoints(249)).toBe(1);
-    expect(masteryLevelForPoints(250)).toBe(2);
-    expect(masteryLevelForPoints(499)).toBe(2);
-    expect(masteryLevelForPoints(500)).toBe(3);
-    expect(masteryLevelForPoints(2250)).toBe(10);
-    expect(masteryLevelForPoints(10_000)).toBe(10);
+    expect(masteryLevelForPoints(99)).toBe(1);
+    expect(masteryLevelForPoints(100)).toBe(2);
+    expect(masteryLevelForPoints(249)).toBe(2);
+    expect(masteryLevelForPoints(250)).toBe(3);
+    expect(masteryLevelForPoints(374)).toBe(3);
+    expect(masteryLevelForPoints(375)).toBe(4);
+    expect(masteryLevelForPoints(499)).toBe(4);
+    expect(masteryLevelForPoints(500)).toBe(5);
+    expect(masteryLevelForPoints(999)).toBe(5);
+    expect(masteryLevelForPoints(1000)).toBe(6);
+    expect(masteryLevelForPoints(1999)).toBe(9);
+    expect(masteryLevelForPoints(2000)).toBe(10);
+    expect(masteryLevelForPoints(6999)).toBe(19);
+    expect(masteryLevelForPoints(7000)).toBe(20);
+    expect(masteryLevelForPoints(10_000)).toBe(20);
   });
 });
 
 describe('masteryProgress', () => {
-  it('renders the fixed 250-point band', () => {
-    expect(masteryProgress(0)).toEqual({ level: 1, into: 0, needed: 250, fraction: 0 });
-    expect(masteryProgress(499)).toEqual({ level: 2, into: 249, needed: 250, fraction: 0.996 });
+  it('renders variable bands against the next threshold', () => {
+    expect(masteryProgress(0)).toEqual({ level: 1, into: 0, needed: 100, fraction: 0 });
+    expect(masteryProgress(175)).toEqual({ level: 2, into: 75, needed: 150, fraction: 0.5 });
+    expect(masteryProgress(1999)).toEqual({
+      level: 9,
+      into: 249,
+      needed: 250,
+      fraction: 0.996,
+    });
   });
 
-  it('clamps beyond the band', () => {
-    const capped = masteryProgress(2250);
-    expect(capped.level).toBe(10);
-    expect(capped.into).toBe(0);
-    expect(capped.fraction).toBe(0);
+  it('renders a full bar at the L20 cap', () => {
+    expect(masteryProgress(7000)).toEqual({
+      level: 20,
+      into: 500,
+      needed: 500,
+      fraction: 1,
+    });
+    expect(masteryProgress(10_000).fraction).toBe(1);
   });
 });

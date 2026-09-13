@@ -148,7 +148,7 @@ const TRACK_ORDER: readonly ('strength' | 'endurance' | 'mobility' | 'discipline
 
 /**
  * FR-MAS-4 — the four mastery bars in a fixed order, each a pure derivation
- * of `mastery.points` via the server curve (floor(points/250)+1, cap 10).
+ * of `mastery.points` via the server rank ladder (1..20, 0047).
  */
 export function masteryRows(
   rows: readonly { track: string; points: number }[],

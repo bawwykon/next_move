@@ -111,10 +111,11 @@ const CATALOG: AchievementCatalogRow[] = [
 ];
 
 describe('ACHIEVEMENT_CATEGORY_ART', () => {
-  it('covers exactly the four schema categories with a distinct emblem each', () => {
+  it('covers exactly the five schema categories with a distinct emblem each', () => {
     expect(Object.keys(ACHIEVEMENT_CATEGORY_ART).sort()).toEqual([
       'beginner',
       'consistency',
+      'mastery',
       'progress',
       'special',
     ]);

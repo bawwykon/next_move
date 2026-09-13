@@ -133,10 +133,10 @@ describe('masteryRows', () => {
     expect(strength.fraction).toBe(0);
     const discipline = rows[3]!;
     expect(discipline.points).toBe(499);
-    expect(discipline.level).toBe(2);
-    expect(discipline.levelTitle).toBe('Explorer');
-    expect(discipline.into).toBe(249);
-    expect(discipline.fraction).toBeCloseTo(0.996);
+    expect(discipline.level).toBe(4);
+    expect(discipline.levelTitle).toBe('Apprentice');
+    expect(discipline.into).toBe(124);
+    expect(discipline.fraction).toBeCloseTo(0.992);
   });
 });
 

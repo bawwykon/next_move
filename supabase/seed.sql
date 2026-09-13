@@ -348,6 +348,10 @@ left join public.exercise_library e on e.slug = s.exercise_slug;
 --   early-bird         {kind:'hour-before',hour:10,count:100}   (UTC)
 --   night-owl          {kind:'hour-after',hour:20,count:100}    (UTC)
 --   master-adventurer  {kind:'level',level:100}
+--   mastery-strength-10   {kind:'mastery',track:'strength',level:10}
+--   mastery-endurance-10  {kind:'mastery',track:'endurance',level:10}
+--   mastery-mobility-10   {kind:'mastery',track:'mobility',level:10}
+--   mastery-discipline-10 {kind:'mastery',track:'discipline',level:10}
 insert into public.achievements (slug, title, description, hint, category, rarity, unlock_rule) values
   ('first-quest', 'First Quest', 'Complete your first quest.', 'Take the first step.', 'beginner', 'Common', '{"kind":"quests","count":1}'),
   ('first-level', 'First Level', 'Reach level 2.', 'Every journey has its first summit.', 'beginner', 'Common', '{"kind":"level","level":2}'),
@@ -362,7 +366,11 @@ insert into public.achievements (slug, title, description, hint, category, rarit
   ('early-bird', 'Early Bird', 'Start 100 quests before 10:00 AM.', 'The day starts early for some.', 'special', 'Epic', '{"kind":"hour-before","hour":10,"count":100}'),
   ('night-owl', 'Night Owl', 'Start 100 quests after 8:00 PM.', 'Night holds its own magic.', 'special', 'Epic', '{"kind":"hour-after","hour":20,"count":100}'),
   ('master-adventurer', 'Master Adventurer', 'Reach level 100.', 'The summit waits for the patient.', 'special', 'Legendary', '{"kind":"level","level":100}'),
-  ('founders-emblem', 'Founder''s Emblem', 'Awarded to founding supporters.', 'Reserved for founders.', 'special', 'Legendary', '{"kind":"purchase","sku":"founders_emblem"}')
+  ('founders-emblem', 'Founder''s Emblem', 'Awarded to founding supporters.', 'Reserved for founders.', 'special', 'Legendary', '{"kind":"purchase","sku":"founders_emblem"}'),
+  ('mastery-strength-10', 'Strength Master', 'Reach Strength mastery level 10.', 'The iron remembers your name.', 'mastery', 'Legendary', '{"kind":"mastery","track":"strength","level":10}'),
+  ('mastery-endurance-10', 'Endurance Master', 'Reach Endurance mastery level 10.', 'Mile by mile, unstoppable.', 'mastery', 'Legendary', '{"kind":"mastery","track":"endurance","level":10}'),
+  ('mastery-mobility-10', 'Mobility Master', 'Reach Mobility mastery level 10.', 'Move well, move often.', 'mastery', 'Legendary', '{"kind":"mastery","track":"mobility","level":10}'),
+  ('mastery-discipline-10', 'Discipline Master', 'Reach Discipline mastery level 10.', 'Showing up is the skill.', 'mastery', 'Legendary', '{"kind":"mastery","track":"discipline","level":10}')
 on conflict (slug) do update set rarity = excluded.rarity;
 
 -- cosmetics (18)
