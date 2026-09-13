@@ -74,6 +74,23 @@ const dayKey = (offset: number): string => {
 const epocOffset = (key: string): number =>
   Math.round((Date.parse(key) - Date.parse(EPOC)) / DAY_MS);
 
+/**
+ * Independent mirror of the 0048 trial rotation (ISO week of the calendar
+ * day_key -> strength/endurance/mobility/discipline). Kept inline per the
+ * mirror-not-reuse rule: the test pins the server contract.
+ */
+const trialTrackForDayKey = (key: string): string => {
+  const [y, m, d] = key.split('-').map(Number) as [number, number, number];
+  const day = new Date(Date.UTC(y, m - 1, d));
+  const weekday = (day.getUTCDay() + 6) % 7;
+  day.setUTCDate(day.getUTCDate() - weekday + 3);
+  const yearStart = new Date(Date.UTC(day.getUTCFullYear(), 0, 4));
+  const startWeekday = (yearStart.getUTCDay() + 6) % 7;
+  yearStart.setUTCDate(yearStart.getUTCDate() - startWeekday + 3);
+  const week = 1 + Math.round((day.getTime() - yearStart.getTime()) / DAY_MS / 7);
+  return (['strength', 'endurance', 'mobility', 'discipline'] as const)[(week - 1) % 4]!;
+};
+
 const idemUuid = (label: string): string => {
   let hash = 0;
   for (let i = 0; i < label.length; i += 1) {
@@ -400,7 +417,17 @@ describe('economy simulation sweep (live supabase)', () => {
     expect(prof.longest_streak).toBe(DAYS);
     expect(prof.last_completed_day).toBe(dayKey(DAYS - 1));
     expect(prof.journey_quests).toBe(DAYS);
-    expect(await masteryRow()).toEqual({ mobility: 3030, discipline: 1515 }); // AT-02H 3x
+    // Trial mastery (0048): every weekly payout also banks +60 in that ISO
+    // week's rotation track — recomputed here independently of the server.
+    // Base is AT-02H 3x (101 mobility mornings); the 15 weeklies scatter.
+    const expectedMastery: Record<string, number> = { mobility: 3030, discipline: 1515 };
+    payouts.forEach((p, i) => {
+      if (p.xp.weekly > 0) {
+        const track = trialTrackForDayKey(dayKey(i));
+        expectedMastery[track] = (expectedMastery[track] ?? 0) + 60;
+      }
+    });
+    expect(await masteryRow()).toEqual(expectedMastery);
 
     // Replay: same idempotency keys return stored payloads, nothing drifts.
     const replay5 = await completeViaRpc(morning(5, 9, 'sim-5-9'));

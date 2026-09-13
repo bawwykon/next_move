@@ -62,6 +62,25 @@ const MILESTONES: readonly { days: number; xp: number }[] = [
   { days: 365, xp: 6000 },
 ];
 const LEVEL_XP_FOR = (level: number): number => 50 * level * (level - 1);
+const TRIAL_BONUS_XP = 60;
+const TRIAL_BY_WEEK = ['strength', 'endurance', 'mobility', 'discipline'] as const;
+
+/**
+ * Independent mirror of the 0048 trial rotation (ISO week of the calendar
+ * day_key -> trial track). The sim's dayKeys are absolute calendar dates,
+ * so UTC construction is exact in every host time zone.
+ */
+function trialTrackForDayKey(key: string): string {
+  const [y, m, d] = key.split('-').map(Number) as [number, number, number];
+  const day = new Date(Date.UTC(y, m - 1, d));
+  const weekday = (day.getUTCDay() + 6) % 7;
+  day.setUTCDate(day.getUTCDate() - weekday + 3);
+  const yearStart = new Date(Date.UTC(day.getUTCFullYear(), 0, 4));
+  const startWeekday = (yearStart.getUTCDay() + 6) % 7;
+  yearStart.setUTCDate(yearStart.getUTCDate() - startWeekday + 3);
+  const week = 1 + Math.round((day.getTime() - yearStart.getTime()) / DAY_MS / 7);
+  return TRIAL_BY_WEEK[(week - 1) % 4]!;
+}
 
 function mulberry32(seed: number): () => number {
   let a = seed >>> 0;
@@ -167,6 +186,9 @@ function runMirror(events: SimEvent[], quests: Map<string, Quest>): Mirror {
     weekCounts.set(week, count);
     if (count === 3) {
       weekly += WEEKLY_XP;
+      // Trial mastery (0048, relaxed): +60 in the ISO-week trial track.
+      const trialTrack = trialTrackForDayKey(dayKey(ev.dayOffset));
+      mastery[trialTrack] = (mastery[trialTrack] ?? 0) + TRIAL_BONUS_XP;
     }
     let days = weekDays.get(week);
     if (!days) {

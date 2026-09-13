@@ -202,9 +202,9 @@ const en = {
         title: 'Trial of Mobility',
         goal: 'Complete 3 quests this week to stay in motion',
       },
-      grand: {
-        title: 'The Grand Trial',
-        goal: 'Complete 3 quests this week for full honors',
+      discipline: {
+        title: 'Trial of Discipline',
+        goal: 'Complete 3 quests this week to prove your discipline',
       },
     },
   },
@@ -1099,9 +1099,9 @@ const es: typeof en = {
         title: 'Prueba de movilidad',
         goal: 'Completa 3 misiones esta semana para no parar de moverte',
       },
-      grand: {
-        title: 'La gran prueba',
-        goal: 'Completa 3 misiones esta semana con todos los honores',
+      discipline: {
+        title: 'Prueba de disciplina',
+        goal: 'Completa 3 misiones esta semana para demostrar tu disciplina',
       },
     },
   },
@@ -2031,9 +2031,9 @@ const ar = {
         title: 'تحدي المرونة',
         goal: 'أكمل 3 مهام هذا الأسبوع لتبقى في حركة',
       },
-      grand: {
-        title: 'التحدي الكبير',
-        goal: 'أكمل 3 مهام هذا الأسبوع بكل فخر',
+      discipline: {
+        title: 'تحدي الانضباط',
+        goal: 'أكمل 3 مهام هذا الأسبوع لتثبت انضباطك',
       },
     },
     // I18N-AR — explicit day-words + templates selected in code (no

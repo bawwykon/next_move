@@ -232,7 +232,7 @@ export const TRIAL_ART: Record<string, number> = {
   'trial-strength': require('@/assets/icons/trial_strength.png'),
   'trial-endurance': require('@/assets/icons/trial_endurance.png'),
   'trial-mobility': require('@/assets/icons/trial_mobility.png'),
-  'trial-grand': require('@/assets/icons/trial_grand.png'),
+  'trial-discipline': require('@/assets/icons/trial_discipline.png'),
 };
 
 export function trialArt(trialId: string | null | undefined): number | null {

@@ -72,6 +72,23 @@ type Payload = {
 const iso = (dayKey: string, hour: number, minute = 0) =>
   `${dayKey}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00.000Z`;
 
+/**
+ * Independent mirror of the 0048 trial rotation (ISO week of the calendar
+ * day_key -> strength/endurance/mobility/discipline). Deliberately NOT
+ * imported from src: the test must pin the server, not reuse it.
+ */
+const trialTrackForDayKey = (dayKey: string): string => {
+  const [y, m, d] = dayKey.split('-').map(Number) as [number, number, number];
+  const day = new Date(Date.UTC(y, m - 1, d));
+  const weekday = (day.getUTCDay() + 6) % 7;
+  day.setUTCDate(day.getUTCDate() - weekday + 3);
+  const yearStart = new Date(Date.UTC(day.getUTCFullYear(), 0, 4));
+  const startWeekday = (yearStart.getUTCDay() + 6) % 7;
+  yearStart.setUTCDate(yearStart.getUTCDate() - startWeekday + 3);
+  const week = 1 + Math.round((day.getTime() - yearStart.getTime()) / 604_800_000);
+  return (['strength', 'endurance', 'mobility', 'discipline'] as const)[(week - 1) % 4]!;
+};
+
 describe('complete_quest RPC (live local supabase)', () => {
   let user: SupabaseClient;
   let admin: SupabaseClient;
@@ -675,6 +692,30 @@ describe('complete_quest RPC (live local supabase)', () => {
     // Exactly-once: a second completion must not re-unlock it.
     const next = await callOk(easyEvent(d, 'mas-badge-2', 9));
     expect(next.achievements.map((a) => a.slug)).not.toContain('mastery-discipline-10');
+  });
+
+  it('trial mastery: weekly completion pays +60 in the ISO-week trial track (0048)', async () => {
+    await resetProgression();
+    // Fri/Sat/Sun of a single Mon–Sun window; the Sunday event is the 3rd.
+    const d1 = '2026-09-04';
+    const d2 = '2026-09-05';
+    const d3 = '2026-09-06';
+    const r1 = await callOk(easyEvent(d1, 'trial-w1', 8));
+    expect(r1.xp.weekly).toBe(0);
+    expect(r1.mastery.find((m) => m.track === 'mobility')!.points_after).toBe(30);
+    await callOk(easyEvent(d2, 'trial-w2', 8));
+    const r = await callOk(easyEvent(d3, 'trial-w3', 8));
+    expect(r.xp.weekly).toBe(1000);
+    // morning-stretch touches mobility only: 3×30 mobility, 3×15 discipline,
+    // plus the +60 trial bonus in the rotation track for that ISO week
+    // (a track the quest never touches still gets its own payload row).
+    const trialTrack = trialTrackForDayKey(d3);
+    const byTrack = Object.fromEntries(r.mastery.map((m) => [m.track, m.points_after]));
+    const base: Record<string, number> = { mobility: 90, discipline: 45 };
+    for (const [track, points] of Object.entries(byTrack)) {
+      expect(points).toBe((base[track] ?? 0) + (track === trialTrack ? 60 : 0));
+    }
+    expect(byTrack[trialTrack]).toBe((base[trialTrack] ?? 0) + 60);
   });
 
   it('titles: level_title matches FR-XP-3 at 5/10/25/50/100 (end-to-end via RPC)', async () => {
