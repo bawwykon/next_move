@@ -178,6 +178,35 @@ const en = {
     streakMilestone_one: '{{count}} day to a {{days}}-day bonus',
     streakMilestone_other: '{{count}} days to a {{days}}-day bonus',
     streakIdle: 'Your adventure is waiting. Your next quest is ready.',
+    milestone: {
+      kicker: 'Next Milestone',
+      chapter_one: '{{count}} more quest to reach Chapter {{id}}: {{name}}',
+      chapter_other: '{{count}} more quests to reach Chapter {{id}}: {{name}}',
+      chapterMeta: '{{done}} / {{target}} quests',
+      level: '{{xp}} XP to reach Level {{level}} ({{title}})',
+      levelMeta: '{{done}} / {{target}} XP',
+      streak_one: '{{count}} more day to the {{days}}-day streak badge',
+      streak_other: '{{count}} more days to the {{days}}-day streak badge',
+      streakMeta: '{{done}} / {{target}} days',
+    },
+    trial: {
+      strength: {
+        title: 'Trial of Strength',
+        goal: 'Complete 3 quests this week to prove your strength',
+      },
+      endurance: {
+        title: 'Trial of Endurance',
+        goal: 'Complete 3 quests this week to outlast the week',
+      },
+      mobility: {
+        title: 'Trial of Mobility',
+        goal: 'Complete 3 quests this week to stay in motion',
+      },
+      grand: {
+        title: 'The Grand Trial',
+        goal: 'Complete 3 quests this week for full honors',
+      },
+    },
   },
   quest: {
     back: 'Back',
@@ -1046,6 +1075,35 @@ const es: typeof en = {
     streakMilestone_one: '{{count}} día para el bonus de {{days}} días',
     streakMilestone_other: '{{count}} días para el bonus de {{days}} días',
     streakIdle: 'Tu aventura te espera. Tu próxima misión está lista.',
+    milestone: {
+      kicker: 'Próxima meta',
+      chapter_one: '{{count}} misión más para el Capítulo {{id}}: {{name}}',
+      chapter_other: '{{count}} misiones más para el Capítulo {{id}}: {{name}}',
+      chapterMeta: '{{done}} / {{target}} misiones',
+      level: '{{xp}} XP para el Nivel {{level}} ({{title}})',
+      levelMeta: '{{done}} / {{target}} XP',
+      streak_one: '{{count}} día más para la insignia de racha de {{days}} días',
+      streak_other: '{{count}} días más para la insignia de racha de {{days}} días',
+      streakMeta: '{{done}} / {{target}} días',
+    },
+    trial: {
+      strength: {
+        title: 'Prueba de fuerza',
+        goal: 'Completa 3 misiones esta semana para demostrar tu fuerza',
+      },
+      endurance: {
+        title: 'Prueba de resistencia',
+        goal: 'Completa 3 misiones esta semana para aguantar hasta el final',
+      },
+      mobility: {
+        title: 'Prueba de movilidad',
+        goal: 'Completa 3 misiones esta semana para no parar de moverte',
+      },
+      grand: {
+        title: 'La gran prueba',
+        goal: 'Completa 3 misiones esta semana con todos los honores',
+      },
+    },
   },
   quest: {
     back: 'Atrás',
@@ -1941,6 +1999,43 @@ const ar = {
     streakMilestone_many: '{{count}} يومًا على مكافأة {{days}} يومًا',
     streakMilestone_other: '{{count}} يومًا على مكافأة {{days}} يومًا',
     streakIdle: 'مغامرتك بانتظارك. مهمتك التالية جاهزة.',
+    milestone: {
+      kicker: 'المعلم التالي',
+      chapter_zero: 'لا مهام متبقية للفصل {{id}}: {{name}}',
+      chapter_one: 'مهمة واحدة أخرى للفصل {{id}}: {{name}}',
+      chapter_two: 'مهمتان أخريان للفصل {{id}}: {{name}}',
+      chapter_few: '{{count}} مهام أخرى للفصل {{id}}: {{name}}',
+      chapter_many: '{{count}} مهمة أخرى للفصل {{id}}: {{name}}',
+      chapter_other: '{{count}} مهمة أخرى للفصل {{id}}: {{name}}',
+      chapterMeta: '{{done}} / {{target}} مهام',
+      level: '{{xp}} نقطة للوصول إلى المستوى {{level}} ({{title}})',
+      levelMeta: '{{done}} / {{target}} نقطة',
+      streak_zero: 'لا أيام متبقية لشارة {{days}} أيام',
+      streak_one: 'يوم واحد آخر لشارة {{days}} أيام',
+      streak_two: 'يومان آخران لشارة {{days}} أيام',
+      streak_few: '{{count}} أيام أخرى لشارة {{days}} أيام',
+      streak_many: '{{count}} يومًا آخر لشارة {{days}} يومًا',
+      streak_other: '{{count}} يومًا آخر لشارة {{days}} يومًا',
+      streakMeta: '{{done}} / {{target}} أيام',
+    },
+    trial: {
+      strength: {
+        title: 'تحدي القوة',
+        goal: 'أكمل 3 مهام هذا الأسبوع لتثبت قوتك',
+      },
+      endurance: {
+        title: 'تحدي التحمل',
+        goal: 'أكمل 3 مهام هذا الأسبوع لتتفوق على الأسبوع',
+      },
+      mobility: {
+        title: 'تحدي المرونة',
+        goal: 'أكمل 3 مهام هذا الأسبوع لتبقى في حركة',
+      },
+      grand: {
+        title: 'التحدي الكبير',
+        goal: 'أكمل 3 مهام هذا الأسبوع بكل فخر',
+      },
+    },
     // I18N-AR — explicit day-words + templates selected in code (no
     // resolver dependence): {{days}} inside the stock templates can't
     // inflect, and "N على مكافأة N" reads redundantly at streak 0.

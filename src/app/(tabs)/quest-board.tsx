@@ -40,12 +40,15 @@ import {
   zoneForXp,
 } from '@/domain/customWorkout/model';
 import { WEEKLY_TARGET, dayWindow, weeklyWindow } from '@/domain/board/window';
+import { nextMilestone } from '@/domain/board/nextMilestone';
+import { weeklyTrialFor } from '@/domain/board/weeklyTrial';
 import { dailyMessageKey } from '@/domain/journal/dailyMessages';
 import {
   DAILY_QUEST_ART,
   WEEKLY_CHALLENGE_ART,
   difficultyArt,
   masteryArt,
+  trialArt,
 } from '@/features/assets/assetMap';
 import { difficultyBadge, difficultyDescriptor } from '@/features/questBoard/badges';
 import { isCompletedToday } from '@/features/questBoard/completedToday';
@@ -58,6 +61,7 @@ import {
 import { formatDuration } from '@/features/questBoard/format';
 import { greetingForHour } from '@/features/questBoard/greeting';
 import { weeklyChallengeProgress } from '@/features/questBoard/weekly';
+import { milestoneCopy } from '@/features/questBoard/milestone';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 import { useCharacterStore } from '@/state/characterStore';
 import { useWorkoutStore } from '@/state/workoutStore';
@@ -159,6 +163,12 @@ export default function QuestBoardScreen() {
     return weeklyWindow(new Date(today.startMs), progress.done);
   }, [completions, todayKey, today.startMs]);
 
+  // Big-3 WEEKLY-TRIALS — display-only rotation (the server rule stays
+  // "3 completions Mon–Sun pays +1,000 XP"); only seal + title + goal rotate.
+  const trial = useMemo(() => weeklyTrialFor(new Date(today.startMs)), [today.startMs]);
+  const trialKey = trial.replace('trial-', '');
+  const trialSeal = trialArt(trial) ?? WEEKLY_CHALLENGE_ART;
+
   // S9-01 — the daily cell derives from the same completions snapshot: any
   // completion whose local day key is today means the +150 XP bonus has paid.
   const daily = useMemo(
@@ -232,6 +242,21 @@ export default function QuestBoardScreen() {
   const streakCount = streak?.current ?? 0;
   const streakPill = streakPillCopy(streakCount, t, i18n.language);
 
+  // Big-3 NEXT-MILESTONE — the anchor card below the greeting. Null until
+  // the profile snapshot lands; the domain never returns empty.
+  const milestone = useMemo(() => {
+    if (!profile) {
+      return null;
+    }
+    return nextMilestone({
+      journeyQuests: profile.journeyQuestCount,
+      totalXp: profile.totalXp,
+      level: profile.level,
+      streak: streakCount,
+    });
+  }, [profile, streakCount]);
+  const milestoneText = milestone ? milestoneCopy(milestone, t) : null;
+
   return (
     <Screen>
       {hasError ? (
@@ -268,6 +293,27 @@ export default function QuestBoardScreen() {
                   {greeting}, {displayName}.
                 </Text>
                 <Text style={styles.greetingLine}>{line}</Text>
+                {/* Big-3 NEXT-MILESTONE — the closest reward anchor. */}
+                {milestone && milestoneText ? (
+                  <View style={styles.milestoneCard}>
+                    <View style={styles.milestoneHeader}>
+                      <Ionicons name="map-outline" size={18} color={colors.rewardStrong} />
+                      <Text style={styles.milestoneKicker}>{milestoneText.kicker}</Text>
+                    </View>
+                    <Text style={styles.milestoneLine}>{milestoneText.line}</Text>
+                    <View style={styles.progressTrack}>
+                      <View
+                        style={[
+                          styles.progressFill,
+                          { width: `${Math.round(milestone.fraction * 100)}%` },
+                        ]}
+                      />
+                    </View>
+                    <View style={styles.weeklyMeta}>
+                      <Text style={styles.weeklyCount}>{milestoneText.meta}</Text>
+                    </View>
+                  </View>
+                ) : null}
                 {/* PH4-02 — one message per day, seeded by the day key. */}
                 <View style={styles.dailyMessageCard}>
                   <Text style={styles.dailyMessageText}>{t(dailyMessageKey(todayKey))}</Text>
@@ -404,20 +450,19 @@ export default function QuestBoardScreen() {
                 <Text style={styles.sectionTitle}>{t('board.weeklyTitle')}</Text>
                 <View style={styles.weeklyCard}>
                   <View style={styles.weeklyHeader}>
-                    <Image
-                      source={WEEKLY_CHALLENGE_ART}
-                      style={styles.weeklyIcon}
-                      contentFit="contain"
-                    />
+                    <Image source={trialSeal} style={styles.weeklyIcon} contentFit="contain" />
                     <Text style={styles.weeklyGoal}>
                       {weekly.challengeState === 'complete'
                         ? t('board.weeklyDone')
-                        : t('board.weeklyTitle')}
+                        : t(`board.trial.${trialKey}.title`)}
                     </Text>
                     {weekly.challengeState === 'complete' ? (
                       <Ionicons name="checkmark-circle" size={20} color={colors.success} />
                     ) : null}
                   </View>
+                  {weekly.challengeState === 'complete' ? null : (
+                    <Text style={styles.trialGoal}>{t(`board.trial.${trialKey}.goal`)}</Text>
+                  )}
                   <View style={styles.progressTrack}>
                     <View
                       style={[
@@ -969,6 +1014,38 @@ const styles = StyleSheet.create({
   weeklyReward: {
     color: colors.reward,
     fontFamily: fonts.bodyBold.family,
+    fontSize: 13,
+  },
+  milestoneCard: {
+    alignSelf: 'stretch',
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.rewardStrong,
+  },
+  milestoneHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  milestoneKicker: {
+    color: colors.rewardStrong,
+    fontFamily: fonts.bodyBold.family,
+    fontSize: 12,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  milestoneLine: {
+    color: colors.text,
+    fontFamily: fonts.body.family,
+    fontSize: 15,
+  },
+  trialGoal: {
+    color: colors.textMuted,
+    fontFamily: fonts.body.family,
     fontSize: 13,
   },
   quietLine: {
