@@ -277,7 +277,10 @@ export default function BuilderScreen() {
                       isLast={index === segments.length - 1}
                       segment={segment}
                       name={
-                        segment.kind === 'rest' ? t('build.restName') : nameOf(segment.exerciseSlug)
+                        segment.kind === 'rest'
+                          ? t('build.restName')
+                          : (exerciseName(segment.exerciseSlug, nameOf(segment.exerciseSlug), t) ??
+                            nameOf(segment.exerciseSlug))
                       }
                       difficulty={
                         segment.kind === 'exercise' ? difficultyOf(segment.exerciseSlug) : null

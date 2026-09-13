@@ -2411,7 +2411,7 @@ const ar = {
     purchase: 'شراء',
     levelShort: 'مستوى {{n}}',
     lockedKeep: 'مغلق — واصل التقدم لكسبه',
-    lockedLevel: '{{lvl}} • مغلق',
+    lockedLevel: 'يُفتح عند المستوى {{lvl}}',
     badgeHint: 'اختر حتى 3 شارات لعرضها على ملفك.',
     badgeCount: '{{n}} / 3 مختارة',
     badgeEmpty: 'لا شارات بعد.',
