@@ -407,6 +407,7 @@ const en = {
     emptyLine: 'Could not load exercises. Try again in a moment.',
     nameLabel: 'Name (optional)',
     namePlaceholder: 'Leave blank for "{{name}}"',
+    defaultName: 'Custom Quest',
     yourQuest: 'Your Quest',
     emptyQuest: 'Nothing here yet — tap exercises below to forge your quest.',
     exercisesTitle: 'Exercises',
@@ -1317,6 +1318,7 @@ const es: typeof en = {
     emptyLine: 'No se pudieron cargar los ejercicios. Inténtalo de nuevo en un momento.',
     nameLabel: 'Nombre (opcional)',
     namePlaceholder: 'Déjalo vacío para «{{name}}»',
+    defaultName: 'Misión personalizada',
     yourQuest: 'Tu misión',
     emptyQuest: 'Nada aquí aún — toca ejercicios abajo para forjar tu misión.',
     exercisesTitle: 'Ejercicios',
@@ -2047,19 +2049,19 @@ const ar = {
     trial: {
       strength: {
         title: 'تحدي القوة',
-        goal: 'أكمل 3 مهام هذا الأسبوع لتثبت قوتك',
+        goal: 'أكمل 3 مهام هذا الأسبوع لتثبت قوتك.',
       },
       endurance: {
         title: 'تحدي التحمل',
-        goal: 'أكمل 3 مهام هذا الأسبوع لتتفوق على الأسبوع',
+        goal: 'أكمل 3 مهام هذا الأسبوع لتتفوق على الأسبوع.',
       },
       mobility: {
         title: 'تحدي المرونة',
-        goal: 'أكمل 3 مهام هذا الأسبوع لتبقى في حركة',
+        goal: 'أكمل 3 مهام هذا الأسبوع لتبقى في حركة.',
       },
       discipline: {
         title: 'تحدي الانضباط',
-        goal: 'أكمل 3 مهام هذا الأسبوع لتثبت انضباطك',
+        goal: 'أكمل 3 مهام هذا الأسبوع لتثبت انضباطك.',
       },
     },
     // I18N-AR — explicit day-words + templates selected in code (no
@@ -2297,6 +2299,7 @@ const ar = {
     emptyLine: 'تعذّر تحميل التمارين. حاول مرة أخرى بعد قليل.',
     nameLabel: 'الاسم (اختياري)',
     namePlaceholder: 'اتركه فارغًا لاسم «{{name}}»',
+    defaultName: 'مهمة مخصصة',
     yourQuest: 'مهمتك',
     emptyQuest: 'لا شيء هنا بعد — انقر التمارين أدناه لتصنع مهمتك.',
     exercisesTitle: 'التمارين',

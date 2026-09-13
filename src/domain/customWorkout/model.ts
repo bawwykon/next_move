@@ -30,6 +30,12 @@ export const MAX_SEGMENTS = 16;
 export const MIN_TOTAL_SEC = 480;
 export const MAX_TOTAL_SEC = 1200;
 export const NAME_MAX_CHARS = 60;
+/**
+ * Legacy English fallback quest name. Screens prefer `t('build.defaultName')`
+ * (Arabic review: no raw English in the UI); this stays as the last-resort
+ * DB fallback in saveCustomWorkout and the blank-field sentinel for rows
+ * saved before localization.
+ */
 export const DEFAULT_WORKOUT_NAME = 'Custom Quest';
 
 export const MIN_NORMAL_COUNT_FOR_HARD_TIER = 5;

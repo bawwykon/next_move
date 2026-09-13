@@ -21,7 +21,6 @@ import {
   type CatalogExercise,
 } from '@/data/repositories/customWorkouts';
 import {
-  DEFAULT_WORKOUT_NAME,
   projectedXp,
   totalDurationSec,
   zoneForXp,
@@ -130,7 +129,7 @@ export default function CustomQuestScreen() {
     );
   }
 
-  const title = workout.name || DEFAULT_WORKOUT_NAME;
+  const title = workout.name || t('build.defaultName');
   // The zone badge reuses the catalog tiers' friendly labels/colors — the
   // projection is display-only, exactly like the builder's meter.
   const zone: MeterZone = zoneForXp(projectedXp(workout.segments, difficultyOf));

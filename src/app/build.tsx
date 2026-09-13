@@ -67,6 +67,9 @@ export default function BuilderScreen() {
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loadedEditId, setLoadedEditId] = useState<string | null>(null);
+  // Localized fallback quest name (Arabic review: no raw English in the UI).
+  // The legacy English constant still blanks correctly for pre-existing rows.
+  const defaultName = t('build.defaultName');
   const [name, setName] = useState('');
   const [segments, setSegments] = useState<CustomSegment[]>([]);
   const [saving, setSaving] = useState(false);
@@ -85,7 +88,11 @@ export default function BuilderScreen() {
       if (existing.data) {
         setEditingId(existing.data.id);
         setLoadedEditId(existing.data.id);
-        setName(existing.data.name === DEFAULT_WORKOUT_NAME ? '' : existing.data.name);
+        setName(
+          existing.data.name === DEFAULT_WORKOUT_NAME || existing.data.name === defaultName
+            ? ''
+            : existing.data.name,
+        );
         setSegments(existing.data.segments);
       }
     }
@@ -148,7 +155,7 @@ export default function BuilderScreen() {
     setToast(null);
     const result = await saveCustomWorkout({
       id: editingId ?? undefined,
-      name,
+      name: name.trim() || defaultName,
       segments,
     });
     setSaving(false);
@@ -178,7 +185,7 @@ export default function BuilderScreen() {
     void track('custom_quest_started', { segments: segments.length });
     router.replace({
       pathname: '/workout/[id]',
-      params: { id, title: name.trim() || DEFAULT_WORKOUT_NAME, source: 'custom' },
+      params: { id, title: name.trim() || defaultName, source: 'custom' },
     });
   };
 
@@ -247,12 +254,12 @@ export default function BuilderScreen() {
               contentContainerStyle={styles.content}
               showsVerticalScrollIndicator={false}
             >
-              {/* Spec item 1 — name (optional, ≤60, defaults to Custom Quest). */}
+              {/* Spec item 1 — name (optional, ≤60, defaults to the localized quest name). */}
               <AppTextField
                 label={t('build.nameLabel')}
                 value={name}
                 onChangeText={(text) => setName(text.slice(0, NAME_MAX_CHARS))}
-                placeholder={t('build.namePlaceholder', { name: DEFAULT_WORKOUT_NAME })}
+                placeholder={t('build.namePlaceholder', { name: defaultName })}
                 maxLength={NAME_MAX_CHARS}
               />
 

@@ -33,12 +33,7 @@ import type {
   QuestCategory,
   QuestDifficulty,
 } from '@/domain/recommendation/types';
-import {
-  DEFAULT_WORKOUT_NAME,
-  projectedXp,
-  totalDurationSec,
-  zoneForXp,
-} from '@/domain/customWorkout/model';
+import { projectedXp, totalDurationSec, zoneForXp } from '@/domain/customWorkout/model';
 import { WEEKLY_TARGET, dayWindow, weeklyWindow } from '@/domain/board/window';
 import { nextMilestone } from '@/domain/board/nextMilestone';
 import { weeklyTrialFor } from '@/domain/board/weeklyTrial';
@@ -344,7 +339,7 @@ export default function QuestBoardScreen() {
                               id: checkpoint.questId,
                               title:
                                 customs.find((custom) => custom.id === checkpoint.questId)?.name ??
-                                DEFAULT_WORKOUT_NAME,
+                                t('build.defaultName'),
                               source: 'custom',
                             }
                           : { id: checkpoint.questId },
@@ -517,7 +512,7 @@ export default function QuestBoardScreen() {
                       >
                         <View style={styles.rowLeft}>
                           <Text style={styles.rowTitle} numberOfLines={1}>
-                            {custom.name || DEFAULT_WORKOUT_NAME}
+                            {custom.name || t('build.defaultName')}
                           </Text>
                           <Text style={styles.rowMeta}>
                             {t('board.minutes', {
