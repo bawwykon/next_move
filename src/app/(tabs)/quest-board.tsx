@@ -409,7 +409,9 @@ export default function QuestBoardScreen() {
                     <Text style={styles.weeklyGoal}>{dailyCell.goal}</Text>
                     {daily.done ? (
                       <Ionicons name="checkmark-circle" size={20} color={colors.success} />
-                    ) : null}
+                    ) : (
+                      <View style={styles.checkPlaceholder} />
+                    )}
                   </View>
                   <View style={styles.progressTrack}>
                     <View
@@ -439,11 +441,10 @@ export default function QuestBoardScreen() {
                     </Text>
                     {weekly.challengeState === 'complete' ? (
                       <Ionicons name="checkmark-circle" size={20} color={colors.success} />
-                    ) : null}
+                    ) : (
+                      <View style={styles.checkPlaceholder} />
+                    )}
                   </View>
-                  {weekly.challengeState === 'complete' ? null : (
-                    <Text style={styles.trialGoal}>{t(`board.trial.${trialKey}.goal`)}</Text>
-                  )}
                   <View style={styles.progressTrack}>
                     <View
                       style={[
@@ -949,6 +950,11 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodyBold.family,
     fontSize: 15,
     flexShrink: 1,
+    flex: 1,
+    textAlign: 'center',
+  },
+  checkPlaceholder: {
+    width: 20,
   },
   progressTrack: {
     height: 8,
@@ -1006,11 +1012,6 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontFamily: fonts.body.family,
     fontSize: 15,
-  },
-  trialGoal: {
-    color: colors.textMuted,
-    fontFamily: fonts.body.family,
-    fontSize: 13,
   },
   quietLine: {
     color: colors.textMuted,
