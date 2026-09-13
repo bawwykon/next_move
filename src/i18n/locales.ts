@@ -840,6 +840,18 @@ const en = {
           'From standing, squat down, step or jump back to a plank, return to the squat, then jump up.',
         safety: 'Land softly with bent knees on the jump.',
       },
+      superman: {
+        name: 'Superman',
+        instruction:
+          'Lie face down, simultaneously lift chest, arms, and legs off floor, squeeze lower back, then lower with control.',
+        safety: 'Keep neck neutral looking down; do not strain or arch forcefully.',
+      },
+      'side-lunge': {
+        name: 'Side Lunge',
+        instruction:
+          'Step wide to one side, bend knee and sink hips back while keeping trailing leg straight. Push through heel to return.',
+        safety: 'Keep front heel grounded and chest open.',
+      },
     },
     cosmetics: {
       'frame-default': { name: 'Classic Frame' },
@@ -1679,6 +1691,18 @@ const es: typeof en = {
         instruction:
           'De pie, baja a sentadilla, lleva los pies atrás a plancha (con salto o paso), vuelve a la sentadilla y salta arriba.',
         safety: 'Cae suave, con las rodillas flexionadas.',
+      },
+      superman: {
+        name: 'Superman',
+        instruction:
+          'Tumbado boca abajo, eleva a la vez pecho, brazos y piernas, contrae la zona lumbar y baja con control.',
+        safety: 'Mantén el cuello neutro mirando abajo; no fuerces ni arquees bruscamente.',
+      },
+      'side-lunge': {
+        name: 'Zancada lateral',
+        instruction:
+          'Da un paso amplio al lado, flexiona la rodilla y lleva la cadera atrás con la otra pierna estirada. Empuja con el talón para volver.',
+        safety: 'Mantén el talón delantero apoyado y el pecho abierto.',
       },
     },
     cosmetics: {
@@ -2567,6 +2591,18 @@ const ar = {
         instruction:
           'من الوقوف، انزل للقرفصاء ثم اقفز أو اخطُ للخلف لوضعية اللوح، وارجع للقرفصاء ثم اقفز للأعلى.',
         safety: 'اهبط بنعومة وركب مثنية عند القفز.',
+      },
+      superman: {
+        name: 'سوبرمان',
+        instruction:
+          'استلقِ على بطنك وارفع الصدر والذراعين والساقين معًا عن الأرض، واشدد أسفل الظهر ثم انزل بتحكم.',
+        safety: 'أبقِ الرقبة محايدة بالنظر للأسفل ولا تجهد ظهرك أو تقوسه بقوة.',
+      },
+      'side-lunge': {
+        name: 'اندفاع جانبي',
+        instruction:
+          'اخطُ خطوة واسعة إلى الجانب واثنِ الركبة مع دفع الوركين للخلف والساق الأخرى مستقيمة، ثم ادفع بكعبك للعودة.',
+        safety: 'أبقِ الكعب الأمامي ثابتًا على الأرض والصدر مفتوحًا.',
       },
     },
     cosmetics: {

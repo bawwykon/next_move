@@ -27,6 +27,8 @@ export const EXERCISE_ART: Record<string, number> = {
   'bicycle-crunch': require('@/assets/exercises/bicycle_crunch.png'),
   'mountain-climber': require('@/assets/exercises/mountain_climber.png'),
   burpees: require('@/assets/exercises/burpees.png'),
+  superman: require('@/assets/exercises/superman.png'),
+  'side-lunge': require('@/assets/exercises/side_lunge.png'),
 };
 
 export function exerciseArt(slug: string | null | undefined): number | null {
@@ -57,6 +59,8 @@ export const EXERCISE_THUMBS: Record<string, number> = {
   'bicycle-crunch': require('@/assets/exercises/thumbs/bicycle_crunch.png'),
   'mountain-climber': require('@/assets/exercises/thumbs/mountain_climber.png'),
   burpees: require('@/assets/exercises/thumbs/burpees.png'),
+  superman: require('@/assets/exercises/thumbs/superman.png'),
+  'side-lunge': require('@/assets/exercises/thumbs/side_lunge.png'),
 };
 
 export function exerciseThumb(slug: string | null | undefined): number | null {
@@ -78,6 +82,10 @@ export const ACHIEVEMENT_ART: Record<string, number> = {
   'early-bird': require('@/assets/badges/badge_early_bird.png'),
   'night-owl': require('@/assets/badges/badge_night_owl.png'),
   'master-adventurer': require('@/assets/badges/badge_master_adventurer.png'),
+  'mastery-strength-10': require('@/assets/badges/badge_mastery_strength.png'),
+  'mastery-endurance-10': require('@/assets/badges/badge_mastery_endurance.png'),
+  'mastery-mobility-10': require('@/assets/badges/badge_mastery_mobility.png'),
+  'mastery-discipline-10': require('@/assets/badges/badge_mastery_discipline.png'),
   'founders-emblem': require('@/assets/badges/premium_badge.png'),
   premium_badge: require('@/assets/badges/premium_badge.png'),
 };
@@ -218,6 +226,18 @@ export function difficultyArt(difficulty: string): number | null {
 
 export const DAILY_QUEST_ART = require('@/assets/icons/icon_daily_quest.png') as number;
 export const WEEKLY_CHALLENGE_ART = require('@/assets/icons/icon_weekly_challenge.png') as number;
+
+// --- Weekly trial seals (assets/icons/trial_*.png, 4-week rotation) ---
+export const TRIAL_ART: Record<string, number> = {
+  'trial-strength': require('@/assets/icons/trial_strength.png'),
+  'trial-endurance': require('@/assets/icons/trial_endurance.png'),
+  'trial-mobility': require('@/assets/icons/trial_mobility.png'),
+  'trial-grand': require('@/assets/icons/trial_grand.png'),
+};
+
+export function trialArt(trialId: string | null | undefined): number | null {
+  return trialId ? (TRIAL_ART[trialId] ?? null) : null;
+}
 
 export const MASTERY_ART: Record<string, number> = {
   strength: require('@/assets/icons/mastery_strength.png'),

@@ -5,8 +5,8 @@ import {
 } from '@/domain/exercises/difficulty';
 
 describe('exercise difficulty map', () => {
-  it('classifies all 20 catalog exercises exactly once', () => {
-    expect(Object.keys(EXERCISE_DIFFICULTY).length).toBe(20);
+  it('classifies all 22 catalog exercises exactly once', () => {
+    expect(Object.keys(EXERCISE_DIFFICULTY).length).toBe(22);
   });
 
   it('marks the gentle foundations as beginner', () => {
@@ -22,6 +22,7 @@ describe('exercise difficulty map', () => {
       'glute-bridge',
       'seated-leg-raise',
       'bird-dog',
+      'superman',
     ];
     for (const slug of beginners) {
       expect(exerciseDifficulty(slug)).toBe('beginner');
@@ -33,6 +34,7 @@ describe('exercise difficulty map', () => {
     expect(exerciseDifficulty('push-up')).toBe('intermediate');
     expect(exerciseDifficulty('lunges')).toBe('intermediate');
     expect(exerciseDifficulty('plank')).toBe('intermediate');
+    expect(exerciseDifficulty('side-lunge')).toBe('intermediate');
     expect(exerciseDifficulty('gentle-hops')).toBe('intermediate');
     // TUNE-01 — isometric hold reclassified (mirrors migration 0028).
     expect(exerciseDifficulty('wall-sit')).toBe('intermediate');

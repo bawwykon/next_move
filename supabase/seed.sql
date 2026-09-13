@@ -127,7 +127,7 @@ on conflict (profile_id) do update set
   workout_time = excluded.workout_time,
   completed_at = excluded.completed_at;
 
--- exercise catalog (20 — v1.1, AT-02B: 13 kept + 7 new; side-steps/chair-squat removed)
+-- exercise catalog (22 — big-3 batch: 20 v1.1 + superman/side-lunge; side-steps/chair-squat removed)
 -- NOTE: difficulty is authoritative per row here (matches 0027 + 0028 +
 -- 0044). Migrations must never assume these rows exist (seed runs after all
 -- migrations on a fresh reset); 0044 repairs databases seeded before this.
@@ -151,7 +151,9 @@ insert into public.exercise_library (slug, name, instruction, safety_note, categ
   ('plank', 'Plank', 'Hold a straight-arm or forearm plank with your body in one line.', 'Breathe steadily; stop if your lower back aches.', '{"strength","discipline"}', 'Knees-down or wall plank.', 'intermediate'),
   ('bicycle-crunch', 'Bicycle Crunch', 'Lie on your back, lift your shoulders, and alternate bringing opposite elbow to knee in a pedaling motion.', 'Move slowly and keep your lower back pressed down.', '{"strength","discipline"}', 'March the legs instead of pedaling.', 'advanced'),
   ('mountain-climber', 'Mountain Climbers', 'From a straight-arm plank, drive your knees toward your chest one at a time, keeping your hips low.', 'Keep shoulders over wrists; small, steady steps.', '{"endurance","strength"}', 'Slow step-throughs instead of hops.', 'advanced'),
-  ('burpees', 'Burpees', 'From standing, squat down, step or jump back to a plank, return to the squat, then jump up.', 'Land softly with bent knees on the jump.', '{"endurance","strength"}', 'Step back instead of jumping; walk hands in and out.', 'advanced')
+  ('burpees', 'Burpees', 'From standing, squat down, step or jump back to a plank, return to the squat, then jump up.', 'Land softly with bent knees on the jump.', '{"endurance","strength"}', 'Step back instead of jumping; walk hands in and out.', 'advanced'),
+  ('superman', 'Superman', 'Lie face down, simultaneously lift chest, arms, and legs off floor, squeeze lower back, then lower with control.', 'Keep neck neutral looking down; do not strain or arch forcefully.', '{"strength","mobility"}', 'Lift arms only or legs only.', 'beginner'),
+  ('side-lunge', 'Side Lunge', 'Step wide to one side, bend knee and sink hips back while keeping trailing leg straight. Push through heel to return.', 'Keep front heel grounded and chest open.', '{"strength","mobility"}', 'Take a shallower step or hold a chair for support.', 'intermediate')
 on conflict (slug) do nothing;
 
 -- quest definitions (AT-02I — three difficulty tiers)
