@@ -191,19 +191,19 @@ const en = {
     },
     trial: {
       strength: {
-        title: 'Trial of Strength',
+        title: 'Weekly Trial of Strength!',
         goal: 'Complete 3 quests this week to prove your strength',
       },
       endurance: {
-        title: 'Trial of Endurance',
+        title: 'Weekly Trial of Endurance!',
         goal: 'Complete 3 quests this week to outlast the week',
       },
       mobility: {
-        title: 'Trial of Mobility',
+        title: 'Weekly Trial of Mobility!',
         goal: 'Complete 3 quests this week to stay in motion',
       },
       discipline: {
-        title: 'Trial of Discipline',
+        title: 'Weekly Trial of Discipline!',
         goal: 'Complete 3 quests this week to prove your discipline',
       },
     },
@@ -1101,19 +1101,19 @@ const es: typeof en = {
     },
     trial: {
       strength: {
-        title: 'Prueba de fuerza',
+        title: '¡Prueba semanal de fuerza!',
         goal: 'Completa 3 misiones esta semana para demostrar tu fuerza',
       },
       endurance: {
-        title: 'Prueba de resistencia',
+        title: '¡Prueba semanal de resistencia!',
         goal: 'Completa 3 misiones esta semana para aguantar hasta el final',
       },
       mobility: {
-        title: 'Prueba de movilidad',
+        title: '¡Prueba semanal de movilidad!',
         goal: 'Completa 3 misiones esta semana para no parar de moverte',
       },
       discipline: {
-        title: 'Prueba de disciplina',
+        title: '¡Prueba semanal de disciplina!',
         goal: 'Completa 3 misiones esta semana para demostrar tu disciplina',
       },
     },
@@ -2048,19 +2048,19 @@ const ar = {
     },
     trial: {
       strength: {
-        title: 'تحدي القوة',
+        title: 'تحدي القوة الأسبوعي!',
         goal: 'أكمل 3 مهام هذا الأسبوع لتثبت قوتك.',
       },
       endurance: {
-        title: 'تحدي التحمل',
+        title: 'تحدي التحمل الأسبوعي!',
         goal: 'أكمل 3 مهام هذا الأسبوع لتتفوق على الأسبوع.',
       },
       mobility: {
-        title: 'تحدي المرونة',
+        title: 'تحدي المرونة الأسبوعي!',
         goal: 'أكمل 3 مهام هذا الأسبوع لتبقى في حركة.',
       },
       discipline: {
-        title: 'تحدي الانضباط',
+        title: 'تحدي الانضباط الأسبوعي!',
         goal: 'أكمل 3 مهام هذا الأسبوع لتثبت انضباطك.',
       },
     },
