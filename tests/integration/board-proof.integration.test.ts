@@ -104,6 +104,38 @@ describe('board data path (local supabase)', () => {
     }
   });
 
+  it('convention: easy/normal quests contain no advanced exercises (advanced lives in hard)', async () => {
+    const { data: quests, error: qErr } = await supabase
+      .from('quests')
+      .select('id, slug, difficulty')
+      .eq('active', true);
+    expect(qErr).toBeNull();
+    const { data: segments, error: sErr } = await supabase
+      .from('quest_segments')
+      .select('quest_id, exercise_id');
+    expect(sErr).toBeNull();
+    const { data: exercises, error: eErr } = await supabase
+      .from('exercise_library')
+      .select('id, slug, difficulty');
+    expect(eErr).toBeNull();
+    const exById = new Map((exercises ?? []).map((e) => [e.id, e]));
+    const questById = new Map((quests ?? []).map((q) => [q.id, q]));
+    const violations: string[] = [];
+    for (const s of segments ?? []) {
+      if (!s.quest_id || !s.exercise_id) continue; // rest blocks carry a null exercise_id
+      const quest = questById.get(s.quest_id);
+      const ex = exById.get(s.exercise_id);
+      if (!quest || !ex) continue;
+      if (
+        (quest.difficulty === 'easy' || quest.difficulty === 'normal') &&
+        ex.difficulty === 'advanced'
+      ) {
+        violations.push(`${quest.slug}/${ex.slug}`);
+      }
+    }
+    expect(violations).toEqual([]);
+  });
+
   // Seed rows store day_key computed from now() in the Postgres UTC calendar,
   // while dayKeyDomain.dayKey uses local host time. Compute the expected
   // today/yesterday keys in the seed's UTC frame so these assertions hold on
