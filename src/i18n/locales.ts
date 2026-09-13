@@ -2037,11 +2037,11 @@ const ar = {
       level: '{{xp}} نقطة للوصول إلى المستوى {{level}} ({{title}})',
       levelMeta: '{{done}} / {{target}} نقطة',
       streak_zero: 'لا أيام متبقية لشارة {{days}} أيام',
-      streak_one: 'يوم واحد آخر لشارة {{days}} أيام',
-      streak_two: 'يومان آخران لشارة {{days}} أيام',
-      streak_few: '{{count}} أيام أخرى لشارة {{days}} أيام',
-      streak_many: '{{count}} يومًا آخر لشارة {{days}} يومًا',
-      streak_other: '{{count}} يومًا آخر لشارة {{days}} يومًا',
+      streak_one: 'يوم واحد متبقٍ للحصول على شارة {{days}} أيام',
+      streak_two: 'يومان متبقيان للحصول على شارة {{days}} أيام',
+      streak_few: '{{count}} أيام متبقية للحصول على شارة {{days}} أيام',
+      streak_many: '{{count}} يومًا متبقٍ للحصول على شارة {{days}} يومًا',
+      streak_other: '{{count}} يومًا متبقٍ للحصول على شارة {{days}} يومًا',
       streakMeta: '{{done}} / {{target}} أيام',
     },
     trial: {
@@ -2517,7 +2517,7 @@ const ar = {
         description: 'حركات سريعة من مكانك لتنشيط جسمك بين المهام.',
       },
       'home-circuit': {
-        title: 'دائرة المنزل',
+        title: 'دائرة التمارين المنزلية',
         description: 'دائرة تمارين بوزن الجسم للمبتدئين يمكنك إتمامها في غرفة المعيشة.',
       },
       'steady-flow': {
@@ -2637,12 +2637,12 @@ const ar = {
       'master-adventurer': {
         title: 'المغامر الأستاذ',
         description: 'اصعد إلى المستوى 100.',
-        hint: 'القمة تنتظر الصبورين.',
+        hint: 'القمة تنتظر الصابرين.',
       },
       'founders-emblem': {
         title: 'شارة المؤسسين',
         description: 'تُمنح للداعمين الأوائل.',
-        hint: 'محفوظة للمؤسسين.',
+        hint: 'خاصة بالمؤسسين.',
       },
       'mastery-strength-10': {
         title: 'أستاذ القوة',
@@ -2657,12 +2657,12 @@ const ar = {
       'mastery-mobility-10': {
         title: 'أستاذ المرونة',
         description: 'بلغ المستوى 10 في إتقان المرونة.',
-        hint: 'تحرك جيدًا وتحرك كثيرًا.',
+        hint: 'تحرك بمرونة، وتحرك باستمرار.',
       },
       'mastery-discipline-10': {
         title: 'أستاذ الانضباط',
         description: 'بلغ المستوى 10 في إتقان الانضباط.',
-        hint: 'العودة كل يوم هي المهارة.',
+        hint: 'الاستمرارية هي سر المهارة.',
       },
     },
     exercises: {
