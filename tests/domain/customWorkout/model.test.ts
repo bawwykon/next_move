@@ -50,8 +50,8 @@ describe('custom workout classification & XP rebalance', () => {
     expect(classifyWorkout(draft, RESOLVER).tier).toBe('normal');
   });
 
-  it('classifies workouts with >= 45s Hard exercises as Hard (400 XP)', () => {
-    const draft = [ex('squat', 240), ex('burpees', 240)]; // 480s, 240s hard >= 45s
+  it('classifies 1 Hard + 2 Normal (supported hard) as Hard (400 XP)', () => {
+    const draft = [ex('burpees', 30), ex('squat', 45), ex('push-up', 45)]; // score 2+1+1 = 4
     expect(projectedXp(draft, RESOLVER)).toBe(400);
     expect(classifyWorkout(draft, RESOLVER).tier).toBe('hard');
   });
@@ -62,9 +62,16 @@ describe('custom workout classification & XP rebalance', () => {
     expect(classifyWorkout(draft, RESOLVER).tier).toBe('hard');
   });
 
-  it('does not qualify as Hard if Hard time is insufficient (< 45s)', () => {
-    const draft = [ex('wall-push-up', 240), ex('burpees', 30)]; // 30s hard < 45s, 0 normal
-    expect(projectedXp(draft, RESOLVER)).toBe(100); // defaults to easy since < 45s hard
+  it('a lone Hard block diluted in easy filler is Normal, not Hard (score 2)', () => {
+    const draft = [ex('wall-push-up', 240), ex('burpees', 30)]; // score 0+2 = 2
+    expect(projectedXp(draft, RESOLVER)).toBe(200);
+    expect(classifyWorkout(draft, RESOLVER).tier).toBe('normal');
+  });
+
+  it('4 normals without hard stay Normal (volume hard needs 5)', () => {
+    const draft = [ex('squat', 120), ex('push-up', 120), ex('lunges', 120), ex('plank', 120)];
+    expect(projectedXp(draft, RESOLVER)).toBe(200);
+    expect(classifyWorkout(draft, RESOLVER).tier).toBe('normal');
   });
 
   it('classifies 5+ Normal exercises (and 0 Hard) as Hard (400 XP)', () => {

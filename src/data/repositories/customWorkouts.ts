@@ -12,6 +12,8 @@ export interface CatalogExercise {
   slug: string;
   name: string;
   difficulty: ExerciseDifficulty;
+  /** Server-owned track tags (strength/endurance/mobility/discipline) for filters. */
+  categories: string[];
   /** WK-01 — how-to copy shown on the paused overlay. */
   instruction: string | null;
   /** WK-01 — safety note shown on the paused overlay. */
@@ -38,7 +40,7 @@ function isExerciseDifficulty(value: string): value is ExerciseDifficulty {
 export async function fetchExerciseCatalog(): Promise<RepoResult<CatalogExercise[]>> {
   const { data, error } = await supabase
     .from('exercise_library')
-    .select('slug, name, difficulty, instruction, safety_note')
+    .select('slug, name, difficulty, categories, instruction, safety_note')
     .order('name', { ascending: true });
 
   if (error) {
@@ -54,6 +56,9 @@ export async function fetchExerciseCatalog(): Promise<RepoResult<CatalogExercise
       slug: row.slug,
       name: row.name,
       difficulty: row.difficulty,
+      categories: Array.isArray(row.categories)
+        ? row.categories.filter((c) => typeof c === 'string')
+        : [],
       instruction: row.instruction ?? null,
       safetyNote: row.safety_note ?? null,
     });

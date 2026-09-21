@@ -5,8 +5,10 @@
  *
  * A dedicated throwaway user drives the RPC; service role prepares fixtures.
  * Classification pins (0038: Easy 100 / Normal 200 / Hard 400 from preset
- * 30/45/60s blocks + 30s rests, 480-900s window, 12-segment cap), farm
- * guards, journey-freeze semantics, and idempotent replay.
+ * 30/45/60s blocks + 30s rests, 480-1200s window, 16-segment cap, score
+ * tiers per 0054), farm
+ * guards, journey-advance semantics (0052: customs count like authored
+ * quests), and idempotent replay.
  *
  * Calendar note mirrors complete-quest.integration: fixed day keys; 2026-07-06
  * is a Monday. Timer windows are +/-15% around the saved total duration.
@@ -229,13 +231,15 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
     expect(payload.xp.quest).toBe(200);
   });
 
-  it('classification: >= 45s Hard exercises = Hard / 400 XP', async () => {
+  it('classification: supported Hard (1 hard + 2 normal) = Hard / 400 XP', async () => {
     await resetProgression();
     const d = day(3);
     const wid = await createWorkout('hard-w', [
       seg('burpees', 60),
-      ...Array.from({ length: 7 }, () => seg('step-touch', 60)),
-    ]);
+      seg('squat', 60),
+      seg('push-up', 60),
+      ...Array.from({ length: 5 }, () => seg('step-touch', 60)),
+    ]); // score 2+1+1 = 4 -> hard, 480s
     const payload = (await call(wid, event(d, 'hard-h', 480))).payload!;
     expect(payload.xp.quest).toBe(400);
   });
@@ -253,16 +257,16 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
     expect(payload.xp.quest).toBe(400);
   });
 
-  it('classification: insufficient Hard time (< 45s) does not qualify as Hard', async () => {
+  it('classification: lone Hard block diluted in easy filler = Normal / 200 XP', async () => {
     await resetProgression();
     const d = day(5);
-    const wid = await createWorkout('insufficient-hard', [
+    const wid = await createWorkout('diluted-hard', [
       seg('burpees', 30),
       ...Array.from({ length: 7 }, () => seg('wall-push-up', 60)),
       restSeg(30),
-    ]);
-    const payload = (await call(wid, event(d, 'ins-h', 480))).payload!;
-    expect(payload.xp.quest).toBe(100);
+    ]); // score 2 -> normal, 480s
+    const payload = (await call(wid, event(d, 'dil-h', 480))).payload!;
+    expect(payload.xp.quest).toBe(200);
   });
 
   it('classification: 5+ Normal exercises (and 0 Hard) = Hard / 400 XP', async () => {
@@ -304,7 +308,7 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
     expect(error!.message).toContain('complete_custom_workout.bad_duration');
   });
 
-  it('rest blocks add zero XP while filling the clock (0029)', async () => {
+  it('rest blocks add zero points while filling the clock (0029)', async () => {
     await resetProgression();
     const d = day(3);
     const wid = await createWorkout('rest-mix', [
@@ -312,9 +316,9 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
       restSeg(30),
       seg('burpees', 60),
       restSeg(30),
-    ]);
+    ]); // score 2 (burpees only; rests score 0) -> normal, 480s recorded
     const payload = (await call(wid, event(d, 'rest-mix-w', 480))).payload!;
-    expect(payload.xp.quest).toBe(400);
+    expect(payload.xp.quest).toBe(200);
     expect(payload.xp.first).toBe(50);
     expect(payload.xp.total).toBe(payload.xp.quest + payload.xp.daily + payload.xp.first);
     const row = await admin
@@ -364,16 +368,16 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
     expect(error!.message).toContain('complete_custom_workout.no_exercise');
   });
 
-  it('journey stays frozen: quests/chapter unchanged, discipline +15 per AT-02H rates', async () => {
+  it('journey advances: quests/chapter follow the same counter as authored quests (0052)', async () => {
     await resetProgression();
     const d = day(4);
     const wid = await createWorkout(
-      'journey-frozen',
+      'journey-advances',
       Array.from({ length: 8 }, () => seg('plank', 60)), // strength exercise, 480s
     );
-    const payload = (await call(wid, event(d, 'j-frozen', 480))).payload!;
+    const payload = (await call(wid, event(d, 'j-advances', 480))).payload!;
     expect(payload.journey).toEqual({
-      quests: 0,
+      quests: 1,
       chapter_before: 1,
       chapter_after: 1,
       next_threshold: 10,
@@ -387,7 +391,7 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
       .select('total_xp, journey_quests, current_chapter')
       .eq('id', profileId)
       .single();
-    expect(row.data!.journey_quests).toBe(0);
+    expect(row.data!.journey_quests).toBe(1);
     expect(row.data!.current_chapter).toBe(1);
   });
 
@@ -592,7 +596,8 @@ describe('complete_custom_workout RPC (live local supabase)', () => {
     const result = await submitCompletion(user, ev);
     expect(result.error).toBeNull();
     expect(result.data).not.toBeNull();
-    // wall-sit + plank are both intermediate (TUNE-01), 4 intermediate exercises, 0 hard -> Normal / 200 XP.
+    // wall-sit + plank are both intermediate (TUNE-01): 4 intermediate blocks,
+    // 0 hard -> score 4 but volume hard needs 5 -> Normal / 200 XP.
     expect(result.data!.xp.quest).toBe(200);
 
     // Deleted definition -> workout_invalid, not 'unknown' or timer_mismatch.

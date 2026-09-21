@@ -38,8 +38,6 @@ export const NAME_MAX_CHARS = 60;
  */
 export const DEFAULT_WORKOUT_NAME = 'Custom Quest';
 
-export const MIN_NORMAL_COUNT_FOR_HARD_TIER = 5;
-
 /** Meter scale: ceiling at 400 XP. */
 export const METER_SCALE_XP = 400;
 /** Zone marks on the meter, mirroring quest tiers (easy 100 / normal 200 / hard 400). */
@@ -85,34 +83,49 @@ export function roundHalfUp(value: number): number {
 }
 
 export const HARD_EXERCISE_SLUGS = new Set(['burpees', 'mountain-climber', 'bicycle-crunch']);
-export const MIN_HARD_SEC_FOR_HARD_TIER = 45;
-export const MIN_NORMAL_COUNT_FOR_NORMAL_TIER = 2;
+/**
+ * Tier scoring (owner rule): a hard block is worth 2 points, a normal
+ * (intermediate) block 1 point; easy/beginner and rest blocks score nothing.
+ * Hard = supported hard (1+ hard blocks and 4+ points, e.g. 1 hard + 2
+ * normal) or sheer volume (5+ normal blocks with 0 hard). Normal = 2+
+ * points. Easy = 0-1. A lone hard block diluted in easy filler scores 2 =
+ * normal; 4 normals without hard score 4 but stay normal (volume hard needs
+ * 5). Intensity and duration stay separate concerns: the 480s floor
+ * guarantees a real session, the score guarantees honest intensity.
+ */
+export const HARD_BLOCK_POINTS = 2;
+export const NORMAL_BLOCK_POINTS = 1;
+export const HARD_TIER_SCORE = 4;
+export const NORMAL_TIER_SCORE = 2;
+export const MIN_NORMAL_COUNT_FOR_HARD_TIER = 5;
 
 export function classifyWorkout(
   segments: readonly CustomSegment[],
   difficultyOf: DifficultyResolver,
 ): { xp: number; tier: MeterZone } {
-  let hardSec = 0;
-  let normalCount = 0;
+  let hardBlocks = 0;
+  let normalBlocks = 0;
 
   for (const seg of segments) {
-    if (seg.kind === 'exercise') {
-      const diff = difficultyOf(seg.exerciseSlug);
-      if (diff === 'advanced' || HARD_EXERCISE_SLUGS.has(seg.exerciseSlug)) {
-        hardSec += seg.durationSec;
-      } else if (diff === 'intermediate') {
-        normalCount += 1;
-      }
+    if (seg.kind !== 'exercise') {
+      continue;
+    }
+    const diff = difficultyOf(seg.exerciseSlug);
+    if (diff === 'advanced' || HARD_EXERCISE_SLUGS.has(seg.exerciseSlug)) {
+      hardBlocks += 1;
+    } else if (diff === 'intermediate') {
+      normalBlocks += 1;
     }
   }
 
-  if (hardSec >= MIN_HARD_SEC_FOR_HARD_TIER) {
+  const score = hardBlocks * HARD_BLOCK_POINTS + normalBlocks * NORMAL_BLOCK_POINTS;
+  if (
+    (hardBlocks >= 1 && score >= HARD_TIER_SCORE) ||
+    (hardBlocks === 0 && normalBlocks >= MIN_NORMAL_COUNT_FOR_HARD_TIER)
+  ) {
     return { xp: 400, tier: 'hard' };
   }
-  if (normalCount >= MIN_NORMAL_COUNT_FOR_HARD_TIER && hardSec === 0) {
-    return { xp: 400, tier: 'hard' };
-  }
-  if (normalCount >= MIN_NORMAL_COUNT_FOR_NORMAL_TIER && hardSec === 0) {
+  if (score >= NORMAL_TIER_SCORE) {
     return { xp: 200, tier: 'normal' };
   }
   return { xp: 100, tier: 'easy' };
