@@ -1,10 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
+  Modal,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -25,6 +28,7 @@ import {
 import { fetchCosmeticCatalog, type CosmeticRow } from '@/data/repositories/cosmetics';
 import { fetchCompletionHistory, type CompletionHistoryRow } from '@/data/repositories/history';
 import { fetchProfileCosmetics } from '@/data/repositories/profileCosmetics';
+import { deleteCustomAvatar, uploadCustomAvatar } from '@/data/repositories/profile';
 import { supabase } from '@/data/supabase';
 import { dayKey } from '@/domain/streak/dayKey';
 import {
@@ -43,7 +47,9 @@ import {
 } from '@/features/assets/assetMap';
 import { withTapCue } from '@/lib/sounds';
 import { LoadoutCard } from '@/features/profile/LoadoutCard';
+import { AvatarCropEditor } from '@/features/profile/AvatarCropEditor';
 import {
+  avatarDisplayUrl,
   historyLines,
   levelLine,
   masteryRows,
@@ -221,6 +227,120 @@ export default function ProfileScreen() {
     [profile, t],
   );
 
+  /**
+   * CUSTOM-AVATAR — Discord-style avatar menu. The uploaded photo (avatarUrl)
+   * wins over the equipped RPG portrait; the frame keeps layering on top
+   * untouched. Uploads flip the `avatarBust` nonce so the image refetches
+   * exactly once; steady URLs keep their cache across restarts.
+   */
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [avatarBust, setAvatarBust] = useState(0);
+  const [portraitSignal, setPortraitSignal] = useState<{ slot: 'portrait'; nonce: number } | null>(
+    null,
+  );
+  // CUSTOM-AVATAR — camera dot hidden per owner (kept for a later return).
+  const SHOW_CAMERA_BADGE = false;
+  // CUSTOM-AVATAR — Discord-style crop editor handoff (full-size pick first,
+  // framing happens in the circular editor, bytes come from its output).
+  const [cropUri, setCropUri] = useState<string | null>(null);
+
+  const openAvatarMenu = useCallback(() => {
+    setAvatarError(null);
+    setAvatarMenuOpen(true);
+  }, []);
+
+  const closeAvatarMenu = useCallback(() => {
+    setAvatarMenuOpen(false);
+  }, []);
+
+  const handleUploadPhoto = useCallback(async () => {
+    if (avatarBusy || !profile) {
+      return;
+    }
+    setAvatarBusy(true);
+    setAvatarError(null);
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        setAvatarError(t('profile.saveFailed'));
+        return;
+      }
+      // Full-size pick — framing happens in the circular crop editor
+      // (the native 1:1 cropper cannot do Discord-style circle + zoom).
+      const picked = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: false,
+        quality: 1,
+      });
+      const uri = picked.assets?.[0]?.uri;
+      if (picked.canceled || !uri) {
+        return;
+      }
+      // Single modal at a time (nested transparent Modals eat taps on
+      // Android): the menu closes, the editor takes over fullscreen.
+      setAvatarMenuOpen(false);
+      setCropUri(uri);
+    } finally {
+      setAvatarBusy(false);
+    }
+  }, [avatarBusy, profile, t]);
+
+  const handleCropCancel = useCallback(() => {
+    setCropUri(null);
+    setAvatarMenuOpen(true);
+  }, []);
+
+  const handleCropApply = useCallback(
+    async (croppedUri: string, base64: string | null) => {
+      if (!profile) {
+        setCropUri(null);
+        return;
+      }
+      setCropUri(null);
+      setAvatarBusy(true);
+      setAvatarError(null);
+      try {
+        const uploaded = await uploadCustomAvatar(profile.id, croppedUri, base64);
+        if (uploaded.error) {
+          // Back to the menu so the error line is visible.
+          setAvatarError(t('profile.saveFailed'));
+          setAvatarMenuOpen(true);
+          return;
+        }
+        setProfile((current) => (current ? { ...current, avatarUrl: uploaded.data } : current));
+        setAvatarBust(Date.now());
+        setAvatarMenuOpen(false);
+      } finally {
+        setAvatarBusy(false);
+      }
+    },
+    [profile, t],
+  );
+
+  const handleRemovePhoto = useCallback(async () => {
+    if (avatarBusy || !profile) {
+      return;
+    }
+    setAvatarBusy(true);
+    setAvatarError(null);
+    const removed = await deleteCustomAvatar(profile.id);
+    setAvatarBusy(false);
+    if (removed.error) {
+      setAvatarError(t('profile.saveFailed'));
+      return;
+    }
+    setProfile((current) => (current ? { ...current, avatarUrl: null } : current));
+    setAvatarBust(Date.now());
+    setAvatarMenuOpen(false);
+  }, [avatarBusy, profile, t]);
+
+  const handleChoosePortrait = useCallback(() => {
+    setAvatarMenuOpen(false);
+    setPortraitSignal({ slot: 'portrait', nonce: Date.now() });
+  }, []);
+
   const initials = email ? (email.split('@')[0] ?? '').slice(0, 2).toUpperCase() : 'A';
   const todayKey = dayKey(new Date());
   // AT-01D — resolve the equipped item ids/slugs to catalogue slugs for the art
@@ -241,6 +361,9 @@ export default function ProfileScreen() {
     [catalog, profile],
   );
   const portraitArt = equippedSlug('portrait') ? cosmeticArt(equippedSlug('portrait')) : null;
+  // CUSTOM-AVATAR — uploaded photo wins, equipped RPG portrait is fallback.
+  const customAvatarUri = avatarDisplayUrl(profile?.avatarUrl ?? null, avatarBust);
+  const avatarSource = customAvatarUri ? { uri: customAvatarUri } : portraitArt;
   const frameSlug = equippedSlug('frame');
   const frameArt = frameSlug ? cosmeticArt(frameSlug) : null;
   // Per-frame gap so the frame's bottom deco (bow / gold point) never eats the nameplate.
@@ -313,7 +436,14 @@ export default function ProfileScreen() {
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.header}>
-              <View style={styles.avatarWrap}>
+              {/* CUSTOM-AVATAR — tapping the avatar opens the photo menu. */}
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel={t('profile.changeAvatarTitle')}
+                activeOpacity={0.85}
+                style={styles.avatarWrap}
+                onPress={withTapCue(openAvatarMenu)}
+              >
                 {frameArt !== null ? (
                   // AT-01E — frame paints BEHIND the portrait; each frame
                   // image is positioned from its measured ring-hole center
@@ -327,9 +457,9 @@ export default function ProfileScreen() {
                   />
                 ) : null}
                 <View style={styles.avatar} accessibilityLabel={t('profile.profileFor', { email })}>
-                  {portraitArt !== null ? (
+                  {avatarSource !== null ? (
                     <Image
-                      source={portraitArt}
+                      source={avatarSource}
                       style={styles.avatarImage}
                       contentFit="cover"
                       accessibilityLabel={t('profile.portraitA11y')}
@@ -338,7 +468,12 @@ export default function ProfileScreen() {
                     <Text style={styles.initials}>{initials}</Text>
                   )}
                 </View>
-              </View>
+                {SHOW_CAMERA_BADGE ? (
+                  <View style={styles.cameraBadge} pointerEvents="none">
+                    <Ionicons name="camera" size={14} color={colors.reward} />
+                  </View>
+                ) : null}
+              </TouchableOpacity>
               {/* PH3-01b — name frame + badge centered below name banner */}
               <View style={[styles.nameFrameWrap, { marginTop: nameFrameMarginTop }]}>
                 <View style={[styles.nameFrame, hasNameplate && styles.nameFramePremium]}>
@@ -491,6 +626,89 @@ export default function ProfileScreen() {
               onEquip={handleEquip}
               onEquipBadges={handleEquipBadges}
               earnedBadges={earnedBadges}
+              openSignal={portraitSignal}
+            />
+
+            {/* CUSTOM-AVATAR — Discord-style photo menu (bottom sheet). */}
+            <Modal
+              visible={avatarMenuOpen}
+              transparent
+              animationType="slide"
+              onRequestClose={closeAvatarMenu}
+            >
+              <View style={styles.sheetBackdrop}>
+                <Pressable style={styles.sheetDismissArea} onPress={withTapCue(closeAvatarMenu)} />
+                <View style={styles.sheet}>
+                  <Text style={styles.sheetTitle}>{t('profile.changeAvatarTitle')}</Text>
+
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    style={styles.menuRow}
+                    disabled={avatarBusy}
+                    onPress={() => void handleUploadPhoto()}
+                  >
+                    <Ionicons
+                      name="camera-outline"
+                      size={20}
+                      color={avatarBusy ? colors.textMuted : colors.reward}
+                    />
+                    <Text style={styles.menuLabel}>
+                      {avatarBusy ? t('profile.uploading') : t('profile.uploadPhoto')}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    style={styles.menuRow}
+                    disabled={avatarBusy}
+                    onPress={withTapCue(handleChoosePortrait)}
+                  >
+                    <Ionicons
+                      name="color-palette-outline"
+                      size={20}
+                      color={avatarBusy ? colors.textMuted : colors.reward}
+                    />
+                    <Text style={styles.menuLabel}>{t('profile.choosePortrait')}</Text>
+                  </TouchableOpacity>
+
+                  {profile?.avatarUrl ? (
+                    <TouchableOpacity
+                      accessibilityRole="button"
+                      style={styles.menuRow}
+                      disabled={avatarBusy}
+                      onPress={() => void handleRemovePhoto()}
+                    >
+                      <Ionicons
+                        name="trash-outline"
+                        size={20}
+                        color={avatarBusy ? colors.textMuted : colors.danger}
+                      />
+                      <Text style={styles.menuLabel}>{t('profile.removePhoto')}</Text>
+                    </TouchableOpacity>
+                  ) : null}
+
+                  {avatarError ? <Text style={styles.menuError}>{avatarError}</Text> : null}
+
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    style={styles.menuCancel}
+                    disabled={avatarBusy}
+                    onPress={withTapCue(closeAvatarMenu)}
+                  >
+                    <Text style={styles.menuCancelLabel}>{t('common.cancel')}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </Modal>
+
+            {/* CUSTOM-AVATAR — Discord-style circular crop editor. Sits above
+                the menu; cancel returns to it, apply uploads + closes both. */}
+            <AvatarCropEditor
+              key={cropUri ?? 'avatar-crop-closed'}
+              visible={cropUri !== null}
+              imageUri={cropUri}
+              onCancel={handleCropCancel}
+              onApply={(croppedUri, base64) => void handleCropApply(croppedUri, base64)}
             />
 
             {/* Quest history — last-4 preview; the full paged list lives on
@@ -632,6 +850,81 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     zIndex: 2,
   },
+  // CUSTOM-AVATAR — camera dot signalling the avatar is tappable.
+  cameraBadge: {
+    position: 'absolute',
+    right: 6,
+    bottom: 6,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.reward,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 3,
+  },
+  // CUSTOM-AVATAR — Discord-style photo menu (same sheet language as LoadoutCard).
+  // Backdrop stays transparent like the journey chapter sheet (owner call):
+  // the profile behind the menu is never dimmed to black.
+  sheetBackdrop: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    justifyContent: 'flex-end',
+  },
+  sheetDismissArea: {
+    flex: 1,
+  },
+  sheet: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+    padding: spacing.xl,
+    gap: spacing.sm,
+    paddingBottom: spacing.xxxl,
+  },
+  sheetTitle: {
+    color: colors.text,
+    fontFamily: fonts.display.family,
+    fontSize: 22,
+    marginBottom: spacing.sm,
+  },
+  menuRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    minHeight: 48,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+  },
+  menuLabel: {
+    flex: 1,
+    color: colors.text,
+    fontFamily: fonts.bodyBold.family,
+    fontSize: 15,
+  },
+  menuError: {
+    color: colors.danger,
+    fontFamily: fonts.body.family,
+    fontSize: 13,
+    textAlign: 'center',
+  },
+  menuCancel: {
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.surfaceElevated,
+    marginTop: spacing.md,
+  },
+  menuCancelLabel: {
+    color: colors.text,
+    fontFamily: fonts.bodyBold.family,
+    fontSize: 15,
+  },
   initials: {
     color: colors.reward,
     fontFamily: fonts.display.family,
@@ -705,19 +998,23 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   badgeSlot: {
-    width: 36,
-    height: 36,
+    width: 45,
+    height: 45,
     borderRadius: radius.pill,
     backgroundColor: colors.surface,
     borderWidth: 2,
-    borderColor: colors.reward,
+    // Antique amber, not bright reward-gold: the ring has to sit next to the
+    // painterly frame/nameplate art, whose golds are muted bronze. reward
+    // (#FBBF24) reads neon-yellow at 36px on near-black; rewardStrong keeps
+    // the "equipped = rewarded" language without the clash.
+    borderColor: colors.rewardStrong,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
   badgeSlotImage: {
-    width: 28,
-    height: 28,
+    width: 35,
+    height: 35,
   },
   levelLine: {
     color: colors.textMuted,

@@ -19,6 +19,19 @@ export function formatXp(xp: number): string {
   return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
+/**
+ * CUSTOM-AVATAR — display precedence for the profile avatar circle: the
+ * uploaded photo URL wins, otherwise the equipped RPG portrait art renders.
+ * The `bust` nonce is appended only after a fresh upload/remove so expo-image
+ * refetches exactly once (a stable URL keeps its cache across restarts).
+ */
+export function avatarDisplayUrl(url: string | null, bust: number): string | null {
+  if (!url) {
+    return null;
+  }
+  return bust > 0 ? `${url}?t=${bust}` : url;
+}
+
 export interface XpBar {
   intoXp: number;
   neededXp: number;

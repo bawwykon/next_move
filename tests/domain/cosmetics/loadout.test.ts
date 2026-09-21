@@ -6,11 +6,13 @@ import {
   catalogBySlot,
   DEFAULT_SLOT_SLUGS,
   ownedBySlug,
+  pickerItems,
   resolveEquipped,
   SLOT_COLUMN,
   slotColumn,
   validateEquip,
   type CatalogItem,
+  type OwnedCatalogItem,
 } from '@/domain/cosmetics/loadout';
 
 const CATALOG: CatalogItem[] = [
@@ -67,6 +69,45 @@ describe('catalogBySlot', () => {
     const grouped = catalogBySlot(CATALOG, new Set());
     const all = [...grouped.frame, ...grouped.nameplate, ...grouped.portrait];
     expect(all.some((item) => item.slug === 'mystery-item')).toBe(false);
+  });
+});
+
+describe('pickerItems', () => {
+  const items: OwnedCatalogItem[] = [
+    { id: 'f1', slug: 'frame-default', name: 'Classic Frame', kind: 'frame', owned: true },
+    { id: 'f2', slug: 'frame-level-05', name: 'Level 5 Frame', kind: 'frame', owned: false },
+    {
+      id: 'n0',
+      slug: 'nameplate-default',
+      name: 'Default Nameplate',
+      kind: 'nameplate',
+      owned: true,
+    },
+    { id: 'p1', slug: 'portrait-default', name: 'Classic Portrait', kind: 'portrait', owned: true },
+  ];
+
+  it('hides the seeded default where the Default row already covers it', () => {
+    expect(
+      pickerItems(
+        'frame',
+        items.filter((i) => i.kind === 'frame'),
+      ).map((i) => i.slug),
+    ).toEqual(['frame-level-05']);
+    expect(
+      pickerItems(
+        'portrait',
+        items.filter((i) => i.kind === 'portrait'),
+      ).map((i) => i.slug),
+    ).toEqual([]);
+  });
+
+  it('keeps the nameplate default (no unequip row exists there)', () => {
+    expect(
+      pickerItems(
+        'nameplate',
+        items.filter((i) => i.kind === 'nameplate'),
+      ).map((i) => i.slug),
+    ).toEqual(['nameplate-default']);
   });
 });
 

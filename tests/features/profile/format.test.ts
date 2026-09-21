@@ -5,6 +5,7 @@
  */
 import {
   achievementsEntry,
+  avatarDisplayUrl,
   dayLabel,
   formatXp,
   historyExhausted,
@@ -221,5 +222,22 @@ describe('pickerRowStrings (S8-02, FR-COS-2)', () => {
         expect(text).not.toMatch(ruleSyntax);
       }
     }
+  });
+});
+
+describe('avatarDisplayUrl (CUSTOM-AVATAR)', () => {
+  it('null url resolves to the RPG portrait fallback', () => {
+    expect(avatarDisplayUrl(null, 0)).toBeNull();
+    expect(avatarDisplayUrl(null, 123)).toBeNull();
+  });
+
+  it('steady urls keep their cache (no bust param)', () => {
+    expect(avatarDisplayUrl('http://10.0.2.2:54321/x.png', 0)).toBe('http://10.0.2.2:54321/x.png');
+  });
+
+  it('fresh uploads bust the cache exactly once', () => {
+    expect(avatarDisplayUrl('http://10.0.2.2:54321/x.png', 1726234567890)).toBe(
+      'http://10.0.2.2:54321/x.png?t=1726234567890',
+    );
   });
 });

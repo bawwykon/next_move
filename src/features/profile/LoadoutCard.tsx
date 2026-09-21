@@ -6,7 +6,12 @@ import type { TFunction } from 'i18next';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import type { CosmeticRow } from '@/data/repositories/cosmetics';
-import { catalogBySlot, DEFAULT_SLOT_SLUGS, type CosmeticSlot } from '@/domain/cosmetics/loadout';
+import {
+  catalogBySlot,
+  DEFAULT_SLOT_SLUGS,
+  pickerItems,
+  type CosmeticSlot,
+} from '@/domain/cosmetics/loadout';
 import { achievementArt, cosmeticArt, nameplateArt } from '@/features/assets/assetMap';
 import { cosmeticName } from '@/features/catalog/copy';
 import { pickerRowStrings } from '@/features/profile/format';
@@ -59,6 +64,12 @@ export interface LoadoutCardProps {
   onEquip: (slot: CosmeticSlot, itemId: string | null) => Promise<string | null>;
   onEquipBadges: (badges: string[]) => Promise<string | null>;
   earnedBadges: string[];
+  /**
+   * CUSTOM-AVATAR — lets the profile avatar menu open the portrait picker
+   * directly. A new object identity (bumped `nonce`) opens `slot`; null (or
+   * an unchanged identity) does nothing.
+   */
+  openSignal?: { slot: CosmeticSlot; nonce: number } | null;
 }
 
 function slotValue(
@@ -90,14 +101,34 @@ export function LoadoutCard({
   onEquip,
   onEquipBadges,
   earnedBadges,
+  openSignal = null,
 }: LoadoutCardProps) {
   const [openSlot, setOpenSlot] = useState<CosmeticSlot | null>(null);
+  const [consumedSignal, setConsumedSignal] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [badgeModalOpen, setBadgeModalOpen] = useState(false);
   const [tempBadges, setTempBadges] = useState<string[]>(equipped.badges);
   const { t } = useTranslation();
+  // Render-phase consume: a fresh signal opens the requested picker once.
+  // (Same-component setState during render re-renders before commit. The
+  // nonce is only consumed when no picker is open, so a signal that lands
+  // mid-picker waits for it instead of being swallowed.)
+  if (openSignal !== null && openSignal.nonce !== consumedSignal && openSlot === null) {
+    setConsumedSignal(openSignal.nonce);
+    const current = equipped[openSignal.slot];
+    const defaultSlug = DEFAULT_SLOT_SLUGS[openSignal.slot];
+    const isDefaultItem =
+      current !== null &&
+      defaultSlug !== undefined &&
+      catalog.some(
+        (item) => (item.id === current || item.slug === current) && item.slug === defaultSlug,
+      );
+    setSelected(isDefaultItem ? null : current);
+    setError(null);
+    setOpenSlot(openSignal.slot);
+  }
 
   const bySlot = catalogBySlot(catalog, owned);
 
@@ -113,7 +144,17 @@ export function LoadoutCard({
 
   const open = (slot: CosmeticSlot) => {
     setOpenSlot(slot);
-    setSelected(equipped[slot]);
+    const current = equipped[slot];
+    // The slot default has no picker row (the "Default" null-row covers it):
+    // normalize so the Default row shows selected instead of nothing.
+    const defaultSlug = DEFAULT_SLOT_SLUGS[slot];
+    const isDefaultItem =
+      current !== null &&
+      defaultSlug !== undefined &&
+      catalog.some(
+        (item) => (item.id === current || item.slug === current) && item.slug === defaultSlug,
+      );
+    setSelected(isDefaultItem ? null : current);
     setError(null);
   };
 
@@ -235,7 +276,7 @@ export function LoadoutCard({
                 </TouchableOpacity>
               )}
 
-              {bySlot[openSlot].map((item) => {
+              {pickerItems(openSlot, bySlot[openSlot]).map((item) => {
                 const strings = pickerRowStrings(item, t);
                 const locked = !item.owned;
                 const art =
@@ -443,7 +484,10 @@ const styles = StyleSheet.create({
   },
   sheetBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    // Transparent like the chapter sheet (owner call): the profile stays
+    // bright and fully visible behind the picker. The sheet itself stays
+    // opaque; the dismiss area above it still closes on outside taps.
+    backgroundColor: 'transparent',
     justifyContent: 'flex-end',
   },
   sheetDismissArea: {

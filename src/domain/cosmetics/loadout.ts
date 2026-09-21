@@ -104,6 +104,24 @@ export function catalogBySlot(
   return grouped;
 }
 
+/**
+ * Picker rows for a slot. The seeded default item is hidden for slots that
+ * render the "Default" (unequipped) row: unequipped falls back to the same
+ * default slug, so the row would be a pixel-identical duplicate (Default vs
+ * Classic Frame/Portrait). Nameplate has no unequip row, so its default
+ * stays visible.
+ */
+export function pickerItems(
+  slot: CosmeticSlot,
+  items: readonly OwnedCatalogItem[],
+): OwnedCatalogItem[] {
+  if (slot === 'nameplate') {
+    return [...items];
+  }
+  const defaultSlug = DEFAULT_SLOT_SLUGS[slot];
+  return items.filter((item) => item.slug !== defaultSlug);
+}
+
 export type EquipVerdict =
   { ok: true } | { ok: false; reason: 'UNKNOWN_SLOT' | 'UNKNOWN_ITEM' | 'NOT_OWNED' };
 
