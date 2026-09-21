@@ -146,6 +146,53 @@ export type Database = {
           },
         ];
       };
+      world_quests: {
+        Row: {
+          claimed: boolean;
+          claimed_at: string | null;
+          completed: boolean;
+          created_at: string;
+          id: string;
+          objectives: Json;
+          profile_id: string;
+          rerolls_remaining: number;
+          updated_at: string;
+          week_key: string;
+        };
+        Insert: {
+          claimed?: boolean;
+          claimed_at?: string | null;
+          completed?: boolean;
+          created_at?: string;
+          id?: string;
+          objectives?: Json;
+          profile_id: string;
+          rerolls_remaining?: number;
+          updated_at?: string;
+          week_key: string;
+        };
+        Update: {
+          claimed?: boolean;
+          claimed_at?: string | null;
+          completed?: boolean;
+          created_at?: string;
+          id?: string;
+          objectives?: Json;
+          profile_id?: string;
+          rerolls_remaining?: number;
+          updated_at?: string;
+          week_key?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'world_quests_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       mastery: {
         Row: {
           created_at: string;
@@ -284,6 +331,7 @@ export type Database = {
       };
       profiles: {
         Row: {
+          avatar_url: string | null;
           created_at: string;
           current_chapter: number;
           current_streak: number;
@@ -306,6 +354,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          avatar_url?: string | null;
           created_at?: string;
           current_chapter?: number;
           current_streak?: number;
@@ -328,6 +377,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          avatar_url?: string | null;
           created_at?: string;
           current_chapter?: number;
           current_streak?: number;
@@ -542,6 +592,9 @@ export type Database = {
       level_title: { Args: { level: number }; Returns: string };
       mastery_level_for_points: { Args: { points: number }; Returns: number };
       next_journey_threshold: { Args: { quests: number }; Returns: number };
+      ensure_world_quests: { Args: { p_week: string }; Returns: Json };
+      reroll_world_quest: { Args: { p_index: number; p_week: string }; Returns: Json };
+      claim_world_quests_reward: { Args: { p_week: string }; Returns: Json };
     };
     Enums: {
       [_ in never]: never;
