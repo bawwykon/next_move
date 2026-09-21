@@ -4,17 +4,20 @@
  * - `initLocale` runs once at startup (splash gate): saved choice, else
  *   device language, else English. Missing keys fall back to English and
  *   never crash (fallbackLng).
- * - `applyLocale` persists + switches; crossing the LTR/RTL boundary sets
- *   the native RTL flags and reloads (Android only applies RTL on restart).
+ * - `applyLocale` persists + switches; crossing the LTR/RTL boundary or the
+ *   Chinese companion-font boundary sets the native flags and reloads
+ *   (Android only applies RTL on restart; font files bind at startup).
  * - Locale is device-local (AsyncStorage only, never synced to profiles).
  */
 // I18N-AR — Hermes (Android) ships incomplete Intl.PluralRules, so Arabic
 // quantities silently fell back to the 'other' form ("3 يومًا" for 3 أيام).
-// Force-install CLDR plural data for our three locales before i18next runs.
+// Force-install CLDR plural data for our five locales before i18next runs.
 import '@formatjs/intl-pluralrules/polyfill-force.js';
 import '@formatjs/intl-pluralrules/locale-data/ar.js';
 import '@formatjs/intl-pluralrules/locale-data/en.js';
 import '@formatjs/intl-pluralrules/locale-data/es.js';
+import '@formatjs/intl-pluralrules/locale-data/pt.js';
+import '@formatjs/intl-pluralrules/locale-data/zh.js';
 
 import { I18nManager } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -84,6 +87,8 @@ export async function initLocale(): Promise<AppLocale> {
       en: { translation: localeResources.en },
       es: { translation: localeResources.es },
       ar: { translation: localeResources.ar },
+      zh: { translation: localeResources.zh },
+      pt: { translation: localeResources.pt },
     },
     lng: resolved,
     fallbackLng: 'en',
@@ -94,8 +99,11 @@ export async function initLocale(): Promise<AppLocale> {
 }
 
 /**
- * Switch locale at runtime. Same direction: hot-swap via i18next.
+ * Switch locale at runtime. Same direction, same font set: hot-swap via i18next.
  * LTR<->RTL crossing: persist, set flags, reload (Android requirement).
+ * To/from Chinese: reload too, so the Noto Sans SC companions apply
+ * consistently (font files bind at startup; a hot-swap would leave the
+ * previous locale's glyphs rendering via system fallback).
  * Returns true when a reload was triggered (caller should do nothing after).
  */
 export async function applyLocale(locale: AppLocale): Promise<boolean> {
@@ -104,7 +112,7 @@ export async function applyLocale(locale: AppLocale): Promise<boolean> {
   }
   const current = isAppLocale(i18n.language) ? (i18n.language as AppLocale) : 'en';
   await saveLocale(locale);
-  if (isRtlLocale(locale) === isRtlLocale(current)) {
+  if (isRtlLocale(locale) === isRtlLocale(current) && (locale === 'zh') === (current === 'zh')) {
     await i18n.changeLanguage(locale);
     return false;
   }

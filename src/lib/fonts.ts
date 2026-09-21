@@ -12,6 +12,12 @@ export const fontAssets = {
   'BalooBhaijaan2-Bold': require('@/assets/fonts/BalooBhaijaan2-Bold.ttf'),
   'Almarai-Regular': require('@/assets/fonts/Almarai-Regular.ttf'),
   'Almarai-Bold': require('@/assets/fonts/Almarai-Bold.ttf'),
+  // I18N-ZH — Noto Sans SC companions, subset to the Hanzi + punctuation
+  // used in the zh locale tables (0.36 MB each vs 10 MB full). Noto Sans SC
+  // carries its own Latin, so mixed strings ("3 / 10 个任务", emails) stay
+  // consistent. Also loaded (small files) so glyphs exist pre-locale.
+  'NotoSansSC-Regular': require('@/assets/fonts/NotoSansSC-Regular.ttf'),
+  'NotoSansSC-Bold': require('@/assets/fonts/NotoSansSC-Bold.ttf'),
 } as const;
 
 /**
@@ -30,6 +36,25 @@ const fontAssetsAr = {
   'Almarai-Bold': require('@/assets/fonts/Almarai-Bold.ttf'),
 } as const;
 
+/**
+ * I18N-ZH (Chinese phase) — same companion pattern as Arabic: the Latin
+ * family names resolve to Noto Sans SC, so every screen picks up Chinese
+ * typography with no per-screen changes. Same-direction switches
+ * (en<->zh<->es<->pt) keep working without a reload; only LTR<->RTL
+ * crossings reload the app.
+ */
+const fontAssetsZh = {
+  'Baloo2-Bold': require('@/assets/fonts/NotoSansSC-Bold.ttf'),
+  'Nunito-Regular': require('@/assets/fonts/NotoSansSC-Regular.ttf'),
+  'Nunito-Bold': require('@/assets/fonts/NotoSansSC-Bold.ttf'),
+  'NotoSansSC-Regular': require('@/assets/fonts/NotoSansSC-Regular.ttf'),
+  'NotoSansSC-Bold': require('@/assets/fonts/NotoSansSC-Bold.ttf'),
+} as const;
+
 export function useLoadedFonts(locale: AppLocale | null) {
-  return useExpoFonts(locale === 'ar' ? fontAssetsAr : fontAssets);
+  // Single unconditional hook call (rules-of-hooks): pick the map first,
+  // then load. Locale switches that need a different set reload the app,
+  // so the map is effectively constant for the session lifetime.
+  const selected = locale === 'ar' ? fontAssetsAr : locale === 'zh' ? fontAssetsZh : fontAssets;
+  return useExpoFonts(selected);
 }
