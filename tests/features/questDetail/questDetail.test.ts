@@ -45,10 +45,12 @@ describe('formatSegmentDuration', () => {
     expect(formatSegmentDuration(60.4, t)).toBe('1 min');
   });
 
-  it('joins minutes and seconds per locale (Arabic uses و)', async () => {
+  it('joins minutes and seconds per locale (Arabic uses و, Chinese none)', async () => {
     expect(formatSegmentDuration(90, t)).toBe('1 min 30s');
     expect(localeResources.ar.quest.durationJoin).toBe(' و');
     expect(localeResources.es.quest.durationJoin).toBe(' ');
+    expect(localeResources.pt.quest.durationJoin).toBe(' ');
+    expect(localeResources.zh.quest.durationJoin).toBe('');
   });
 });
 

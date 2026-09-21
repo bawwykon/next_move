@@ -3,10 +3,12 @@ import type { TFunction } from 'i18next';
 import {
   DAILY_BONUS_XP,
   WEEKLY_BONUS_XP,
+  WEEKLY_TRIAL_MASTERY_XP,
   dailyCellCopy,
   dailyChallengeProgress,
   daysUntilNextMonday,
   streakPillCopy,
+  trialMasteryCopy,
   weeklyEarnCopy,
 } from '@/features/questBoard/earn';
 import { englishT, arabicT } from '../../i18n/testLocale';
@@ -138,5 +140,24 @@ describe('streakPillCopy', () => {
     for (const banned of ['pain', 'suffer', 'grind', 'intense', 'must', 'should']) {
       expect(texts).not.toContain(banned);
     }
+  });
+});
+
+describe('trialMasteryCopy', () => {
+  it('pins the 0048 contract: +60 mastery in the trial track', () => {
+    expect(WEEKLY_TRIAL_MASTERY_XP).toBe(60);
+  });
+
+  it('names the active trial track under the XP line', () => {
+    expect(trialMasteryCopy(t, 'trial-strength')).toBe('+60 Strength Mastery');
+    expect(trialMasteryCopy(t, 'trial-endurance')).toBe('+60 Endurance Mastery');
+    expect(trialMasteryCopy(t, 'trial-mobility')).toBe('+60 Mobility Mastery');
+    expect(trialMasteryCopy(t, 'trial-discipline')).toBe('+60 Discipline Mastery');
+  });
+
+  it('renders in Arabic with no leaked template syntax', () => {
+    const copy = trialMasteryCopy(ta, 'trial-strength');
+    expect(copy).toContain('60');
+    expect(copy).not.toMatch(/[{}]/);
   });
 });

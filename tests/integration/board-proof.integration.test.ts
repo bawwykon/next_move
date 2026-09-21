@@ -150,18 +150,25 @@ describe('board data path (local supabase)', () => {
   const utcToday = () => utcDayKey(Date.now());
   const utcYesterday = () => utcDayKey(Date.now() - 86_400_000);
 
-  it('fetches the recent completions with day_key for the demo user', async () => {
+  it('fetches the recent completions with day_key for the demo user (date-proof)', async () => {
     const result = await board.fetchRecentCompletions(profileId);
     expect(result.error).toBeNull();
     const completions = result.data!;
-    expect(completions.length).toBeGreaterThanOrEqual(3);
-    const today = utcToday();
-    const yesterday = utcYesterday();
-    expect(completions.some((completion) => completion.dayKey === today)).toBe(true);
-    expect(completions.some((completion) => completion.dayKey === yesterday)).toBe(true);
+    // Live fixture (seed + your own tap-throughs): never pin calendar days or
+    // exact XP totals — assert the repo contract instead: recency window,
+    // descending order, valid day keys, sane XP values.
+    expect(completions.length).toBeGreaterThanOrEqual(1);
+    const dayKeyRe = /^\d{4}-\d{2}-\d{2}$/;
+    let prevMs = Number.POSITIVE_INFINITY;
     for (const completion of completions) {
       expect(completion.completedAt).toBeTruthy();
-      expect(completion.xpAwarded).toBe(100);
+      expect(completion.dayKey).toMatch(dayKeyRe);
+      expect(typeof completion.xpAwarded).toBe('number');
+      expect(completion.xpAwarded).toBeGreaterThan(0);
+      const ms = Date.parse(completion.completedAt);
+      expect(ms).not.toBeNaN();
+      expect(ms).toBeLessThanOrEqual(prevMs); // completed_at desc
+      prevMs = ms;
     }
     console.log(
       'completions:',
@@ -174,18 +181,23 @@ describe('board data path (local supabase)', () => {
     );
   });
 
-  it('derives streak 2/2 from the local completions snapshot', async () => {
-    const completions = (await board.fetchRecentCompletions(profileId)).data!;
-    const streak = streakDomain.currentStreak(
-      completions
-        .map((completion) => completion.dayKey)
-        .filter((key): key is string => key !== null),
-      utcToday(),
-    );
-    expect(streak).toEqual({ current: 2, longest: 2 });
-    console.log(
-      `streak(today=${dayKeyDomain.dayKey(new Date())}): current=${streak.current} longest=${streak.longest}`,
-    );
+  it('derives streaks from completion day keys (synthetic keys, date-proof)', async () => {
+    // The pure streak math is pinned in tests/domain/streak; here we prove
+    // the wiring (live dayKey shape into the streak fn) with
+    // calendar-anchored synthetic keys so this never rots as fixtures age.
+    const fetched = await board.fetchRecentCompletions(profileId);
+    expect(fetched.error).toBeNull();
+    for (const completion of fetched.data!) {
+      expect(completion.dayKey).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    }
+    const today = utcToday();
+    const yesterday = utcYesterday();
+    expect(streakDomain.currentStreak([today, yesterday], today)).toEqual({
+      current: 2,
+      longest: 2,
+    });
+    expect(streakDomain.currentStreak([today], today)).toEqual({ current: 1, longest: 1 });
+    console.log(`streak(today=${dayKeyDomain.dayKey(new Date())}): synthetic 2-day run → 2/2`);
   });
 
   it('fetches the four mastery rows for the demo user', async () => {
@@ -202,11 +214,20 @@ describe('board data path (local supabase)', () => {
     console.log('mastery:', rows.map((row) => `${row.track}=${row.points}`).join(' | '));
   });
 
-  it('fetches the demo profile', async () => {
+  it('fetches the demo profile (name-agnostic)', async () => {
     const result = await board.fetchProfile(profileId);
     expect(result.error).toBeNull();
-    expect(result.data!.displayName).toBe('Adventurer');
+    const { data: raw, error: rawError } = await supabase
+      .from('profiles')
+      .select('display_name, onboarded')
+      .eq('id', profileId)
+      .single();
+    expect(rawError).toBeNull();
+    // Never pin the display name: the owner renames it in-app. Assert the
+    // repo returns exactly what is stored.
+    expect(result.data!.displayName).toBe(raw!.display_name);
     expect(result.data!.onboarded).toBe(true);
+    expect(raw!.onboarded).toBe(true);
     console.log(`profile: ${result.data!.displayName} onboarded=${result.data!.onboarded}`);
   });
 

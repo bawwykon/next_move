@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, spacing } from '@/lib/theme';
 
@@ -9,6 +10,9 @@ export default function TabsLayout() {
   // companion display font until the full typography swap (Arabic phase).
   const { t, i18n } = useTranslation();
   const labelFont = i18n.language === 'ar' ? 'Almarai-Bold' : 'Nunito-Bold';
+  // Gesture-bar devices need the tab bar lifted above the system inset;
+  // fixed heights crash the labels into the gesture pill.
+  const insets = useSafeAreaInsets();
   return (
     <Tabs
       initialRouteName="quest-board"
@@ -20,8 +24,8 @@ export default function TabsLayout() {
           backgroundColor: colors.surface,
           borderTopColor: colors.surfaceElevated,
           borderTopWidth: 1,
-          height: 64,
-          paddingBottom: spacing.sm,
+          height: 64 + insets.bottom,
+          paddingBottom: Math.max(insets.bottom, spacing.sm),
           paddingTop: spacing.xs,
         },
         tabBarLabelStyle: {

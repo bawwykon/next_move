@@ -9,6 +9,7 @@
  */
 import type { TFunction } from 'i18next';
 
+import { TRIAL_TRACK, type WeeklyTrialId } from '@/domain/board/weeklyTrial';
 import { streakMilestoneLine } from '@/features/profile/format';
 
 /** Mirror of `v_daily` — paid on the first completion of the local day. */
@@ -16,6 +17,14 @@ export const DAILY_BONUS_XP = 150;
 
 /** Mirror of the weekly bonus paid on the 3rd completion of the Mon–Sun week. */
 export const WEEKLY_BONUS_XP = 1000;
+
+/**
+ * Mirror of the 0048 trial mastery bonus: when the weekly bonus pays, +60
+ * mastery lands in the active trial's track (relaxed rule — any 3
+ * completions; untouched tracks earn their own row). Shown under the XP on
+ * the weekly card so the payout is never a surprise.
+ */
+export const WEEKLY_TRIAL_MASTERY_XP = 60;
 
 export interface DailyProgress {
   /** Any completion whose local day key equals today. */
@@ -79,6 +88,20 @@ export function weeklyEarnCopy(
   }
   const remaining = target - done;
   return t('board.weeklyRemaining', { count: remaining, xp: WEEKLY_BONUS_XP });
+}
+
+/**
+ * The weekly card's second reward line, under the XP: the 0048 mastery bonus
+ * in the active trial's track. Composed only from already-translated words
+ * (track name + mastery noun), so no locale needs a new glyph — this matters
+ * for Chinese, whose font is subset to in-app characters.
+ */
+export function trialMasteryCopy(t: TFunction, trial: WeeklyTrialId): string {
+  return t('board.masteryReward', {
+    xp: WEEKLY_TRIAL_MASTERY_XP,
+    track: t(`board.categories.${TRIAL_TRACK[trial]}`),
+    mastery: t('profile.mastery'),
+  });
 }
 
 /**

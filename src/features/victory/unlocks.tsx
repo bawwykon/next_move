@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import type { ComponentProps } from 'react';
 
 import type { UnlockOverview } from '@/features/victory/format';
 import {
@@ -14,6 +15,23 @@ import { colors, fonts, radius, spacing } from '@/lib/theme';
 interface UnlocksCardProps {
   overview: UnlockOverview;
 }
+
+type CosmeticIconName = ComponentProps<typeof Ionicons>['name'];
+
+/**
+ * One icon per cosmetic type so a multi-unlock row never reads as copies of
+ * the same sparkle: a frame looks like a frame, a title like text, a
+ * nameplate like a card, a portrait like a face. Unknown types keep the old
+ * sparkle fallback. Color stays calm for the whole group (achievements own
+ * the gold), so type reads by shape, not hue.
+ */
+const COSMETIC_ICONS: Record<string, CosmeticIconName> = {
+  frame: 'image-outline',
+  title: 'text-outline',
+  nameplate: 'card-outline',
+  portrait: 'person-circle-outline',
+  background: 'color-palette-outline',
+};
 
 /**
  * S6-01 — unlock grouping: achievements and cosmetics each get their own
@@ -50,7 +68,11 @@ export function UnlocksCard({ overview }: UnlocksCardProps) {
           <Text style={styles.groupLabel}>{t('victory.cosmeticsGroup')}</Text>
           {overview.cosmetics.map((unlock) => (
             <View key={unlock.id} style={styles.row}>
-              <Ionicons name="sparkles-outline" size={20} color={colors.calm} />
+              <Ionicons
+                name={COSMETIC_ICONS[unlock.type] ?? 'sparkles-outline'}
+                size={20}
+                color={colors.calm}
+              />
               <View style={styles.rowCopy}>
                 <Text style={styles.rowName}>
                   {cosmeticName(unlock.slug, unlock.name, t) ?? unlock.name}

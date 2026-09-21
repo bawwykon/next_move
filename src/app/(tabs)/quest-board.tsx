@@ -45,9 +45,14 @@ import {
   masteryArt,
   trialArt,
 } from '@/features/assets/assetMap';
-import { difficultyBadge, difficultyDescriptor } from '@/features/questBoard/badges';
+import { difficultyBadge } from '@/features/questBoard/badges';
 import { isCompletedToday } from '@/features/questBoard/completedToday';
-import { WEEKLY_BONUS_XP, dailyCellCopy, dailyChallengeProgress } from '@/features/questBoard/earn';
+import {
+  WEEKLY_BONUS_XP,
+  dailyCellCopy,
+  dailyChallengeProgress,
+  trialMasteryCopy,
+} from '@/features/questBoard/earn';
 import { formatDuration } from '@/features/questBoard/format';
 import { greetingForHour } from '@/features/questBoard/greeting';
 import { weeklyChallengeProgress } from '@/features/questBoard/weekly';
@@ -463,9 +468,12 @@ export default function QuestBoardScreen() {
                     <Text style={styles.weeklyCount}>
                       {weekly.completionsInWindow}/{WEEKLY_TARGET}
                     </Text>
-                    <Text style={styles.weeklyReward}>
-                      {t('board.xpReward', { xp: WEEKLY_BONUS_XP })}
-                    </Text>
+                    <View style={styles.weeklyRewards}>
+                      <Text style={styles.weeklyReward}>
+                        {t('board.xpReward', { xp: WEEKLY_BONUS_XP })}
+                      </Text>
+                      <Text style={styles.weeklyMastery}>{trialMasteryCopy(t, trial)}</Text>
+                    </View>
                   </View>
                 </View>
               </View>
@@ -497,7 +505,6 @@ export default function QuestBoardScreen() {
                       null;
                     const xp = projectedXp(custom.segments, difficultyOf);
                     const zone = zoneForXp(xp);
-                    const badge = difficultyBadge(zone as QuestDifficulty, t);
                     return (
                       <TouchableOpacity
                         key={custom.id}
@@ -522,11 +529,10 @@ export default function QuestBoardScreen() {
                             · {t('board.xpReward', { xp })}
                           </Text>
                         </View>
-                        <View style={[styles.zonePill, { backgroundColor: badge.color }]}>
-                          <Text style={styles.zonePillLabel}>
-                            {difficultyDescriptor(zone as QuestDifficulty, t)}
-                          </Text>
-                        </View>
+                        {/* Same BadgePill as catalog rows (icon + label) — customs
+                            used to render a label-only pill, which is why the
+                            difficulty icon was missing on hard customs. */}
+                        <BadgePill difficulty={zone as QuestDifficulty} />
                       </TouchableOpacity>
                     );
                   })}
@@ -986,6 +992,14 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodyBold.family,
     fontSize: 13,
   },
+  weeklyRewards: {
+    alignItems: 'flex-end',
+  },
+  weeklyMastery: {
+    color: colors.reward,
+    fontFamily: fonts.bodyBold.family,
+    fontSize: 12,
+  },
   milestoneCard: {
     alignSelf: 'stretch',
     backgroundColor: colors.surface,
@@ -1067,16 +1081,6 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontFamily: fonts.body.family,
     fontSize: 13,
-  },
-  zonePill: {
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-  },
-  zonePillLabel: {
-    color: colors.background,
-    fontFamily: fonts.bodyBold.family,
-    fontSize: 12,
   },
   skeletonWrap: {
     gap: spacing.md,

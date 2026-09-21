@@ -27,6 +27,11 @@ export interface CharacterProfile {
   currentStreak: number;
   longestStreak: number;
   lastCompletedDay: string | null;
+  /**
+   * CUSTOM-AVATAR (M0059) — public storage URL of the user's uploaded photo.
+   * Null = equipped RPG portrait renders. Server column, read verbatim.
+   */
+  avatarUrl: string | null;
   equipped: {
     frame: string | null;
     nameplate: string | null;
@@ -52,7 +57,7 @@ export async function fetchProfile(profileId: string): Promise<RepoResult<Charac
   const { data, error } = await supabase
     .from('profiles')
     .select(
-      'id, display_name, onboarded, journey_quests, current_chapter, total_xp, level, current_streak, longest_streak, last_completed_day, equipped_frame, equipped_nameplate, equipped_portrait, equipped_badge, equipped_badges',
+      'id, display_name, onboarded, journey_quests, current_chapter, total_xp, level, current_streak, longest_streak, last_completed_day, avatar_url, equipped_frame, equipped_nameplate, equipped_portrait, equipped_badge, equipped_badges',
     )
     .eq('id', profileId)
     .maybeSingle();
@@ -74,6 +79,7 @@ export async function fetchProfile(profileId: string): Promise<RepoResult<Charac
     currentStreak: data.current_streak,
     longestStreak: data.longest_streak,
     lastCompletedDay: data.last_completed_day,
+    avatarUrl: data.avatar_url,
     equipped: {
       frame: data.equipped_frame,
       nameplate:

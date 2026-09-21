@@ -45,8 +45,9 @@ export const DAILY_MESSAGES: readonly string[] = [
 /**
  * PH4-02 — deterministic pick: one message per calendar day, same for every
  * render of that day, changing at midnight. Pure derivation from
- * (pool, dayKey) — no backend, no persistence. The hash folds each character
- * so adjacent days land on different indices; modulo spreads over the pool.
+ * (pool, dayKey) — no backend, no persistence. Sequential rotation over the
+ * UTC day number: adjacent days show adjacent messages and every message
+ * appears exactly once per 30-day cycle (no repeats, no starvation).
  */
 export function dailyMessageFor(dayKey: string): string {
   return DAILY_MESSAGES[dailyMessageIndex(dayKey)] ?? DAILY_MESSAGES[0]!;
@@ -57,11 +58,14 @@ export function dailyMessageIndex(dayKey: string): number {
   if (DAILY_MESSAGES.length === 0) {
     return 0;
   }
-  let hash = 0;
-  for (let i = 0; i < dayKey.length; i += 1) {
-    hash = (hash * 31 + dayKey.charCodeAt(i)) % 2_147_483_647;
+  const parts = dayKey.split('-').map(Number);
+  const dayNumber = Math.floor(
+    Date.UTC(parts[0] ?? 0, (parts[1] ?? 1) - 1, parts[2] ?? 1) / 86_400_000,
+  );
+  if (!Number.isFinite(dayNumber)) {
+    return 0;
   }
-  return hash % DAILY_MESSAGES.length;
+  return ((dayNumber % DAILY_MESSAGES.length) + DAILY_MESSAGES.length) % DAILY_MESSAGES.length;
 }
 
 /** i18n key for the day's message — the UI translates it (I18N-01). */
