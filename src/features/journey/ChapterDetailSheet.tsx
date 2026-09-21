@@ -136,7 +136,9 @@ export function ChapterDetailSheet({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    // Transparent: the map stays bright and visible behind the sheet
+    // (owner call). The outer Pressable still dismisses on outside taps.
+    backgroundColor: 'transparent',
     justifyContent: 'flex-end',
   },
   sheet: {

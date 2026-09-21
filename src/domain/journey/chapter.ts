@@ -17,8 +17,8 @@ export const CHAPTERS: readonly ChapterDef[] = Object.freeze([
   Object.freeze({ id: 2, name: 'Training Grounds', threshold: 10 }),
   Object.freeze({ id: 3, name: 'Into the Wild', threshold: 30 }),
   Object.freeze({ id: 4, name: 'Crossing the Bridge', threshold: 60 }),
-  Object.freeze({ id: 5, name: 'The Ascent', threshold: 100 }),
-  Object.freeze({ id: 6, name: 'Fortress of Discipline', threshold: 200 }),
+  Object.freeze({ id: 5, name: 'Fortress of Discipline', threshold: 100 }),
+  Object.freeze({ id: 6, name: 'The Ascent', threshold: 200 }),
   Object.freeze({ id: 7, name: 'Mastery Peak', threshold: 365 }),
 ]);
 

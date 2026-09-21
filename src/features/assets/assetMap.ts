@@ -113,6 +113,12 @@ export function chapterArt(chapterId: number): number | null {
 export const JOURNEY_MAP_BG = require('@/assets/journey/map_background.jpg') as number;
 export const PLAYER_MAP_TOKEN = require('@/assets/journey/player_map_token.opt.png') as number;
 export const PATH_NODE_GLOWING = require('@/assets/journey/path_node_glowing.opt.png') as number;
+// World-quest scroll medallion (60px dock) + token eye medallion (44px toggle).
+// Owner-supplied AI art, downscaled 1254 → 180px (transparent corners intact).
+export const WORLD_QUEST_MEDALLION =
+  require('@/assets/journey/world_quest_medallion.opt.png') as number;
+export const TOKEN_EYE_MEDALLION =
+  require('@/assets/journey/token_eye_medallion.opt.png') as number;
 
 export const CHAPTER_BADGE_ART: Record<number, number> = {
   1: require('@/assets/journey/chapter_badge_1.opt.png'),

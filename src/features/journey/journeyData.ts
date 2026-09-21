@@ -45,16 +45,16 @@ export const CHAPTER_DATA: readonly ChapterData[] = Object.freeze([
   }),
   Object.freeze({
     id: 5,
-    name: 'The Ascent',
+    name: 'Fortress of Discipline',
     threshold: 100,
-    flavor: 'The air gets thin, but your will is thicker.',
+    flavor: 'Consistency is the strongest armor.',
     requirement: 'Reach 100 quests to unlock',
   }),
   Object.freeze({
     id: 6,
-    name: 'Fortress of Discipline',
+    name: 'The Ascent',
     threshold: 200,
-    flavor: 'Consistency is the strongest armor.',
+    flavor: 'The air gets thin, but your will is thicker.',
     requirement: 'Reach 200 quests to unlock',
   }),
   Object.freeze({

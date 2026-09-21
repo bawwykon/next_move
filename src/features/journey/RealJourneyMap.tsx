@@ -33,11 +33,14 @@ import {
   JOURNEY_MAP_BG,
   PATH_NODE_GLOWING,
   PLAYER_MAP_TOKEN,
+  TOKEN_EYE_MEDALLION,
 } from '@/features/assets/assetMap';
+import { getPlayerPosition, TRAIL_WAYPOINTS } from '@/domain/journey/trail';
 import { withTapCue } from '@/lib/sounds';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 import { ChapterDetailSheet } from './ChapterDetailSheet';
 import { useJourneyState } from './useJourneyState';
+import { WorldQuestsTab } from './WorldQuestsTab';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -45,55 +48,14 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MAP_WIDTH = SCREEN_WIDTH;
 const MAP_HEIGHT = Math.round(SCREEN_WIDTH * 2.0); // Exact 1:2.0 match for 887x1774 artwork
 
-// Waypoints along the winding dirt/stone trail from Village (bottom) to Summit (top)
-// Coordinates in percentage (0..100) of map dimensions
-export interface TrailWaypoint {
-  quest: number;
-  x: number;
-  y: number;
-}
+// Trail shape + chapter-paced position live in @/domain/journey/trail
+// (testable, no I/O). Waypoint `quest` labels below are polyline anchors;
+// pacing derives from chapter thresholds, not from these labels.
 
-const TRAIL_WAYPOINTS: TrailWaypoint[] = [
-  // Chapter 1: The First Step (0-10 quests) — Village
-  { quest: 0, x: 47.0, y: 94.5 },
-  { quest: 3, x: 47.5, y: 90.0 },
-  { quest: 7, x: 53.0, y: 84.5 }, // Fills the empty village exit road
-  { quest: 10, x: 55.5, y: 78.5 },
-
-  // Chapter 2: Training Grounds (10-30 quests)
-  { quest: 15, x: 56.5, y: 74.0 },
-  { quest: 20, x: 53.5, y: 73.0 }, // Village exit bend
-  { quest: 25, x: 54.0, y: 66.0 },
-  { quest: 30, x: 56.0, y: 64.0 },
-
-  // Chapter 3: Into the Wild (30-60 quests) — Forest Curve
-  { quest: 38, x: 68.0, y: 58.5 },
-  { quest: 45, x: 62.0, y: 56.5 }, // Dirt curve center
-  { quest: 53, x: 58.0, y: 51.5 },
-  { quest: 60, x: 48.0, y: 49.5 },
-
-  // Chapter 4: Crossing the Bridge (60-100 quests)
-  { quest: 70, x: 47.0, y: 45.5 }, // Stone bridge threshold
-  { quest: 80, x: 38.0, y: 44.5 }, // On stone bridge
-  { quest: 90, x: 41.0, y: 41.5 },
-  { quest: 100, x: 51.5, y: 39.5 },
-
-  // Chapter 5: The Ascent (100-200 quests) — Mountain Switchbacks
-  { quest: 125, x: 54.0, y: 35.0 }, // Center of stone path (was 52.0 on cliff)
-  { quest: 150, x: 56.5, y: 31.5 },
-  { quest: 175, x: 58.0, y: 30.0 }, // Stone stair step
-  { quest: 200, x: 64.0, y: 25.5 },
-
-  // Chapter 6: Fortress of Discipline (200-365 quests)
-  { quest: 240, x: 66.5, y: 21.5 },
-  { quest: 280, x: 61.5, y: 17.5 },
-  { quest: 320, x: 58.0, y: 12.5 },
-  { quest: 340, x: 55.0, y: 10.0 }, // Upper mountain road curve below peak
-  { quest: 365, x: 56.5, y: 6.5 },
-];
-
-// Explicit node placements along the road centerline (eliminates gaps & off-road pins)
-const GLOWING_NODE_INDICES = [1, 2, 4, 6, 8, 13, 15, 17, 19, 21, 23];
+// 15 glowing path pins in travel order (pin 16 removed per owner)
+// Hidden per owner — data kept so the dots can return anytime.
+const GLOWING_NODE_INDICES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
+const SHOW_GLOW_PINS = false;
 
 export interface ChapterPin {
   id: number;
@@ -103,37 +65,86 @@ export interface ChapterPin {
 }
 
 const CHAPTER_PINS: ChapterPin[] = [
-  { id: 1, badgeX: 9, badgeY: 91.5, align: 'right' },
-  { id: 2, badgeX: 88, badgeY: 76.5, align: 'left' },
-  { id: 3, badgeX: 8, badgeY: 66.5, align: 'right' },
-  { id: 4, badgeX: 88, badgeY: 50.0, align: 'left' },
-  { id: 5, badgeX: 10, badgeY: 35.5, align: 'right' },
-  { id: 6, badgeX: 86, badgeY: 28.5, align: 'left' },
-  { id: 7, badgeX: 19, badgeY: 10.0, align: 'right' },
+  { id: 1, badgeX: 9, badgeY: 88.0, align: 'right' },
+  { id: 2, badgeX: 90, badgeY: 72.0, align: 'left' },
+  { id: 3, badgeX: 8, badgeY: 60.0, align: 'right' },
+  { id: 4, badgeX: 9, badgeY: 42.0, align: 'right' },
+  { id: 5, badgeX: 90, badgeY: 34.0, align: 'left' },
+  { id: 6, badgeX: 8, badgeY: 24.0, align: 'right' },
+  { id: 7, badgeX: 86, badgeY: 6.0, align: 'left' },
 ];
 
-// Calculate player (x, y) along trail for any quest count
-function getPlayerPosition(quests: number): { x: number; y: number } {
-  if (quests <= 0) {
-    return { x: TRAIL_WAYPOINTS[0]!.x, y: TRAIL_WAYPOINTS[0]!.y };
-  }
-  const last = TRAIL_WAYPOINTS[TRAIL_WAYPOINTS.length - 1]!;
-  if (quests >= last.quest) {
-    return { x: last.x, y: last.y };
-  }
-  for (let i = 0; i < TRAIL_WAYPOINTS.length - 1; i++) {
-    const curr = TRAIL_WAYPOINTS[i]!;
-    const next = TRAIL_WAYPOINTS[i + 1]!;
-    if (quests >= curr.quest && quests <= next.quest) {
-      const span = next.quest - curr.quest;
-      const t = span > 0 ? (quests - curr.quest) / span : 0;
-      return {
-        x: curr.x + t * (next.x - curr.x),
-        y: curr.y + t * (next.y - curr.y),
-      };
-    }
-  }
-  return { x: last.x, y: last.y };
+// Owner calibration mode: gold path pins become numbered + draggable in-app.
+// Drag each dot into place, tap Export, send the logged coordinates back —
+// then this flag goes back to false and the positions get baked in.
+const CALIBRATE_PATH_PINS = false;
+
+interface CalibratePinProps {
+  index: number;
+  orderNo: number;
+  baseX: number;
+  baseY: number;
+  reached: boolean;
+  onCommit: (index: number, x: number, y: number) => void;
+  onDragState: (dragging: boolean) => void;
+}
+
+function CalibratePin({
+  index,
+  orderNo,
+  baseX,
+  baseY,
+  reached,
+  onCommit,
+  onDragState,
+}: CalibratePinProps) {
+  const [grant, setGrant] = useState<{ x: number; y: number } | null>(null);
+  const [drag, setDrag] = useState({ dx: 0, dy: 0 });
+  const px = (baseX / 100) * MAP_WIDTH + drag.dx;
+  const py = (baseY / 100) * MAP_HEIGHT + drag.dy;
+  return (
+    <View
+      style={[styles.calibrateHit, { left: px - 32, top: py - 32 }]}
+      onStartShouldSetResponder={() => true}
+      onMoveShouldSetResponder={() => true}
+      onResponderGrant={(e) => {
+        onDragState(true);
+        setGrant({ x: e.nativeEvent.pageX, y: e.nativeEvent.pageY });
+        setDrag({ dx: 0, dy: 0 });
+      }}
+      onResponderMove={(e) => {
+        if (grant !== null) {
+          setDrag({ dx: e.nativeEvent.pageX - grant.x, dy: e.nativeEvent.pageY - grant.y });
+        }
+      }}
+      onResponderRelease={(e) => {
+        onDragState(false);
+        if (grant !== null) {
+          onCommit(
+            index,
+            baseX + ((e.nativeEvent.pageX - grant.x) / MAP_WIDTH) * 100,
+            baseY + ((e.nativeEvent.pageY - grant.y) / MAP_HEIGHT) * 100,
+          );
+        }
+        setGrant(null);
+        setDrag({ dx: 0, dy: 0 });
+      }}
+      onResponderTerminate={() => {
+        onDragState(false);
+        setGrant(null);
+        setDrag({ dx: 0, dy: 0 });
+      }}
+    >
+      <Image
+        source={PATH_NODE_GLOWING}
+        style={[styles.waypointImage, { opacity: reached ? 1 : 0.45 }]}
+        contentFit="contain"
+      />
+      <View style={styles.calibrateTag}>
+        <Text style={styles.calibrateTagText}>{orderNo}</Text>
+      </View>
+    </View>
+  );
 }
 
 interface RealJourneyMapProps {
@@ -145,8 +156,32 @@ interface RealJourneyMapProps {
 export function RealJourneyMap({ journeyQuestCount, refreshing, onRefresh }: RealJourneyMapProps) {
   const { t } = useTranslation();
   const { chapters, currentChapter } = useJourneyState(journeyQuestCount, t);
+  // Full-bleed map: art runs under the status bar by design (owner call).
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [showPlayerToken, setShowPlayerToken] = useState(true);
+  const [pinOverrides, setPinOverrides] = useState<
+    Readonly<Record<number, { x: number; y: number }>>
+  >(() => ({}));
+  const [draggingPin, setDraggingPin] = useState(false);
+  const handlePinDragState = useCallback((dragging: boolean) => {
+    setDraggingPin(dragging);
+  }, []);
+  const handleCommitPin = useCallback((index: number, x: number, y: number) => {
+    const rx = Math.round(x * 10) / 10;
+    const ry = Math.round(y * 10) / 10;
+    setPinOverrides((prev) => ({ ...prev, [index]: { x: rx, y: ry } }));
+  }, []);
+  const handleExportPins = useCallback(() => {
+    console.log('PINOUT BEGIN');
+    for (let i = 0; i < TRAIL_WAYPOINTS.length; i++) {
+      const w = TRAIL_WAYPOINTS[i]!;
+      const o = pinOverrides[i];
+      const x = (o ? o.x : w.x).toFixed(1);
+      const y = (o ? o.y : w.y).toFixed(1);
+      console.log('PINOUT { quest: ' + w.quest + ', x: ' + x + ', y: ' + y + ' },');
+    }
+    console.log('PINOUT END');
+  }, [pinOverrides]);
   const scrollViewRef = useRef<ScrollView>(null);
   const [hasScrolledInitial, setHasScrolledInitial] = useState(false);
 
@@ -180,6 +215,51 @@ export function RealJourneyMap({ journeyQuestCount, refreshing, onRefresh }: Rea
 
   const playerPos = useMemo(() => getPlayerPosition(journeyQuestCount), [journeyQuestCount]);
 
+  // Token walk glide: position animates on the JS driver (layout props) while
+  // the bob below stays on the native driver — nested views so they never
+  // fight. First paint snaps (no glide from 0,0); later count changes glide
+  // ~0.9s to the new trail spot instead of teleporting.
+  const [tokenLeft] = useState(() => new Animated.Value(0));
+  const [tokenTop] = useState(() => new Animated.Value(0));
+  const tokenPlaced = useRef(false);
+  useEffect(() => {
+    const left = (playerPos.x / 100) * MAP_WIDTH - 28;
+    const top = (playerPos.y / 100) * MAP_HEIGHT - 54;
+    if (!tokenPlaced.current) {
+      tokenPlaced.current = true;
+      tokenLeft.setValue(left);
+      tokenTop.setValue(top);
+      return;
+    }
+    const glide = Animated.parallel([
+      Animated.timing(tokenLeft, { toValue: left, duration: 900, useNativeDriver: false }),
+      Animated.timing(tokenTop, { toValue: top, duration: 900, useNativeDriver: false }),
+    ]);
+    glide.start();
+    return () => glide.stop();
+  }, [playerPos, tokenLeft, tokenTop]);
+
+  // Camera follow: after the token starts gliding to a new spot (quest
+  // completed while the map stays mounted), glide the camera to re-center
+  // it. First paint is covered by the initial snap in handleMapLayout.
+  const mapHeightRef = useRef(0);
+  const prevQuestCount = useRef(journeyQuestCount);
+  useEffect(() => {
+    if (prevQuestCount.current === journeyQuestCount) {
+      return;
+    }
+    prevQuestCount.current = journeyQuestCount;
+    if (!hasScrolledInitial || mapHeightRef.current <= 0) {
+      return;
+    }
+    const playerPixelY = (playerPos.y / 100) * mapHeightRef.current;
+    const targetY = Math.max(0, playerPixelY - SCREEN_HEIGHT / 2 + 60);
+    const t = setTimeout(() => {
+      scrollViewRef.current?.scrollTo({ y: targetY, animated: true });
+    }, 350);
+    return () => clearTimeout(t);
+  }, [journeyQuestCount, playerPos.y, hasScrolledInitial]);
+
   const selectedChapter =
     selectedId !== null ? (chapters.find((c) => c.data.id === selectedId) ?? null) : null;
 
@@ -196,6 +276,7 @@ export function RealJourneyMap({ journeyQuestCount, refreshing, onRefresh }: Rea
     (e: LayoutChangeEvent) => {
       if (hasScrolledInitial) return;
       const mapActualHeight = e.nativeEvent.layout.height;
+      mapHeightRef.current = mapActualHeight;
       const playerPixelY = (playerPos.y / 100) * mapActualHeight;
       const targetScrollY = Math.max(0, playerPixelY - SCREEN_HEIGHT / 2 + 60);
 
@@ -216,6 +297,7 @@ export function RealJourneyMap({ journeyQuestCount, refreshing, onRefresh }: Rea
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         bounces={true}
+        scrollEnabled={!draggingPin}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -236,32 +318,50 @@ export function RealJourneyMap({ journeyQuestCount, refreshing, onRefresh }: Rea
           />
 
           {/* Intermediate Glowing Waypoint Nodes along the Trail */}
-          {GLOWING_NODE_INDICES.map((wpIndex) => {
-            const wp = TRAIL_WAYPOINTS[wpIndex]!;
-            const isReached = journeyQuestCount >= wp.quest;
-            const px = (wp.x / 100) * MAP_WIDTH;
-            const py = (wp.y / 100) * MAP_HEIGHT;
-            return (
-              <View
-                key={`wp-${wpIndex}`}
-                style={[
-                  styles.waypointWrap,
-                  {
-                    left: px - 11,
-                    top: py - 11,
-                    opacity: isReached ? 1 : 0.45,
-                  },
-                ]}
-                pointerEvents="none"
-              >
-                <Image
-                  source={PATH_NODE_GLOWING}
-                  style={styles.waypointImage}
-                  contentFit="contain"
-                />
-              </View>
-            );
-          })}
+          {SHOW_GLOW_PINS &&
+            GLOWING_NODE_INDICES.map((wpIndex, order) => {
+              const override = pinOverrides[wpIndex];
+              const wp = TRAIL_WAYPOINTS[wpIndex]!;
+              const x = override ? override.x : wp.x;
+              const y = override ? override.y : wp.y;
+              const isReached = journeyQuestCount >= wp.quest;
+              if (CALIBRATE_PATH_PINS) {
+                return (
+                  <CalibratePin
+                    key={'wp-' + wpIndex}
+                    index={wpIndex}
+                    orderNo={order + 1}
+                    baseX={x}
+                    baseY={y}
+                    reached={isReached}
+                    onCommit={handleCommitPin}
+                    onDragState={handlePinDragState}
+                  />
+                );
+              }
+              const px = (x / 100) * MAP_WIDTH;
+              const py = (y / 100) * MAP_HEIGHT;
+              return (
+                <View
+                  key={`wp-${wpIndex}`}
+                  style={[
+                    styles.waypointWrap,
+                    {
+                      left: px - 11,
+                      top: py - 11,
+                      opacity: isReached ? 1 : 0.45,
+                    },
+                  ]}
+                  pointerEvents="none"
+                >
+                  <Image
+                    source={PATH_NODE_GLOWING}
+                    style={styles.waypointImage}
+                    contentFit="contain"
+                  />
+                </View>
+              );
+            })}
 
           {/* 7 Interactive Chapter Badges & Banner Pins */}
           {CHAPTER_PINS.map((pin) => {
@@ -365,26 +465,22 @@ export function RealJourneyMap({ journeyQuestCount, refreshing, onRefresh }: Rea
             );
           })}
 
-          {/* Animated Player Map Token */}
+          {/* Animated Player Map Token — outer glides along the trail (JS
+              driver, layout props), inner keeps the native-driver bob. */}
           {showPlayerToken ? (
             <Animated.View
-              style={[
-                styles.playerTokenContainer,
-                {
-                  left: (playerPos.x / 100) * MAP_WIDTH - 28,
-                  top: (playerPos.y / 100) * MAP_HEIGHT - 54,
-                  transform: [{ translateY: bounceAnim }],
-                },
-              ]}
+              style={[styles.playerTokenContainer, { left: tokenLeft, top: tokenTop }]}
               pointerEvents="none"
             >
-              {/* Glowing Aura under pedestal */}
-              <View style={styles.playerPedestalAura} />
-              <Image
-                source={PLAYER_MAP_TOKEN}
-                style={styles.playerTokenImage}
-                contentFit="contain"
-              />
+              <Animated.View style={{ transform: [{ translateY: bounceAnim }] }}>
+                {/* Glowing Aura under pedestal */}
+                <View style={styles.playerPedestalAura} />
+                <Image
+                  source={PLAYER_MAP_TOKEN}
+                  style={styles.playerTokenImage}
+                  contentFit="contain"
+                />
+              </Animated.View>
             </Animated.View>
           ) : null}
         </View>
@@ -445,7 +541,7 @@ export function RealJourneyMap({ journeyQuestCount, refreshing, onRefresh }: Rea
         </View>
       ) : null}
 
-      {/* Player Token Show/Hide Toggle */}
+      {/* Player Token Show/Hide Toggle — eye medallion, dimmed while hidden. */}
       <TouchableOpacity
         accessibilityRole="button"
         accessibilityLabel={showPlayerToken ? t('journeyMap.hideToken') : t('journeyMap.showToken')}
@@ -453,8 +549,32 @@ export function RealJourneyMap({ journeyQuestCount, refreshing, onRefresh }: Rea
         activeOpacity={0.8}
         onPress={withTapCue(() => setShowPlayerToken((visible) => !visible))}
       >
-        <Ionicons name={showPlayerToken ? 'eye' : 'eye-off'} size={22} color={colors.reward} />
+        <Image
+          source={TOKEN_EYE_MEDALLION}
+          style={[styles.tokenToggleMedallion, showPlayerToken ? null : styles.tokenToggleHidden]}
+          contentFit="cover"
+        />
       </TouchableOpacity>
+      {/* Weekly world quests — 60px circle dock, bottom-right above the eye toggle. */}
+      <WorldQuestsTab journeyQuestCount={journeyQuestCount} />
+      {CALIBRATE_PATH_PINS ? (
+        <View style={styles.calibrateBanner} pointerEvents="none">
+          <Text style={styles.calibrateBannerText}>
+            Drag the numbered dots into place, then tap Export
+          </Text>
+        </View>
+      ) : null}
+      {CALIBRATE_PATH_PINS ? (
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Export pin positions"
+          style={styles.calibrateExport}
+          activeOpacity={0.8}
+          onPress={handleExportPins}
+        >
+          <Text style={styles.calibrateExportText}>Export</Text>
+        </TouchableOpacity>
+      ) : null}
 
       {/* Chapter Detail Bottom Sheet */}
       <ChapterDetailSheet
@@ -479,7 +599,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 0,
     paddingBottom: 110, // room for floating HUD
   },
   mapCanvas: {
@@ -502,6 +621,66 @@ const styles = StyleSheet.create({
   waypointImage: {
     width: 22,
     height: 22,
+  },
+  calibrateHit: {
+    position: 'absolute',
+    width: 64,
+    height: 64,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 8,
+  },
+  calibrateTag: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#FFD700',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  calibrateTagText: {
+    color: '#1A1208',
+    fontFamily: fonts.bodyBold.family,
+    fontSize: 11,
+  },
+  calibrateBanner: {
+    position: 'absolute',
+    top: 60,
+    left: spacing.lg,
+    right: spacing.lg,
+    backgroundColor: 'rgba(16, 20, 26, 0.92)',
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: '#FFD700',
+    padding: spacing.md,
+    alignItems: 'center',
+    zIndex: 12,
+  },
+  calibrateBannerText: {
+    color: '#FFD700',
+    fontFamily: fonts.bodyBold.family,
+    fontSize: 12,
+  },
+  calibrateExport: {
+    position: 'absolute',
+    end: spacing.lg,
+    bottom: 205,
+    paddingHorizontal: spacing.lg,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FFD700',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 11,
+  },
+  calibrateExportText: {
+    color: '#1A1208',
+    fontFamily: fonts.bodyBold.family,
+    fontSize: 14,
   },
   chapterPinContainer: {
     position: 'absolute',
@@ -643,12 +822,20 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
+    overflow: 'hidden',
     backgroundColor: 'rgba(16, 20, 26, 0.92)',
     borderWidth: 1,
     borderColor: 'rgba(255, 215, 0, 0.35)',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 11,
+  },
+  tokenToggleMedallion: {
+    width: 44,
+    height: 44,
+  },
+  tokenToggleHidden: {
+    opacity: 0.4,
   },
   floatingBottomHud: {
     position: 'absolute',

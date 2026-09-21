@@ -12,8 +12,8 @@ describe('CHAPTERS catalogue', () => {
       { id: 2, name: 'Training Grounds', threshold: 10 },
       { id: 3, name: 'Into the Wild', threshold: 30 },
       { id: 4, name: 'Crossing the Bridge', threshold: 60 },
-      { id: 5, name: 'The Ascent', threshold: 100 },
-      { id: 6, name: 'Fortress of Discipline', threshold: 200 },
+      { id: 5, name: 'Fortress of Discipline', threshold: 100 },
+      { id: 6, name: 'The Ascent', threshold: 200 },
       { id: 7, name: 'Mastery Peak', threshold: 365 },
     ]);
   });

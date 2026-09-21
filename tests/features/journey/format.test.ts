@@ -78,12 +78,12 @@ describe('journeyNodes (FR-JOURNEY-5 bar semantics)', () => {
     expect(nodes[0]!.state).toBe('completed');
   });
 
-  it('exacts the 100-quest C4→C5 progress (100 → 0 of 100 into The Ascent)', () => {
+  it('exacts the 100-quest C4→C5 progress (100 → 0 of 100 into Fortress of Discipline)', () => {
     const nodes = journeyNodes(100, t);
-    const ascent = nodes[4]!;
-    expect(ascent.state).toBe('current');
-    expect(ascent.fraction).toBe(0);
-    expect(ascent.meta).toBe('0 of 100 quests to the next chapter');
+    const fortress = nodes[4]!;
+    expect(fortress.state).toBe('current');
+    expect(fortress.fraction).toBe(0);
+    expect(fortress.meta).toBe('0 of 100 quests to the next chapter');
   });
 
   it('fills completed chapters and locks the future ones at any count', () => {
