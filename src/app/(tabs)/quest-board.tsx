@@ -260,7 +260,7 @@ export default function QuestBoardScreen() {
           <TouchableOpacity
             accessibilityRole="button"
             style={styles.retryButton}
-            onPress={withTapCue(onRefresh)}
+            onPress={onRefresh}
           >
             <Text style={styles.retryLabel}>{t('board.retry')}</Text>
           </TouchableOpacity>
@@ -675,7 +675,7 @@ function ResumeBanner({
           accessibilityRole="button"
           style={styles.resumeLater}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          onPress={withTapCue(onDismiss)}
+          onPress={onDismiss}
         >
           <Text style={styles.resumeLaterLabel}>{t('board.resumeDismiss')}</Text>
         </TouchableOpacity>

@@ -17,11 +17,14 @@ export default function WelcomeScreen() {
         <Text style={styles.body}>{t('auth.welcomeBody')}</Text>
       </View>
       <View style={styles.actions}>
-        <AppButton label={t('auth.getStarted')} onPress={() => router.push('/(auth)/register')} />
+        <AppButton
+          label={t('auth.getStarted')}
+          onPress={withTapCue(() => router.push('/(auth)/register'))}
+        />
         <AppButton
           label={t('auth.haveAccountLong')}
           variant="secondary"
-          onPress={withTapCue(() => router.push('/(auth)/login'))}
+          onPress={() => router.push('/(auth)/login')}
         />
       </View>
     </Screen>

@@ -8,7 +8,6 @@ import { AppTextField } from '@/components/ui/AppTextField';
 import { Screen } from '@/components/ui/Screen';
 import { colors, fonts, spacing } from '@/lib/theme';
 import { authErrorMessage } from '@/lib/auth-errors';
-import { withTapCue } from '@/lib/sounds';
 import { useSessionStore } from '@/state/sessionStore';
 
 export default function RegisterScreen() {
@@ -81,7 +80,7 @@ export default function RegisterScreen() {
         <Text style={styles.footerText}>{t('auth.haveAccount')}</Text>
         <Pressable
           accessibilityRole="button"
-          onPress={withTapCue(() => router.push('/(auth)/login'))}
+          onPress={() => router.push('/(auth)/login')}
           style={styles.link}
         >
           <Text style={styles.linkText}>{t('auth.signIn')}</Text>

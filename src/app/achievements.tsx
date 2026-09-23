@@ -12,7 +12,7 @@ import {
 } from '@/data/repositories/achievements';
 import { fetchProfile } from '@/data/repositories/board';
 import { supabase } from '@/data/supabase';
-import { withTapCue } from '@/lib/sounds';
+import { playCue, withTapCue } from '@/lib/sounds';
 import {
   type AchievementCatalogRow,
   type AchievementRow,
@@ -127,7 +127,7 @@ export default function AchievementsScreen() {
             <TouchableOpacity
               accessibilityRole="button"
               style={styles.retryButton}
-              onPress={withTapCue(() => void load())}
+              onPress={() => void load()}
             >
               <Text style={styles.retryLabel}>{t('common.retry')}</Text>
             </TouchableOpacity>
@@ -197,7 +197,10 @@ export default function AchievementsScreen() {
                         { borderColor },
                         isEquipped && styles.gridCellEquipped,
                       ]}
-                      disabled
+                      // SOUND-EFFECTS-UPGRADE — earned badges celebrate on tap;
+                      // locked cells stay inert (no false unlock fanfare).
+                      disabled={!isUnlocked}
+                      onPress={isUnlocked ? () => playCue('click') : undefined}
                     >
                       <View style={styles.gridEmblem}>
                         {art ? (
@@ -289,12 +292,18 @@ function AchievementRowView({ row }: { row: AchievementRow }) {
   }
   const strings = unlockedRowStrings(row, t);
   return (
-    <View style={styles.row}>
+    // SOUND-EFFECTS-UPGRADE — unlocked detail rows celebrate on tap (grid
+    // cells do the same); locked rows above remain plain views.
+    <TouchableOpacity
+      accessibilityRole="button"
+      style={styles.row}
+      onPress={() => playCue('click')}
+    >
       {badge ? (
         <View style={styles.emblem}>
           <Image
             source={badge}
-            style={[styles.badge, { width: 64, height: 64, aspectRatio: 1, maxWidth: 64 }]}
+            style={{ width: 64, height: 64, aspectRatio: 1, maxWidth: 64 }}
             contentFit="contain"
           />
         </View>
@@ -308,7 +317,7 @@ function AchievementRowView({ row }: { row: AchievementRow }) {
         <Text style={styles.rowDescription}>{strings[1]}</Text>
         <Text style={styles.rowDate}>{strings[2]}</Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 

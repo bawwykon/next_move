@@ -32,7 +32,7 @@ import {
 import { fetchCosmeticCatalog, type CosmeticRow } from '@/data/repositories/cosmetics';
 import type { CharacterProfile } from '@/data/repositories/board';
 import { DEFAULT_SETTINGS, type AppSettings } from '@/domain/settings/model';
-import { withTapCue, setSoundFxEnabled } from '@/lib/sounds';
+import { playCue, setSoundFxEnabled, withTapCue } from '@/lib/sounds';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 import { useSessionStore } from '@/state/sessionStore';
 import { useCharacterStore } from '@/state/characterStore';
@@ -259,7 +259,7 @@ export default function SettingsScreen() {
           <TouchableOpacity
             accessibilityRole="button"
             style={styles.profileCard}
-            onPress={withTapCue(() => router.push('/(tabs)/profile'))}
+            onPress={() => router.push('/(tabs)/profile')}
           >
             {profileLoading || !profile || !bar ? (
               <View style={styles.profileLoading}>
@@ -286,7 +286,7 @@ export default function SettingsScreen() {
                     <TouchableOpacity
                       accessibilityRole="button"
                       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      onPress={withTapCue(() => router.push('/edit-profile'))}
+                      onPress={() => router.push('/edit-profile')}
                     >
                       <Ionicons name="pencil" size={15} color={colors.textMuted} />
                     </TouchableOpacity>
@@ -316,10 +316,7 @@ export default function SettingsScreen() {
 
           {/* Account */}
           <SettingsCard>
-            <TouchableOpacity
-              style={styles.row}
-              onPress={withTapCue(() => router.push('/edit-profile'))}
-            >
+            <TouchableOpacity style={styles.row} onPress={() => router.push('/edit-profile')}>
               <Ionicons name="person-outline" size={20} color={colors.reward} />
               <View style={styles.rowBody}>
                 <Text style={styles.rowLabel}>{t('settings.account')}</Text>
@@ -329,16 +326,8 @@ export default function SettingsScreen() {
             </TouchableOpacity>
           </SettingsCard>
 
-          {/* Notifications & Sounds */}
+          {/* Sounds */}
           <SettingsCard>
-            <View style={styles.row}>
-              <Ionicons name="notifications-outline" size={20} color={colors.textMuted} />
-              <View style={styles.rowBody}>
-                <Text style={styles.rowLabel}>{t('settings.notifications')}</Text>
-                <Text style={styles.rowHint}>{t('settings.notificationsHint')}</Text>
-              </View>
-            </View>
-            <View style={styles.divider} />
             <View style={styles.toggleRow}>
               <View style={styles.rowBody}>
                 <Text style={styles.rowLabel}>{t('settings.soundFx')}</Text>
@@ -346,7 +335,10 @@ export default function SettingsScreen() {
               </View>
               <Switch
                 value={settings.soundFx}
-                onValueChange={(v) => void updateToggle('soundFx', v)}
+                onValueChange={(v) => {
+                  playCue('click');
+                  void updateToggle('soundFx', v);
+                }}
                 trackColor={{ true: colors.reward }}
                 thumbColor={colors.text}
               />
@@ -359,7 +351,10 @@ export default function SettingsScreen() {
               </View>
               <Switch
                 value={settings.haptics}
-                onValueChange={(v) => void updateToggle('haptics', v)}
+                onValueChange={(v) => {
+                  playCue('click');
+                  void updateToggle('haptics', v);
+                }}
                 trackColor={{ true: colors.reward }}
                 thumbColor={colors.text}
               />
@@ -375,7 +370,10 @@ export default function SettingsScreen() {
               </View>
               <Switch
                 value={settings.autoPauseOnCall}
-                onValueChange={(v) => void updateToggle('autoPauseOnCall', v)}
+                onValueChange={(v) => {
+                  playCue('click');
+                  void updateToggle('autoPauseOnCall', v);
+                }}
                 trackColor={{ true: colors.reward }}
                 thumbColor={colors.text}
               />
@@ -388,7 +386,10 @@ export default function SettingsScreen() {
               </View>
               <Switch
                 value={settings.showExerciseArt}
-                onValueChange={(v) => void updateToggle('showExerciseArt', v)}
+                onValueChange={(v) => {
+                  playCue('click');
+                  void updateToggle('showExerciseArt', v);
+                }}
                 trackColor={{ true: colors.reward }}
                 thumbColor={colors.text}
               />
@@ -441,7 +442,7 @@ export default function SettingsScreen() {
 
           {/* Data & Privacy */}
           <SettingsCard>
-            <TouchableOpacity style={styles.row} onPress={withTapCue(() => void handleSyncNow())}>
+            <TouchableOpacity style={styles.row} onPress={() => void handleSyncNow()}>
               <Ionicons name="sync-outline" size={20} color={colors.textMuted} />
               <View style={styles.rowBody}>
                 <Text style={styles.rowLabel}>
@@ -451,7 +452,7 @@ export default function SettingsScreen() {
               </View>
             </TouchableOpacity>
             <View style={styles.divider} />
-            <TouchableOpacity style={styles.row} onPress={withTapCue(() => void handleExport())}>
+            <TouchableOpacity style={styles.row} onPress={() => void handleExport()}>
               <Ionicons name="download-outline" size={20} color={colors.textMuted} />
               <View style={styles.rowBody}>
                 <Text style={styles.rowLabel}>{t('settings.exportData')}</Text>
@@ -491,7 +492,7 @@ export default function SettingsScreen() {
                 <TouchableOpacity
                   accessibilityRole="button"
                   style={styles.row}
-                  onPress={withTapCue(() => setSafetyVisible(true))}
+                  onPress={() => setSafetyVisible(true)}
                 >
                   <Ionicons name="shield-checkmark-outline" size={20} color={colors.textMuted} />
                   <View style={styles.rowBody}>
@@ -529,7 +530,7 @@ export default function SettingsScreen() {
           <TouchableOpacity
             accessibilityRole="button"
             style={styles.dangerCard}
-            onPress={withTapCue(() => confirmLogout())}
+            onPress={() => confirmLogout()}
           >
             <Ionicons name="log-out-outline" size={20} color={colors.danger} />
             <View style={styles.rowBody}>
@@ -561,7 +562,7 @@ export default function SettingsScreen() {
             <TouchableOpacity
               accessibilityRole="button"
               style={styles.sheetClose}
-              onPress={withTapCue(() => setSafetyVisible(false))}
+              onPress={() => setSafetyVisible(false)}
             >
               <Text style={styles.sheetCloseLabel}>{t('common.close')}</Text>
             </TouchableOpacity>

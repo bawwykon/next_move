@@ -99,7 +99,7 @@ export default function HistoryScreen() {
             <TouchableOpacity
               accessibilityRole="button"
               style={styles.retryButton}
-              onPress={withTapCue(() => void loadFirstPage())}
+              onPress={() => void loadFirstPage()}
             >
               <Text style={styles.retryLabel}>{t('common.retry')}</Text>
             </TouchableOpacity>
@@ -135,7 +135,7 @@ export default function HistoryScreen() {
                   <TouchableOpacity
                     accessibilityRole="button"
                     style={styles.loadMore}
-                    onPress={withTapCue(() => void loadMore())}
+                    onPress={() => void loadMore()}
                   >
                     <Text style={styles.loadMoreLabel}>
                       {loadingMore ? t('history.loadingMore') : t('history.loadMore')}

@@ -117,10 +117,10 @@ export default function CustomQuestScreen() {
           <TouchableOpacity
             accessibilityRole="button"
             style={styles.retryButton}
-            onPress={withTapCue(() => {
+            onPress={() => {
               setStatus('loading');
               void load();
-            })}
+            }}
           >
             <Text style={styles.retryLabel}>{t('common.retry')}</Text>
           </TouchableOpacity>
@@ -234,12 +234,12 @@ export default function CustomQuestScreen() {
           <TouchableOpacity
             accessibilityRole="button"
             style={styles.startButton}
-            onPress={withTapCue(() =>
+            onPress={() =>
               router.push({
                 pathname: '/workout/[id]',
                 params: { id: workout.id, title, source: 'custom' },
-              }),
-            )}
+              })
+            }
           >
             <Text style={styles.startLabel}>{t('custom.start')}</Text>
             <Ionicons name="play" size={20} color={colors.background} />
@@ -248,9 +248,7 @@ export default function CustomQuestScreen() {
             <TouchableOpacity
               accessibilityRole="button"
               style={styles.secondaryButton}
-              onPress={withTapCue(() =>
-                router.push({ pathname: '/build', params: { id: workout.id } }),
-              )}
+              onPress={() => router.push({ pathname: '/build', params: { id: workout.id } })}
             >
               <Ionicons name="create-outline" size={18} color={colors.calmStrong} />
               <Text style={styles.secondaryLabel}>{t('custom.edit')}</Text>
@@ -258,7 +256,7 @@ export default function CustomQuestScreen() {
             <TouchableOpacity
               accessibilityRole="button"
               style={[styles.secondaryButton, styles.deleteButton]}
-              onPress={withTapCue(() => setDeleteVisible(true))}
+              onPress={() => setDeleteVisible(true)}
             >
               <Ionicons name="trash-outline" size={18} color={colors.danger} />
               <Text style={[styles.secondaryLabel, styles.deleteLabel]}>{t('custom.delete')}</Text>
@@ -281,7 +279,7 @@ export default function CustomQuestScreen() {
               accessibilityRole="button"
               style={styles.sheetDelete}
               disabled={deleting}
-              onPress={withTapCue(() => void onDelete())}
+              onPress={() => void onDelete()}
             >
               <Text style={styles.sheetDeleteLabel}>
                 {deleting ? t('custom.deleting') : t('custom.delete')}
@@ -290,7 +288,7 @@ export default function CustomQuestScreen() {
             <TouchableOpacity
               accessibilityRole="button"
               style={styles.sheetCancel}
-              onPress={withTapCue(() => setDeleteVisible(false))}
+              onPress={() => setDeleteVisible(false)}
             >
               <Text style={styles.sheetCancelLabel}>{t('common.cancel')}</Text>
             </TouchableOpacity>

@@ -364,7 +364,7 @@ export default function BuilderScreen() {
           <TouchableOpacity
             accessibilityRole="button"
             style={styles.shieldButton}
-            onPress={withTapCue(() => onSettings())}
+            onPress={() => onSettings()}
           >
             <Ionicons name="settings-outline" size={20} color={colors.reward} />
           </TouchableOpacity>
@@ -381,10 +381,10 @@ export default function BuilderScreen() {
             <TouchableOpacity
               accessibilityRole="button"
               style={styles.retryButton}
-              onPress={withTapCue(() => {
+              onPress={() => {
                 setStatus('loading');
                 void load();
-              })}
+              }}
             >
               <Text style={styles.retryLabel}>{t('common.retry')}</Text>
             </TouchableOpacity>
@@ -482,7 +482,7 @@ export default function BuilderScreen() {
                     <TouchableOpacity
                       accessibilityRole="button"
                       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      onPress={withTapCue(() => setQuery(''))}
+                      onPress={() => setQuery('')}
                     >
                       <Ionicons name="close-circle" size={18} color={colors.textMuted} />
                     </TouchableOpacity>
@@ -554,7 +554,7 @@ export default function BuilderScreen() {
                             segments.length >= MAX_SEGMENTS ? styles.pickChipDisabled : null,
                           ]}
                           disabled={segments.length >= MAX_SEGMENTS}
-                          onPress={withTapCue(addRest)}
+                          onPress={addRest}
                         >
                           <Ionicons name="add" size={20} color={colors.background} />
                         </TouchableOpacity>
@@ -575,7 +575,7 @@ export default function BuilderScreen() {
                   accessibilityRole="button"
                   style={[styles.startButton, valid ? null : styles.buttonDisabled]}
                   disabled={!valid || saving}
-                  onPress={withTapCue(() => void onStartQuest())}
+                  onPress={() => void onStartQuest()}
                 >
                   <Text style={styles.startLabel}>
                     {saving ? t('build.saving') : t('build.start')}
@@ -586,7 +586,7 @@ export default function BuilderScreen() {
                   accessibilityRole="button"
                   style={[styles.saveButton, valid ? null : styles.buttonDisabled]}
                   disabled={!valid || saving}
-                  onPress={withTapCue(() => void onSave())}
+                  onPress={() => void onSave()}
                 >
                   <Ionicons name="save-outline" size={16} color={colors.reward} />
                   <Text style={styles.saveLabel}>{t('common.save')}</Text>
@@ -612,17 +612,17 @@ export default function BuilderScreen() {
             <TouchableOpacity
               accessibilityRole="button"
               style={styles.sheetDelete}
-              onPress={withTapCue(() => {
+              onPress={() => {
                 setDiscardVisible(false);
                 router.back();
-              })}
+              }}
             >
               <Text style={styles.sheetDeleteLabel}>{t('build.discardConfirm')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               accessibilityRole="button"
               style={styles.sheetCancel}
-              onPress={withTapCue(() => setDiscardVisible(false))}
+              onPress={() => setDiscardVisible(false)}
             >
               <Text style={styles.sheetCancelLabel}>{t('common.cancel')}</Text>
             </TouchableOpacity>
@@ -672,7 +672,7 @@ const FilterPill = memo(function FilterPill({
     <TouchableOpacity
       accessibilityRole="button"
       style={[styles.filterPill, active ? styles.filterPillActive : null]}
-      onPress={withTapCue(onPress)}
+      onPress={onPress}
     >
       {image !== undefined ? (
         <Image source={image} style={styles.filterPillImage} contentFit="contain" />
@@ -714,7 +714,7 @@ const ExerciseGridCard = memo(function ExerciseGridCard({
           {exerciseName(exercise.slug, exercise.name, t) ?? exercise.name}
         </Text>
         <View style={styles.gridMetaRow}>
-          <Text style={styles.gridMeta}>45s</Text>
+          <Text style={styles.gridDuration}>45s</Text>
           {icon !== null ? (
             <Image
               source={icon}
@@ -732,7 +732,7 @@ const ExerciseGridCard = memo(function ExerciseGridCard({
         accessibilityRole="button"
         style={[styles.gridAdd, disabled ? styles.pickChipDisabled : null]}
         disabled={disabled}
-        onPress={withTapCue(() => onAdd(exercise.slug))}
+        onPress={() => onAdd(exercise.slug)}
       >
         <Ionicons name="add" size={20} color={colors.background} />
       </TouchableOpacity>
@@ -788,7 +788,7 @@ const BuildRow = memo(function BuildRow({
           accessibilityRole="button"
           accessibilityLabel={name}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          onPress={withTapCue(() => onHandlePress(index))}
+          onPress={() => onHandlePress(index)}
         >
           <Ionicons
             name="reorder-three"
@@ -817,7 +817,7 @@ const BuildRow = memo(function BuildRow({
                   segment.durationSec === preset ? styles.durationChipActive : null,
                   isRest ? styles.durationChipLocked : null,
                 ]}
-                onPress={withTapCue(() => onDuration(index, preset))}
+                onPress={() => onDuration(index, preset)}
               >
                 <Text
                   style={[
@@ -831,32 +831,37 @@ const BuildRow = memo(function BuildRow({
             ))}
           </View>
         </View>
-        {diffIcon !== null ? (
-          <Image
-            source={diffIcon}
-            style={styles.diffIcon}
-            contentFit="contain"
-            accessibilityLabel={
-              difficulty !== null
-                ? t('quest.difficultyA11y', { level: t(`quest.difficultyName.${difficulty}`) })
-                : undefined
-            }
-          />
-        ) : null}
-        <TouchableOpacity
-          accessibilityRole="button"
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          onPress={withTapCue(() => onRemove(index))}
-        >
-          <Ionicons name="close" size={20} color={colors.danger} />
-        </TouchableOpacity>
+        <View style={styles.rowEnd}>
+          {diffIcon !== null ? (
+            <Image
+              source={diffIcon}
+              style={styles.diffIcon}
+              contentFit="contain"
+              accessibilityLabel={
+                difficulty !== null
+                  ? t('quest.difficultyA11y', {
+                      level: t(`quest.difficultyName.${difficulty}`),
+                    })
+                  : undefined
+              }
+            />
+          ) : null}
+          <TouchableOpacity
+            accessibilityRole="button"
+            style={styles.removeButton}
+            hitSlop={{ top: 4, bottom: 0, left: 8, right: 8 }}
+            onPress={() => onRemove(index)}
+          >
+            <Ionicons name="close" size={20} color={colors.danger} />
+          </TouchableOpacity>
+        </View>
       </View>
       <View style={styles.rowActions}>
         <TouchableOpacity
           accessibilityRole="button"
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           disabled={isFirst}
-          onPress={withTapCue(() => onMove(index, -1))}
+          onPress={() => onMove(index, -1)}
         >
           <Ionicons
             name="chevron-up"
@@ -868,7 +873,7 @@ const BuildRow = memo(function BuildRow({
           accessibilityRole="button"
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           disabled={isLast}
-          onPress={withTapCue(() => onMove(index, 1))}
+          onPress={() => onMove(index, 1)}
         >
           <Ionicons
             name="chevron-down"
@@ -1153,15 +1158,20 @@ const styles = StyleSheet.create({
   rowLeft: {
     flex: 1,
     gap: spacing.sm,
+    minWidth: 0,
   },
   rowName: {
     color: colors.text,
     fontFamily: fonts.bodyBold.family,
     fontSize: 15,
+    flex: 1,
+    minWidth: 0,
   },
   chipRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.sm,
+    flexWrap: 'nowrap',
   },
   durationChip: {
     borderRadius: radius.pill,
@@ -1189,7 +1199,17 @@ const styles = StyleSheet.create({
   diffIcon: {
     width: 20,
     height: 20,
+    flexShrink: 0,
   },
+  rowEnd: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    paddingBottom: 4,
+  },
+  removeButton: {},
   rowActions: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1306,6 +1326,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    flexWrap: 'nowrap',
   },
   gridMeta: {
     color: colors.textMuted,
@@ -1313,9 +1334,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     flexShrink: 1,
   },
+  gridDuration: {
+    color: colors.textMuted,
+    fontFamily: fonts.body.family,
+    fontSize: 12,
+    flexShrink: 0,
+  },
   gridDiffIcon: {
     width: 14,
     height: 14,
+    flexShrink: 0,
   },
   gridAdd: {
     position: 'absolute',

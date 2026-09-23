@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  Pressable,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -27,7 +28,7 @@ import {
 } from '@/data/repositories/worldQuests';
 import { WORLD_QUEST_MEDALLION } from '@/features/assets/assetMap';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
-import { withTapCue } from '@/lib/sounds';
+import { playCue, withTapCue } from '@/lib/sounds';
 
 const OBJECTIVE_ICONS: Record<WorldQuestKey, keyof typeof Ionicons.glyphMap> = {
   wq_strength: 'barbell',
@@ -166,6 +167,9 @@ export const WorldQuestsTab = memo(function WorldQuestsTab({
         setToast(result.error);
         return;
       }
+      // SOUND-EFFECTS-UPGRADE — reward cue only after the server accepts the
+      // claim (a failed RPC never celebrates).
+      playCue('worldQuestComplete');
       const fresh = await fetchWorldQuestsWeek(week.weekKey);
       setBusy(false);
       if (!fresh.error && fresh.data) {
@@ -228,6 +232,12 @@ export const WorldQuestsTab = memo(function WorldQuestsTab({
         onRequestClose={() => setLedgerVisible(false)}
       >
         <View style={styles.sheetBackdrop}>
+          {/* Outside-tap dismiss (LoadoutCard / avatar-menu pattern): the
+              backdrop went transparent per owner call, but without a Pressable
+              outside taps fell through to the map instead of closing. Absolute
+              fill behind the card; the card renders above so its own taps are
+              unaffected. */}
+          <Pressable style={styles.sheetDismissArea} onPress={() => setLedgerVisible(false)} />
           <View style={styles.sheetCard}>
             <View style={styles.sheetHeader}>
               <View style={styles.sheetHeadings}>
@@ -237,7 +247,7 @@ export const WorldQuestsTab = memo(function WorldQuestsTab({
               <TouchableOpacity
                 accessibilityRole="button"
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                onPress={withTapCue(() => setLedgerVisible(false))}
+                onPress={() => setLedgerVisible(false)}
               >
                 <Ionicons name="close" size={22} color={colors.textMuted} />
               </TouchableOpacity>
@@ -254,7 +264,7 @@ export const WorldQuestsTab = memo(function WorldQuestsTab({
                 <TouchableOpacity
                   accessibilityRole="button"
                   style={styles.retryButton}
-                  onPress={withTapCue(() => void load())}
+                  onPress={() => void load()}
                 >
                   <Text style={styles.retryLabel}>{t('common.retry')}</Text>
                 </TouchableOpacity>
@@ -419,6 +429,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing.xl,
+  },
+  sheetDismissArea: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   sheetCard: {
     width: '100%',

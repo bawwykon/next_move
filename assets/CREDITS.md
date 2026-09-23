@@ -65,16 +65,19 @@ All images are **AI-generated originals** produced for Next Move by the Asset De
 
 ## Sound sources
 
-| File                 | Source                    | License        |
-| -------------------- | ------------------------- | -------------- |
-| chapter_unlocked.wav | ElevenLabs SFX generation | ElevenLabs ToS |
-| click.wav            | ElevenLabs SFX generation | ElevenLabs ToS |
-| countdown.wav        | ElevenLabs SFX generation | ElevenLabs ToS |
-| exercise_end.wav     | ElevenLabs SFX generation | ElevenLabs ToS |
-| levelup.wav          | ElevenLabs SFX generation | ElevenLabs ToS |
-| quest_complete.wav   | ElevenLabs SFX generation | ElevenLabs ToS |
-| rest_end.wav         | ElevenLabs SFX generation | ElevenLabs ToS |
-| rest_start.wav       | ElevenLabs SFX generation | ElevenLabs ToS |
-| victory_fanfare.wav  | ElevenLabs SFX generation | ElevenLabs ToS |
+| File                     | Cue / usage                                                  | Source                          | License        |
+| ------------------------ | ------------------------------------------------------------ | ------------------------------- | -------------- |
+| click.wav                | `click` — whitelisted UI taps only (see SOUND-EFFECTS notes) | ElevenLabs SFX generation       | ElevenLabs ToS |
+| countdown.wav            | `countdown` — 3-2-1 workout start                            | digitalcountdown.wav (in-house) | internal       |
+| exercise_end.wav         | `exerciseEnd` — work segment completes                       | ElevenLabs SFX generation       | ElevenLabs ToS |
+| rest_start.wav           | `restStart` — entering a 30s rest block                      | ElevenLabs SFX generation       | ElevenLabs ToS |
+| rest_end.wav             | `restEnd` — rest ending, get ready                           | ElevenLabs SFX generation       | ElevenLabs ToS |
+| quest_complete.wav       | `questComplete` — last exercise finishes                     | ElevenLabs SFX generation       | ElevenLabs ToS |
+| victory_fanfare.wav      | `victoryFanfare` — Victory screen payload (t=0.0s)           | ElevenLabs SFX generation       | ElevenLabs ToS |
+| levelup.wav              | `levelup` — player level-up on Victory (t=3.2s)              | ElevenLabs SFX generation       | ElevenLabs ToS |
+| chapter_unlocked.wav     | `chapterUnlocked` — Journey chapter celebration (5.2s)       | ElevenLabs SFX generation       | ElevenLabs ToS |
+| mastery_levelup.wav      | `masteryLevelup` — mastery rank up on Victory (t=8.8s)       | ElevenLabs SFX generation       | ElevenLabs ToS |
+| achievement_unlocked.wav | `achievementUnlocked` — achievement earned / badge tap       | ElevenLabs SFX generation       | ElevenLabs ToS |
+| world_quest_complete.wav | `worldQuestComplete` — claiming weekly world quest reward    | ElevenLabs SFX generation       | ElevenLabs ToS |
 
 See `THIRD_PARTY_NOTICES.md` for bundled third-party notices.

@@ -420,7 +420,7 @@ export default function ProfileScreen() {
             <TouchableOpacity
               accessibilityRole="button"
               style={styles.retryButton}
-              onPress={withTapCue(() => void loadFirstPage())}
+              onPress={() => void loadFirstPage()}
             >
               <Text style={styles.retryLabel}>{t('common.retry')}</Text>
             </TouchableOpacity>
@@ -609,7 +609,7 @@ export default function ProfileScreen() {
               <TouchableOpacity
                 accessibilityRole="button"
                 style={styles.entryRow}
-                onPress={withTapCue(() => router.push('/achievements'))}
+                onPress={() => router.push('/achievements')}
               >
                 <Ionicons name="trophy-outline" size={22} color={colors.reward} />
                 <Text style={styles.entryLabel}>{t('profile.achievements')}</Text>
@@ -637,7 +637,7 @@ export default function ProfileScreen() {
               onRequestClose={closeAvatarMenu}
             >
               <View style={styles.sheetBackdrop}>
-                <Pressable style={styles.sheetDismissArea} onPress={withTapCue(closeAvatarMenu)} />
+                <Pressable style={styles.sheetDismissArea} onPress={closeAvatarMenu} />
                 <View style={styles.sheet}>
                   <Text style={styles.sheetTitle}>{t('profile.changeAvatarTitle')}</Text>
 
@@ -693,7 +693,7 @@ export default function ProfileScreen() {
                     accessibilityRole="button"
                     style={styles.menuCancel}
                     disabled={avatarBusy}
-                    onPress={withTapCue(closeAvatarMenu)}
+                    onPress={closeAvatarMenu}
                   >
                     <Text style={styles.menuCancelLabel}>{t('common.cancel')}</Text>
                   </TouchableOpacity>
@@ -736,7 +736,7 @@ export default function ProfileScreen() {
                 <TouchableOpacity
                   accessibilityRole="button"
                   style={styles.viewAllRow}
-                  onPress={withTapCue(() => router.push('/history'))}
+                  onPress={() => router.push('/history')}
                 >
                   <Text style={styles.viewAllLabel}>{t('profile.viewAllHistory')}</Text>
                   <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />

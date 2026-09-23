@@ -100,7 +100,7 @@ export default function ResetPasswordScreen() {
             <Text style={styles.error}>{missingCode ? t('auth.resetBadLink') : error}</Text>
             <Pressable
               accessibilityRole="button"
-              onPress={withTapCue(() => router.replace('/(auth)/forgot-password'))}
+              onPress={() => router.replace('/(auth)/forgot-password')}
               style={styles.link}
             >
               <Text style={styles.linkText}>{t('auth.resetRequestNew')}</Text>

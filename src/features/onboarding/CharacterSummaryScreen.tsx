@@ -9,7 +9,6 @@ import { planSummary } from '@/domain/recommendation/plan';
 import { cosmeticArt, masteryArt } from '@/features/assets/assetMap';
 import { localizedOptionLabel } from '@/features/onboarding/steps';
 import type { OnboardingPayload } from '@/features/onboarding/wizardController';
-import { withTapCue } from '@/lib/sounds';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 
 const CALIBRATION_MS = 1500;
@@ -163,7 +162,7 @@ export function CharacterSummaryScreen({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t('onboarding.summary.editAnswers')}
-          onPress={withTapCue(onEdit)}
+          onPress={onEdit}
           style={styles.editLink}
         >
           <Text style={styles.editLinkText}>{t('onboarding.summary.editAnswers')}</Text>

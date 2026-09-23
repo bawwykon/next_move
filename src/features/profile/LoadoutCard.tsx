@@ -255,7 +255,7 @@ export function LoadoutCard({
       <Modal visible={openSlot !== null} transparent animationType="slide" onRequestClose={close}>
         {openSlot !== null ? (
           <View style={styles.sheetBackdrop}>
-            <Pressable style={styles.sheetDismissArea} onPress={withTapCue(close)} />
+            <Pressable style={styles.sheetDismissArea} onPress={close} />
             <View style={styles.sheet}>
               <Text style={styles.sheetTitle}>{slotLabel(openSlot)}</Text>
 
@@ -264,7 +264,7 @@ export function LoadoutCard({
                   accessibilityRole="button"
                   style={styles.optionRow}
                   disabled={saving}
-                  onPress={withTapCue(() => setSelected(null))}
+                  onPress={() => setSelected(null)}
                 >
                   <Ionicons
                     name={selected === null ? 'checkmark-circle' : 'ellipse-outline'}
@@ -328,7 +328,7 @@ export function LoadoutCard({
                   accessibilityRole="button"
                   style={styles.cancelButton}
                   disabled={saving}
-                  onPress={withTapCue(close)}
+                  onPress={close}
                 >
                   <Text style={styles.cancelLabel}>{t('common.cancel')}</Text>
                 </TouchableOpacity>
@@ -336,7 +336,7 @@ export function LoadoutCard({
                   accessibilityRole="button"
                   style={[styles.saveButton, saving && styles.saveButtonDisabled]}
                   disabled={saving}
-                  onPress={withTapCue(() => void save())}
+                  onPress={() => void save()}
                 >
                   <Text style={styles.saveLabel}>
                     {saving ? t('loadout.saving') : t('common.save')}
@@ -356,7 +356,7 @@ export function LoadoutCard({
         onRequestClose={closeBadges}
       >
         <View style={styles.sheetBackdrop}>
-          <Pressable style={styles.sheetDismissArea} onPress={withTapCue(closeBadges)} />
+          <Pressable style={styles.sheetDismissArea} onPress={closeBadges} />
           <View style={styles.sheet}>
             <Text style={styles.sheetTitle}>{t('loadout.badges')}</Text>
             <Text style={styles.badgeHint}>{t('loadout.badgeHint')}</Text>
@@ -418,7 +418,7 @@ export function LoadoutCard({
                 accessibilityRole="button"
                 style={styles.cancelButton}
                 disabled={saving}
-                onPress={withTapCue(closeBadges)}
+                onPress={() => closeBadges()}
               >
                 <Text style={styles.cancelLabel}>{t('common.cancel')}</Text>
               </TouchableOpacity>
@@ -426,7 +426,7 @@ export function LoadoutCard({
                 accessibilityRole="button"
                 style={[styles.saveButton, saving && styles.saveButtonDisabled]}
                 disabled={saving}
-                onPress={withTapCue(() => void saveBadges())}
+                onPress={() => void saveBadges()}
               >
                 <Text style={styles.saveLabel}>
                   {saving ? t('loadout.saving') : t('common.save')}

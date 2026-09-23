@@ -5,7 +5,6 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Screen } from '@/components/ui/Screen';
 import { RealJourneyMap } from '@/features/journey/RealJourneyMap';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
-import { withTapCue } from '@/lib/sounds';
 import { useCharacterStore } from '@/state/characterStore';
 import { useFocusEffect } from 'expo-router';
 
@@ -30,7 +29,7 @@ export default function JourneyScreen() {
           <TouchableOpacity
             accessibilityRole="button"
             style={styles.retryButton}
-            onPress={withTapCue(() => void refresh())}
+            onPress={() => void refresh()}
           >
             <Text style={styles.retryLabel}>{t('common.retry')}</Text>
           </TouchableOpacity>

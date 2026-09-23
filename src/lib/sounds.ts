@@ -1,13 +1,19 @@
 /**
- * AT-01D / AT-01K / AT-01M / AT-02C — shared sound-cue player (9 cues).
+ * AT-01D / AT-01K / AT-01M / AT-02C / SOUND-EFFECTS-UPGRADE — shared sound-cue
+ * player (12 cues).
  *
  * Cues: click, countdown, exercise_end, rest_start, rest_end, quest_complete,
- * levelup, victory_fanfare, chapter_unlocked. Lazy pooled players with
+ * levelup, victory_fanfare, chapter_unlocked, achievement_unlocked,
+ * mastery_levelup, world_quest_complete. Lazy pooled players with
  * unconditional fire-and-forget `seekTo(0)` + `play()` — the known-good
  * pattern that produced audible sound on this emulator before the AT-01J/
  * AT-01L experiments. Every call is wrapped so a missing/corrupt asset or a
  * player error can never crash a screen (same contract as the original
- * victory chimes). `withTapCue` is the shared helper for button taps.
+ * victory chimes). `withTapCue` plays `click` only on the approved whitelist:
+ * Build Your Quest, quest selection, Continue/Next, Back, Settings toggles,
+ * Tabs, Profile loadout selections, Achievement selection, Journey
+ * chapter/map buttons, World Quest button, World Quest reroll, Claim reward,
+ * Show/hide character.
  *
  * Background-music coexistence (industry pattern: Sweat/Sworkit/Strava keep
  * the user's music playing and layer cues over it):
@@ -28,7 +34,10 @@ export type SoundCue =
   | 'questComplete'
   | 'levelup'
   | 'victoryFanfare'
-  | 'chapterUnlocked';
+  | 'chapterUnlocked'
+  | 'achievementUnlocked'
+  | 'masteryLevelup'
+  | 'worldQuestComplete';
 
 const SOURCES: Record<SoundCue, number> = {
   click: require('@/assets/sounds/click.wav') as number,
@@ -40,20 +49,26 @@ const SOURCES: Record<SoundCue, number> = {
   levelup: require('@/assets/sounds/levelup.wav') as number,
   victoryFanfare: require('@/assets/sounds/victory_fanfare.wav') as number,
   chapterUnlocked: require('@/assets/sounds/chapter_unlocked.wav') as number,
+  achievementUnlocked: require('@/assets/sounds/achievement_unlocked.wav') as number,
+  masteryLevelup: require('@/assets/sounds/mastery_levelup.wav') as number,
+  worldQuestComplete: require('@/assets/sounds/world_quest_complete.wav') as number,
 };
 
 const players = new Map<SoundCue, AudioPlayer>();
 
 /** Playback lengths of assets/sounds/*.wav — duck windows are duration + buffer. */
 const CUE_DURATIONS_MS: Record<Exclude<SoundCue, 'click'>, number> = {
-  countdown: 4000,
-  exerciseEnd: 1000,
-  restStart: 1000,
-  restEnd: 1000,
-  questComplete: 2000,
-  levelup: 1480,
-  victoryFanfare: 3080,
-  chapterUnlocked: 2560,
+  countdown: 4350,
+  exerciseEnd: 700,
+  restStart: 700,
+  restEnd: 700,
+  questComplete: 2200,
+  levelup: 1900,
+  victoryFanfare: 3000,
+  chapterUnlocked: 3500,
+  achievementUnlocked: 4000,
+  masteryLevelup: 2700,
+  worldQuestComplete: 2200,
 };
 const DUCK_RELEASE_BUFFER_MS = 400;
 

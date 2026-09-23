@@ -174,9 +174,9 @@ export default function OnboardingScreen() {
                   accessibilityRole="button"
                   accessibilityState={{ selected }}
                   accessibilityLabel={option.label}
-                  onPress={withTapCue(() => {
+                  onPress={() => {
                     setWizard((current) => selectAnswer(current, option.value));
-                  })}
+                  }}
                   style={({ pressed }) => [
                     styles.option,
                     selected && styles.optionSelected,
@@ -201,20 +201,20 @@ export default function OnboardingScreen() {
             label={
               wizard.stepIndex === STEP_COUNT - 1 ? t('onboarding.finish') : t('onboarding.next')
             }
-            onPress={handleAdvance}
+            onPress={withTapCue(handleAdvance)}
             disabled={!canAdvance(wizard)}
           />
           {wizard.stepIndex > 0 ? (
             <AppButton
               label={t('onboarding.back')}
               variant="secondary"
-              onPress={() => setWizard((c) => goBack(c))}
+              onPress={withTapCue(() => setWizard((c) => goBack(c)))}
             />
           ) : null}
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={t('onboarding.skip')}
-            onPress={withTapCue(handleSkip)}
+            onPress={handleSkip}
             style={styles.skip}
           >
             <Text style={styles.skipText}>{t('onboarding.skip')}</Text>

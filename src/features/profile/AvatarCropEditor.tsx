@@ -27,7 +27,6 @@ import { Image } from 'expo-image';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 
 import { colors, fonts, radius, spacing } from '@/lib/theme';
-import { withTapCue } from '@/lib/sounds';
 
 export interface AvatarCropEditorProps {
   visible: boolean;
@@ -236,7 +235,7 @@ export function AvatarCropEditor({ visible, imageUri, onCancel, onApply }: Avata
           <TouchableOpacity
             accessibilityRole="button"
             style={styles.headerButton}
-            onPress={withTapCue(onCancel)}
+            onPress={onCancel}
           >
             <Text style={styles.headerAction}>{t('common.cancel')}</Text>
           </TouchableOpacity>

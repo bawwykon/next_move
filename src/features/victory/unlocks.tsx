@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { ComponentProps } from 'react';
 
@@ -10,6 +10,7 @@ import {
   cosmeticName,
   cosmeticType,
 } from '@/features/catalog/copy';
+import { playCue } from '@/lib/sounds';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
 
 interface UnlocksCardProps {
@@ -52,13 +53,20 @@ export function UnlocksCard({ overview }: UnlocksCardProps) {
         <View style={styles.group}>
           <Text style={styles.groupLabel}>{t('victory.achievementsGroup')}</Text>
           {overview.achievements.map((unlock) => (
-            <View key={unlock.id} style={styles.row}>
+            // SOUND-EFFECTS-UPGRADE — tapping an earned achievement replays its
+            // unlock cue (works any time after the staggered victory beats).
+            <TouchableOpacity
+              key={unlock.id}
+              accessibilityRole="button"
+              style={styles.row}
+              onPress={() => playCue('achievementUnlocked')}
+            >
               <Ionicons name="trophy-outline" size={20} color={colors.reward} />
               <View style={styles.rowCopy}>
                 <Text style={styles.rowName}>{achievementTitle(unlock.slug, unlock.title, t)}</Text>
                 <Text style={styles.rowMeta}>{achievementCategory(unlock.category, t)}</Text>
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
       ) : null}

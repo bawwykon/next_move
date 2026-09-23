@@ -43,7 +43,7 @@ import { segmentKindLabel } from '@/features/questDetail/segmentKind';
 import { useAppForeground } from '@/hooks/useAppForeground';
 import { useNow } from '@/hooks/useNow';
 import { colors, fonts, radius, spacing } from '@/lib/theme';
-import { playCue, withTapCue } from '@/lib/sounds';
+import { playCue } from '@/lib/sounds';
 import { useWorkoutStore } from '@/state/workoutStore';
 
 // §7.3 — the timer digits are the largest element on screen; the 3-2-1
@@ -244,7 +244,8 @@ export default function WorkoutScreen() {
       return;
     }
     const shiftedStart = shiftStartForResume(workout.startedAtEpochMs, pausedAtMs, Date.now());
-    setWorkout(buildWorkout(workout.segments, shiftedStart));
+    const resumed = buildWorkout(workout.segments, shiftedStart);
+    setWorkout(resumed);
     setPausedAtMs(null);
     void useWorkoutStore.getState().resumeWorkout(shiftedStart);
   }, [workout, pausedAtMs]);
@@ -282,8 +283,9 @@ export default function WorkoutScreen() {
 
   // Segment-change haptic (7.7) + timer cues (AT-01D/AT-01K sound set) —
   // derived from the engine index, not per-tick. One cue per transition:
-  // restStart into a rest, restEnd out of a rest, exerciseEnd on any other
-  // non-rest → non-rest switch (warmup→work, work→cooldown included).
+  // restStart into a rest only. restEnd/exerciseEnd are off: every non-rest
+  // segment starts with its own 3-2-1 countdown cue, so those end-cues always
+  // overlapped it.
   useEffect(() => {
     if (!workout || segmentIndex === null) {
       return;
@@ -301,10 +303,6 @@ export default function WorkoutScreen() {
     if (prevKind && nextKind) {
       if (nextKind === 'rest') {
         playCue('restStart');
-      } else if (prevKind === 'rest') {
-        playCue('restEnd');
-      } else {
-        playCue('exerciseEnd');
       }
     }
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -388,10 +386,10 @@ export default function WorkoutScreen() {
     }
   }, [remaining, t]);
 
-  // Android back during a workout = Quit Quest with the one allowed
-  // confirmation sheet (Ref 04 rule 5, FR-TIMER-6). The explicit Quit button
-  // has no confirmation and never passes through here. WK-01 — while paused,
-  // back dismisses the pause overlay (resume) instead of quitting.
+  // Android back during a workout = Quit Quest confirmation sheet (Ref 04
+  // rule 5, FR-TIMER-6). The explicit Quit button opens the same sheet so
+  // no path leaves without a confirm. WK-01 — while paused, back dismisses
+  // the pause overlay (resume) instead of quitting.
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
       if (pausedAtMs !== null) {
@@ -406,9 +404,9 @@ export default function WorkoutScreen() {
 
   const leaveQuest = useCallback(() => {
     setQuitVisible(false);
-    // S4-03 — quit = run ends incomplete; no partial XP (FR-TIMER-7). Both
-    // quit paths (button + sheet Leave) route through here, so the
-    // checkpoint is always cleared exactly once.
+    // S4-03 — quit = run ends incomplete; no partial XP (FR-TIMER-7). All
+    // quit paths (button → sheet Leave, Android back → sheet Leave) route
+    // through here, so the checkpoint is always cleared exactly once.
     void useWorkoutStore.getState().clearWorkout();
     // Dismiss straight back to the detail screen the run came from (the
     // workout was presented as a full-screen modal, so this pops it without
@@ -475,10 +473,10 @@ export default function WorkoutScreen() {
           <TouchableOpacity
             accessibilityRole="button"
             style={styles.retryButton}
-            onPress={withTapCue(() => {
+            onPress={() => {
               setStatus('loading');
               void load();
-            })}
+            }}
           >
             <Text style={styles.retryLabel}>{t('board.retry')}</Text>
           </TouchableOpacity>
@@ -495,7 +493,7 @@ export default function WorkoutScreen() {
             accessibilityRole="button"
             style={styles.quitButton}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            onPress={withTapCue(leaveQuest)}
+            onPress={() => setQuitVisible(true)}
           >
             <Ionicons name="close" size={16} color={colors.textMuted} />
             <Text style={styles.quitLabel}>{t('workout.quit')}</Text>
@@ -565,7 +563,7 @@ export default function WorkoutScreen() {
               accessibilityRole="button"
               style={styles.pauseButton}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              onPress={withTapCue(pausedAtMs === null ? handlePause : handleResume)}
+              onPress={pausedAtMs === null ? handlePause : handleResume}
             >
               <Ionicons
                 name={pausedAtMs === null ? 'pause' : 'play'}
@@ -636,7 +634,7 @@ export default function WorkoutScreen() {
           <TouchableOpacity
             accessibilityRole="button"
             style={styles.resumeButton}
-            onPress={withTapCue(handleResume)}
+            onPress={handleResume}
           >
             <Ionicons name="play" size={20} color={colors.background} />
             <Text style={styles.resumeLabel}>{t('workout.resume')}</Text>
@@ -657,14 +655,14 @@ export default function WorkoutScreen() {
             <TouchableOpacity
               accessibilityRole="button"
               style={styles.sheetLeave}
-              onPress={withTapCue(leaveQuest)}
+              onPress={leaveQuest}
             >
               <Text style={styles.sheetLeaveLabel}>{t('workout.leaveCta')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               accessibilityRole="button"
               style={styles.sheetCancel}
-              onPress={withTapCue(() => setQuitVisible(false))}
+              onPress={() => setQuitVisible(false)}
             >
               <Text style={styles.sheetCancelLabel}>{t('workout.cancel')}</Text>
             </TouchableOpacity>

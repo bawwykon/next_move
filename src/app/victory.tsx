@@ -28,7 +28,28 @@ import { useCompletionStore } from '@/state/completionStore';
  * XP/numbers (FR-XP-7 — the client never computes progression). Navigation is
  * replace-only, so Android back can never re-enter the finished workout
  * (Ref 04 rule 3).
+ *
+ * SOUND-EFFECTS-UPGRADE — staggered audio timeline (zero overlap when several
+ * milestones land on one completion):
+ *   t=0.0s  victoryFanfare   (3.0s)
+ *   t=3.2s  levelup          (1.9s)  if leveledUp
+ *   t=5.2s  chapterUnlocked  (3.5s)  if chapterAdvanced
+ *   t=8.8s  masteryLevelup   (2.7s)  if any mastery rank rose
+ * A tap-to-skip still suppresses every not-yet-fired beat.
  */
+
+/** Audio beat offsets from the moment the authoritative payload lands (ms). */
+const VICTORY_BEAT_MS = {
+  fanfare: 0,
+  levelUp: 3200,
+  chapter: 5200,
+  mastery: 8800,
+} as const;
+/** Level-up overlay hold — mirrors the levelup cue length. */
+const LEVEL_UP_HOLD_MS = 1900;
+/** Chapter overlay hold after its cue ends (owner: ~4s or tap-to-dismiss). */
+const CHAPTER_HOLD_MS = 4000;
+
 export default function VictoryScreen() {
   const router = useRouter();
   const { t } = useTranslation();
@@ -55,6 +76,7 @@ export default function VictoryScreen() {
   const enterChimed = useRef(false);
   const levelUpRung = useRef(false);
   const chapterRung = useRef(false);
+  const masteryRung = useRef(false);
 
   const reconciled = reconcileCompletion(lastCompletion, questId);
   const result = reconciled.result;
@@ -62,6 +84,10 @@ export default function VictoryScreen() {
   const leveledUp = result ? result.level.after > result.level.before : false;
   const chapterAdvanced = result
     ? result.journey.chapter_after > result.journey.chapter_before
+    : false;
+  // SOUND-EFFECTS-UPGRADE — any mastery track whose rank rose on this payout.
+  const hasMasteryLevelUp = result
+    ? result.mastery.some((row) => row.level_after > row.level_before)
     : false;
 
   // Once the authoritative payload lands: victory chime + the first confetti
@@ -79,11 +105,12 @@ export default function VictoryScreen() {
     }
   }, [result]);
 
-  // FR-XP-4 — level-up celebration, timed after the initial burst: a second
+  // FR-XP-4 — level-up celebration, timed after the fanfare beat: a second
   // confetti run, the level-up chime, and the overlay flash. A tap-to-skip
   // (FR-VIC-4) suppresses the chime; the reducer then ignores the timed events.
   // AT-02D — when a chapter also advanced, the hide at the end of this beat is
   // suppressed so the chapter beat takes over the overlay (never both at once).
+  // SOUND-EFFECTS-UPGRADE — fixed 3.2s beat so the fanfare always finishes first.
   useEffect(() => {
     if (!result || !leveledUp || levelUpRung.current) {
       return;
@@ -98,12 +125,12 @@ export default function VictoryScreen() {
       }
       playCue('levelup');
       dispatchCelebration('level-up');
-    }, 800);
+    }, VICTORY_BEAT_MS.levelUp);
     const hide = setTimeout(() => {
       if (active && !chapterAdvanced) {
         dispatchCelebration('hide');
       }
-    }, 800 + 1900);
+    }, VICTORY_BEAT_MS.levelUp + LEVEL_UP_HOLD_MS);
     return () => {
       active = false;
       clearTimeout(show);
@@ -111,10 +138,10 @@ export default function VictoryScreen() {
     };
   }, [result, leveledUp, chapterAdvanced]);
 
-  // AT-02D — chapter celebration, the final victory beat: the chapter cue
-  // plays ALONE (overlap rule), after the initial fanfare (and the level-up
-  // beat when both advanced). The overlay holds ~4s or until a tap skips it
-  // (owner amendment — no hard cut when the 2.6s cue ends).
+  // AT-02D — chapter celebration: the chapter cue plays ALONE after the
+  // level-up beat (overlap rule). The overlay holds ~4s or until a tap skips it
+  // (owner amendment — no hard cut when the cue ends).
+  // SOUND-EFFECTS-UPGRADE — fixed 5.2s beat, after levelup fully ends (3.2+1.9).
   useEffect(() => {
     if (!result || !chapterAdvanced || chapterRung.current) {
       return;
@@ -127,21 +154,39 @@ export default function VictoryScreen() {
       }
       playCue('chapterUnlocked');
       dispatchCelebration('chapter');
-    }, 800 + 1900);
-    const hide = setTimeout(
-      () => {
-        if (active) {
-          dispatchCelebration('hide');
-        }
-      },
-      800 + 1900 + 4000,
-    );
+    }, VICTORY_BEAT_MS.chapter);
+    const hide = setTimeout(() => {
+      if (active) {
+        dispatchCelebration('hide');
+      }
+    }, VICTORY_BEAT_MS.chapter + CHAPTER_HOLD_MS);
     return () => {
       active = false;
       clearTimeout(show);
       clearTimeout(hide);
     };
   }, [result, chapterAdvanced]);
+
+  // SOUND-EFFECTS-UPGRADE — final beat: mastery rank-up chime after the
+  // chapter cue has fully ended (5.2 + 3.5 = 8.7s → fires at 8.8s). Cue only —
+  // the MasteryCard is already on screen, so no extra overlay is needed.
+  useEffect(() => {
+    if (!result || !hasMasteryLevelUp || masteryRung.current) {
+      return;
+    }
+    masteryRung.current = true;
+    let active = true;
+    const show = setTimeout(() => {
+      if (!active || skippedRef.current) {
+        return;
+      }
+      playCue('masteryLevelup');
+    }, VICTORY_BEAT_MS.mastery);
+    return () => {
+      active = false;
+      clearTimeout(show);
+    };
+  }, [result, hasMasteryLevelUp]);
 
   const skipCelebration = useCallback(() => {
     if (skippedRef.current) {
@@ -159,7 +204,6 @@ export default function VictoryScreen() {
   }, []);
 
   const handleSkipPress = () => {
-    playCue('click');
     skipCelebration();
   };
 

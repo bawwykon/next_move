@@ -94,10 +94,10 @@ export default function QuestDetailScreen() {
             <TouchableOpacity
               accessibilityRole="button"
               style={styles.retryButton}
-              onPress={withTapCue(() => {
+              onPress={() => {
                 setStatus('loading');
                 void load();
-              })}
+              }}
             >
               <Text style={styles.retryLabel}>{t('board.retry')}</Text>
             </TouchableOpacity>
@@ -160,7 +160,7 @@ export default function QuestDetailScreen() {
               <TouchableOpacity
                 accessibilityRole="button"
                 style={styles.startButton}
-                onPress={withTapCue(start)}
+                onPress={start}
               >
                 <Text style={styles.startLabel}>{t('quest.start')}</Text>
                 <Ionicons name="play" size={20} color={colors.background} />
