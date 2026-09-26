@@ -226,6 +226,39 @@ export default function SettingsScreen() {
     ]);
   }, [t, handleLogout]);
 
+  const handleDeleteAccount = useCallback(async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+    // The avatar (0059 bucket) cannot be deleted by SQL — storage blocks direct
+    // rows deletion — so remove it via the Storage API first; account deletion
+    // proceeds regardless (worst case: one orphaned avatar file).
+    await supabase.storage.from('avatars').remove([`${user.id}/avatar.jpg`]);
+    const { error } = await supabase.rpc('delete_my_account');
+    if (error) {
+      Alert.alert(t('settings.deleteAccount'), t('settings.deleteAccountFailed'));
+      return;
+    }
+    try {
+      await signOut();
+    } catch {
+      // Session is already gone with the user row — local sign-out still follows.
+    }
+    router.replace('/(auth)/welcome');
+  }, [router, signOut, t]);
+
+  const confirmDeleteAccount = useCallback(() => {
+    Alert.alert(t('settings.deleteAccountTitle'), t('settings.deleteAccountMessage'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('settings.deleteAccountConfirm'),
+        style: 'destructive',
+        onPress: () => void handleDeleteAccount(),
+      },
+    ]);
+  }, [t, handleDeleteAccount]);
+
   const chapterLabel = (() => {
     if (!profile) return '';
     const data = chapterDataById(profile.currentChapter);
@@ -551,6 +584,22 @@ export default function SettingsScreen() {
                 {t('settings.logout')}
               </Text>
               <Text style={styles.rowHint}>{t('settings.logoutHint')}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.danger} />
+          </TouchableOpacity>
+
+          {/* Delete account — permanent, double-confirmed */}
+          <TouchableOpacity
+            accessibilityRole="button"
+            style={styles.dangerCard}
+            onPress={() => confirmDeleteAccount()}
+          >
+            <Ionicons name="trash-outline" size={20} color={colors.danger} />
+            <View style={styles.rowBody}>
+              <Text style={[styles.rowLabel, { color: colors.danger }]}>
+                {t('settings.deleteAccount')}
+              </Text>
+              <Text style={styles.rowHint}>{t('settings.deleteAccountHint')}</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={colors.danger} />
           </TouchableOpacity>

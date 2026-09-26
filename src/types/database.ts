@@ -588,6 +588,7 @@ export type Database = {
       chapter_for_quests: { Args: { quests: number }; Returns: number };
       complete_custom_workout: { Args: { ev: Json; p_workout_id: string }; Returns: Json };
       complete_quest: { Args: { ev: Json }; Returns: Json };
+      delete_my_account: { Args: Record<string, never>; Returns: void };
       level_for_xp: { Args: { xp: number }; Returns: number };
       level_title: { Args: { level: number }; Returns: string };
       mastery_level_for_points: { Args: { points: number }; Returns: number };
