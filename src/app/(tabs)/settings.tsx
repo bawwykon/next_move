@@ -515,7 +515,9 @@ export default function SettingsScreen() {
                 <TouchableOpacity
                   style={styles.row}
                   onPress={() =>
-                    Linking.openURL('https://auryond.app/privacy').catch(() => undefined)
+                    Linking.openURL('https://bawwykon.github.io/auryond/privacy').catch(
+                      () => undefined,
+                    )
                   }
                 >
                   <Ionicons name="lock-closed-outline" size={20} color={colors.textMuted} />
