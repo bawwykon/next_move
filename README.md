@@ -1,4 +1,4 @@
-# Next Move
+# auryond
 
 Fitness quest app built with Expo (TypeScript + expo-router).
 
