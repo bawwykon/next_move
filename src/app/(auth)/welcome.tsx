@@ -12,7 +12,7 @@ export default function WelcomeScreen() {
   return (
     <Screen>
       <View style={styles.hero}>
-        <Text style={styles.title}>Next Move</Text>
+        <Text style={styles.title}>Auryond</Text>
         <Text style={styles.pitch}>{t('auth.welcomeTagline')}</Text>
         <Text style={styles.body}>{t('auth.welcomeBody')}</Text>
       </View>

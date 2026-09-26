@@ -504,7 +504,7 @@ export default function SettingsScreen() {
                 <TouchableOpacity
                   style={styles.row}
                   onPress={() =>
-                    Linking.openURL('https://example.com/credits').catch(() => undefined)
+                    Linking.openURL('https://auryond.app/credits').catch(() => undefined)
                   }
                 >
                   <Ionicons name="library-outline" size={20} color={colors.textMuted} />
@@ -515,7 +515,18 @@ export default function SettingsScreen() {
                 <TouchableOpacity
                   style={styles.row}
                   onPress={() =>
-                    Linking.openURL('mailto:support@nextmove.app').catch(() => undefined)
+                    Linking.openURL('https://auryond.app/privacy').catch(() => undefined)
+                  }
+                >
+                  <Ionicons name="lock-closed-outline" size={20} color={colors.textMuted} />
+                  <Text style={styles.rowLabel}>{t('settings.dataPrivacy')}</Text>
+                  <Ionicons name="open-outline" size={16} color={colors.textMuted} />
+                </TouchableOpacity>
+                <View style={styles.divider} />
+                <TouchableOpacity
+                  style={styles.row}
+                  onPress={() =>
+                    Linking.openURL('mailto:support@auryond.app').catch(() => undefined)
                   }
                 >
                   <Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.textMuted} />

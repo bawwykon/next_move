@@ -1,13 +1,14 @@
 {
   "expo": {
-    "name": "next_move",
-    "slug": "next_move",
+    "name": "AURYOND Fitness Adventure",
+    "slug": "auryond",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "nextmove",
+    "scheme": "auryond",
     "userInterfaceStyle": "automatic",
     "android": {
+      "package": "com.auryond.fitness",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
