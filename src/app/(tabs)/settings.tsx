@@ -537,7 +537,9 @@ export default function SettingsScreen() {
                 <TouchableOpacity
                   style={styles.row}
                   onPress={() =>
-                    Linking.openURL('https://auryond.app/credits').catch(() => undefined)
+                    Linking.openURL(
+                      'https://github.com/bawwykon/auryond/blob/main/assets/CREDITS.md',
+                    ).catch(() => undefined)
                   }
                 >
                   <Ionicons name="library-outline" size={20} color={colors.textMuted} />
@@ -561,7 +563,7 @@ export default function SettingsScreen() {
                 <TouchableOpacity
                   style={styles.row}
                   onPress={() =>
-                    Linking.openURL('mailto:support@auryond.app').catch(() => undefined)
+                    Linking.openURL('mailto:ibrahimaljabrix@gmail.com').catch(() => undefined)
                   }
                 >
                   <Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.textMuted} />
