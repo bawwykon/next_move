@@ -7,24 +7,25 @@ DO-NOT-SUBMIT marker stands until a future owner decision reopens it.
 
 ## App identity (current app.json)
 
-- name: next_move → store name "Next Move" — version 1.0.0, no explicit
+- name: AURYOND Fitness Adventure (slug `auryond`) → store name "AURYOND Fitness
+  Adventure" — version 1.0.0, no explicit
   versionCode/build (app.json), so Android build 1 by default
 - icons: `assets/images/icon.png`, splash `assets/images/splash-icon.png`
   (imageWidth 76, #208AEF), adaptive/foreground/monochrome android icons — all
   point at real assets, ready for an EAS build.
 - Known gaps to close before any submission:
-  1. **Android `package`** — app.json has no `android.package`;
-     `expo prebuild`/EAS will not generate a store-ready package id as-is.
-     Candidate: `com.nextmove.app` (verify with owner before locking).
+  1. **Android `package`** — locked to `com.auryond.fitness` in app.json
+     (Auryond rebrand); EAS/prebuild will generate that store package id.
   2. **iOS icon** — `ios.icon` points at `./assets/expo.icon`; the project is
      Android-first (tracked Android-only per D-3). Decide at ED-27 whether to
      keep iOS out of this round.
-  3. **Privacy policy URL** — no URL is wired (EXPO_PUBLIC or app.json).
-     Play requires a privacy policy URL on the store listing; placeholder below.
+  3. **Privacy policy URL** — wired in Settings: `https://auryond.app/privacy`
+     (credits: `https://auryond.app/credits`). The auryond.app pages must be
+     published before any store listing goes live.
 
 ## Screenshot copy lines (draft, 10–12) — Play Console / App Store
 
-Title: **Next Move — small quests, real progress.**
+Title: **Auryond — small quests, real progress.**
 
 1. Home: "Today's Recommended Quest" — one clear next step per day.
 2. Quest board "Choose Your Adventure" — pick a move, press Start, follow along.
@@ -46,6 +47,6 @@ in the store build (NFR-9 logger is local-only, data never leaves the device).
 ## checklist
 
 - [x] owner decides release shape (ED-27) — **point release, store deferred**
-- [ ] android.package chosen + EAS/production build (future store round)
-- [ ] privacy policy URL published + wired (future store round)
+- [x] android.package chosen — `com.auryond.fitness`; EAS/production build pending (future store round)
+- [x] privacy policy URL wired in Settings (`https://auryond.app/privacy`); page still to publish (future store round)
 - [ ] screenshots re-shot from production build on a real device (future store round)

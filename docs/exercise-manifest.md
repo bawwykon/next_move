@@ -1,4 +1,4 @@
-# Exercise Manifest — Next Move catalog (S11-01)
+# Exercise Manifest — Auryond catalog (S11-01)
 
 Reference for the Asset Designer. The exercise library (15 entries) is shared by
 all quests; quests differ only in segment pacing (S11-01) — never exercise
